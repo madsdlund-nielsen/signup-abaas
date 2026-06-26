@@ -112,6 +112,49 @@ hvis muligt, og flag det i din opsummering.** Opfind ikke et svar.
 
 ---
 
+## Mikrobeslutninger — klassificeret
+
+Ud over de uafklarede punkter ovenfor opstår der løbende tekniske valg. **Brug
+ikke skøn på om noget er "ikke-trivielt" — brug listen.** Tre spande:
+
+**Spand A — kræver ALTID en ADR (du vælger selv, men dokumentér):**
+- Mappe-/projektstruktur (feature- vs. lag-baseret)
+- Feature-flag-systemets design
+- Database-navnekonventioner (case, ental/flertal, FK-navngivning)
+- RLS-policy-mønster/-skabelon
+- Test-runner og teststruktur
+- Migrationsværktøj/-flow
+- Secrets-struktur
+- Komponentbibliotek-tilgang (egne vs. headless oven på tokens)
+
+**Spand B — fri, ingen ADR, spørg ikke:**
+- Filnavne, variabelnavne, intern organisering i en fil
+- Dato-/utility-biblioteker
+- Import-rækkefølge, kommentarstil, commit-formulering (hold konventionen)
+
+**Spand C — IKKE dit valg (se uafklarede punkter — flag, beslut ikke):**
+- Alt der binder forretning, pris, jura, leverandør eller dataresidens.
+
+Når i tvivl om en mikrobeslutning hører i A eller C: **stop og spørg Mads.** Med
+god tid til launch foretrækkes et spørgsmål frem for et gæt.
+
+---
+
+## Design (acceptkriterium, ikke kosmetik)
+
+Ejerne dømmer platformen på om den **føles high-end**. UI/UX er derfor et
+acceptkriterium på linje med sikkerhed — ikke noget der pyntes til sidst.
+
+- **`docs/design-tokens.css` er autoritativ.** Hardcod aldrig farve, font,
+  radius eller spacing i komponenter — referér tokens.
+- Udtrykket følger signupacademy.com: navy `#263753`, charcoal `#1A2528`, guld
+  `#B4965D` som sparsom accent. Open Sans overalt. **border-radius: 0 overalt.**
+- Store overskrifter er tynde (300/400), aldrig fede. Versal-UI med
+  letter-spacing. Luftigt, redaktionelt, ingen gradienter.
+- Se `docs/designnoter.md` for intention og do/don't.
+
+---
+
 ## Betalingsmodel (sprogbrug)
 
 Brug **"varierende betalingsfrekvenser"** konsekvent. Kort registreres ved
