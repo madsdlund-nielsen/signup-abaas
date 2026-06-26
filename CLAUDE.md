@@ -1,7 +1,8 @@
 # CLAUDE.md — ABaaS (Advisory Board as a Service)
 
 Dette er det autoritative styringsdokument for Claude Code i dette repo.
-Den fulde byggespec ligger i `docs/ABaaS_Byggespec_v5.pdf` som baggrund — men
+Den fulde byggespec ligger i `docs/byggespec/` (seneste version:
+`ABaaS_Byggespec_v5.pdf`) som baggrund — men
 **dette dokument styrer adfærd, beslutninger og prioritering.** Ved konflikt
 vinder CLAUDE.md, og uafklarede punkter må IKKE besluttes af Claude Code (se
 afsnittet "Uafklarede punkter").
