@@ -31,3 +31,4 @@ det gjort sådan?", så skriv en ADR.
 | # | Titel | Status | Fase |
 |---|---|---|---|
 | 0000 | Skabelon (ikke en rigtig ADR) | — | — |
+| 0001 | Byggespec: placering og versionering | Accepteret | 0 |

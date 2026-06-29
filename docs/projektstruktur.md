@@ -11,7 +11,9 @@
 signup-abaas/
 ├── CLAUDE.md                    # autoritativ styring — læses først
 ├── docs/                        # dokumentation (eksisterer)
-│   ├── ABaaS_Byggespec_v5.pdf   # reference (menneske-spec)
+│   ├── byggespec/               # menneske-spec (reference, versioneret)
+│   │   ├── README.md            # seneste version + versioneringsprocedure
+│   │   └── ABaaS_Byggespec_v5.pdf
 │   ├── fase-0.md                # arbejdspakker + DoD
 │   ├── fase-0-eksekvering.md    # trinsekvens + beslutnings-gates
 │   ├── fase-1.md                # arbejdspakker + DoD
