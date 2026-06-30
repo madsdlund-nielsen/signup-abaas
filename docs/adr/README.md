@@ -40,6 +40,7 @@ det gjort sådan?", så skriv en ADR.
 | 0007 | RLS-policy-mønster og kontofri test | Accepteret | 0 |
 | 0008 | Secrets-/env-struktur | Accepteret | 0 |
 | 0009 | CI-adaptation fra qlim8 (CI uden CD) | Accepteret | 0 |
+| 0010 | Opgradering til Next.js 16 + ESLint flat config | Accepteret | 0 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så

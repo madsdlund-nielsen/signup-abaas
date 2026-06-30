@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src",
     "check": "tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run --project unit",
@@ -20,7 +20,7 @@
     "db:test:down": "docker compose -f docker-compose.test.yml down"
   },
   "dependencies": {
-    "next": "^15.1.6",
+    "next": "^16.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -31,8 +31,8 @@
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^15.1.6",
+    "eslint": "^9.18.0",
+    "eslint-config-next": "^16.0.0",
     "jsdom": "^25.0.1",
     "pg": "^8.13.1",
     "typescript": "^5.7.3",
