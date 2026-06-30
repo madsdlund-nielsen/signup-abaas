@@ -1,0 +1,56 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap");
+
+/* Base — referér KUN design-tokens (se design-tokens.css). Ingen hardcodede
+   farver/fonts/radius/spacing her. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-base);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-regular);
+  color: var(--color-text);
+  background: var(--color-white);
+}
+
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-section) var(--space-4);
+}
+
+/* Eyebrow: versal, letter-spacing, guld. */
+.eyebrow {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+
+/* Stor overskrift: TYND (300/400), navy, aldrig fed. */
+.display {
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  font-weight: var(--fw-light);
+  color: var(--color-navy);
+}
+
+.lead {
+  margin: 0 0 var(--space-5);
+  max-width: 720px;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--color-text-muted);
+}

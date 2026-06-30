@@ -1,0 +1,15 @@
+# Lokal test-database (mønster lånt fra qlim8-app). Bruges af db-tests:
+#   docker compose -f docker-compose.test.yml up -d
+#   npm run test:db
+# tmpfs → data lever kun i RAM, så hver opstart er en ren tavle.
+services:
+  db-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: abaas_test
+    ports:
+      - "5432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
