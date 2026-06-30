@@ -1,0 +1,2 @@
+echo "🛡  pre-push: typecheck + unit tests (integration/db kører i CI)..."
+npm run check && npm run test:unit
