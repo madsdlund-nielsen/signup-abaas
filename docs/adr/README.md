@@ -32,3 +32,16 @@ det gjort sådan?", så skriv en ADR.
 |---|---|---|---|
 | 0000 | Skabelon (ikke en rigtig ADR) | — | — |
 | 0001 | Byggespec: placering og versionering | Accepteret | 0 |
+| 0002 | Projektstruktur: feature-baseret + lib/server-grænse + komponenttilgang | Accepteret | 0 |
+| 0003 | Test-runner og teststruktur: Vitest | Accepteret | 0 |
+| 0004 | Adapter-/port-mønster for sub-processorer | Accepteret | 0 |
+| 0005 | Feature-flag-systemets design | Accepteret | 0 |
+| 0006 | Migrationsflow og database-navnekonventioner | Accepteret | 0 |
+| 0007 | RLS-policy-mønster og kontofri test | Accepteret | 0 |
+| 0008 | Secrets-/env-struktur | Accepteret | 0 |
+| 0009 | CI-adaptation fra qlim8 (CI uden CD) | Accepteret | 0 |
+
+> Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
+> — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så
+> 0001 er byggespec. Spike-ADR'erne (hosting, auth, multi-host, GDPR) tager de næste
+> ledige numre (0010+) når spikene afsluttes efter account-adgang.
