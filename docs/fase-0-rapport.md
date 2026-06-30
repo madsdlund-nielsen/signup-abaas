@@ -37,9 +37,13 @@ Verifikation lokalt: `npm run lint`, `npm run check`, `npm run build`, `npm run 
 | **Hosting** (Henosia DK vs. Netlify IE) | 24 + 26 | Deploy hello-world til begge; test SSR + cron; verificér EU-residens | ADR + valg → deploy-job + secret-store |
 | **Auth** (Supabase Auth vs. eget) | 25 | Vurdér RLS-samspil, EU-residens, senere Stripe/MobilePay-flow; minimal login-prøve | ADR + integration bag `src/server/auth` |
 | **Cal.com multi-host** | 5 + 6 | Verificér 2-3 værter + ejer (Platform managed users + Atoms); EU-residens; native optagelse på valgt plan | ADR + rigtig `BookingProvider`/`VideoProvider` |
-| **GDPR-arkitektur** | 0.7 | Leverandør→region→status-tabel, DPA-struktur, sletteflow, samtykke-hook | ADR (0010+) når leverandører er bekræftet |
 
-Alle fire kræver enten live-accounts eller ejer/Mads-beslutning og er derfor udskudt.
+Alle tre spikes kræver enten live-accounts eller ejer/Mads-beslutning og er derfor udskudt.
+
+> **GDPR-arkitektur (Trin 10): LEVERET** (ADR 0011). Leverandør-register, sletteflow-skitse
+> og opt-in samtykke-model er på plads (`docs/gdpr/`, `src/server/consent`). Tilbage er
+> ejer-/jura-afhængigt: DPA-underskrifter pr. leverandør, samtykketekst/ToS og opbevarings-
+> perioder (bogføring/betaling) — se §3.
 
 ---
 
