@@ -1,0 +1,85 @@
+/* =============================================================
+   Advisory Board Unlimited — Design Tokens
+   Afledt af signupacademy.com (bekræftet via computed styles).
+   Dette er det autoritative token-fundament. Hardcod ALDRIG farver,
+   fonts, radius eller spacing i komponenter — referér disse variabler.
+
+   KILDE: docs/design-tokens.css er kanonisk. Denne fil holdes i sync
+   med kilden (jf. docs/projektstruktur.md). Redigér kilden, ikke kun her.
+   ============================================================= */
+
+:root {
+  /* --- Farver: brand --- */
+  --color-navy:        #263753; /* primær brand; overskrifter, paneler, midt-sektioner */
+  --color-charcoal:    #1A2528; /* hero/mørk sektion, header-bar */
+  --color-gold:        #B4965D; /* accent: CTA, links, highlight, logo-"up" */
+  --color-gold-dark:   #A3854F; /* gold hover */
+  --color-topbar-navy: #222F4A; /* tynd top-kontaktbar */
+
+  /* --- Farver: neutraler & tekst --- */
+  --color-white:       #FFFFFF;
+  --color-text:        #333333; /* brødtekst default */
+  --color-text-muted:  #4E4E4E; /* sekundær tekst */
+  --color-grey-bg:     #EEEEEE; /* lyse sektionsbaggrunde */
+  --color-slate:       #6D838A; /* diskrete accenter */
+  --color-link:        #1E73BE; /* tekstlinks (sjældne) */
+
+  /* --- Farver: overlay/translucent --- */
+  --overlay-navy:      rgba(38, 55, 83, 0.85);   /* panel/foto-overlay på navy */
+  --divider-light:     rgba(255, 255, 255, 0.15);
+  --text-on-dark-soft: rgba(255, 255, 255, 0.8);
+  --tint-steel:        rgba(105, 126, 165, 0.6);
+
+  /* --- Typografi --- */
+  --font-base: "Open Sans", Helvetica, Arial, Lucida, sans-serif;
+  --fw-light:   300;  /* store overskrifter — elegancen ligger i tynde streger */
+  --fw-regular: 400;
+  --fw-semibold: 600; /* nav */
+  --fw-bold:    700;  /* knapper, eyebrows, kort-titler */
+
+  /* Type-skala (desktop) */
+  --fs-h1: 61px;   --lh-h1: 1.3;   /* hero, vægt 400, hvid på mørk */
+  --fs-h2: 45px;   --lh-h2: 1.4;   /* sektionsintro, vægt 300, navy */
+  --fs-h3: 24px;   --lh-h3: 1.5;
+  --fs-body: 16px; --lh-body: 1.7; /* redaktionel, luftig leading */
+  --fs-label: 14px;                /* eyebrow/nav/knap, UPPERCASE */
+  --fs-button: 14px;
+
+  /* --- UI / form --- */
+  --radius: 0;                     /* FLADT overalt — ingen runde hjørner */
+  --btn-padding: 10px 38px;
+  --letter-spacing-ui: 1px;        /* versal-UI: nav, knapper, eyebrows */
+
+  /* --- Spacing-skala (8px-basis; sektioner luftige) --- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 40px;
+  --space-6: 64px;
+  --space-section: 90px;           /* lodret luft mellem sektioner (~80-100px) */
+
+  /* --- Container --- */
+  --container-max: 1160px;         /* centreret, brede ydre gutters */
+
+  /* --- Skygger (sparsomt; kun på boksede paneler) --- */
+  --shadow-panel: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* -------------------------------------------------------------
+   Kanon-komponentregler (referencimplementering)
+   ------------------------------------------------------------- */
+
+/* Primær CTA: rektangulær, guldfyld, hvid versaltekst. Ingen gradient. */
+.btn-primary {
+  background: var(--color-gold);
+  color: var(--color-white);
+  border: 1px solid var(--color-gold);
+  border-radius: var(--radius);
+  padding: var(--btn-padding);
+  font: var(--fw-bold) var(--fs-button)/1 var(--font-base);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.btn-primary:hover { background: var(--color-gold-dark); }
