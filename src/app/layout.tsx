@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "@/styles/design-tokens.css";
 import "@/styles/globals.css";
+import "@/styles/components.css";
 
 export const metadata: Metadata = {
   title: "Advisory Board Unlimited",
