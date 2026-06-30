@@ -1,0 +1,131 @@
+/* Komponentlag — bygger oven på design-tokens.css. Refererer KUN tokens; ingen
+   hardcodede farver/fonts/radius/spacing. border-radius: 0 overalt (--radius). */
+
+/* --- Layout --- */
+.container-x {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+.measure {
+  max-width: 720px;
+}
+.stack > * + * {
+  margin-top: var(--space-4);
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+/* --- Topbar (tynd kontaktbar) --- */
+.topbar {
+  background: var(--color-topbar-navy);
+  color: var(--text-on-dark-soft);
+}
+.topbar__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-2) var(--space-4);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--fs-label);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+}
+
+/* --- Sektionsbånd (skiftende baggrunde) --- */
+.band {
+  width: 100%;
+}
+.band--white {
+  background: var(--color-white);
+  color: var(--color-text);
+}
+.band--grey {
+  background: var(--color-grey-bg);
+  color: var(--color-text);
+}
+.band--navy {
+  background: var(--color-navy);
+  color: var(--color-white);
+}
+.band__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-section) var(--space-4);
+}
+
+/* --- Overskrifter (tynde; aldrig fede) --- */
+.heading-1 {
+  margin: 0;
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  font-weight: var(--fw-light);
+}
+.heading-2 {
+  margin: 0;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: var(--fw-light);
+}
+.heading-3 {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: var(--fw-regular);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-ui);
+}
+.heading--on-light {
+  color: var(--color-navy);
+}
+.heading--on-dark {
+  color: var(--color-white);
+}
+
+/* --- Brødtekst-varianter --- */
+.body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--color-text);
+}
+.body--on-dark {
+  color: var(--text-on-dark-soft);
+}
+
+/* --- Kort: foto-fyld, versal hvid titel ved bund, firkantet --- */
+.card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius);
+  min-height: 320px;
+  background: var(--color-navy);
+  color: var(--color-white);
+}
+.card__media {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+.card__overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay-navy);
+}
+.card__title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: var(--space-4);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+}
