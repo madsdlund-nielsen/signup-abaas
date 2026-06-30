@@ -4,6 +4,7 @@ import { Heading } from "@/components/Heading";
 import { SectionBand } from "@/components/SectionBand";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Card } from "@/components/Card";
+import { Tag } from "@/components/Tag";
 
 describe("design-komponenter (kun tokens via klasser)", () => {
   it("Heading bruger korrekt niveau-tag + token-klasse uden inline-style", () => {
@@ -40,5 +41,13 @@ describe("design-komponenter (kun tokens via klasser)", () => {
     const { getByRole, container } = render(<Card title="Strategi" />);
     expect(getByRole("heading", { level: 3, name: "Strategi" }).className).toBe("card__title");
     expect(container.querySelector(".card__media")?.getAttribute("style")).toBeNull();
+  });
+
+  it("Tag renderer .tag uden inline-style (kun tokens)", () => {
+    const { container } = render(<Tag>Strategi</Tag>);
+    const span = container.querySelector("span");
+    expect(span?.className).toBe("tag");
+    expect(span?.textContent).toBe("Strategi");
+    expect(span?.getAttribute("style")).toBeNull();
   });
 });
