@@ -32,3 +32,10 @@ Vælg hosting der opfylder: EU-serverplacering, SSR (Next.js App Router) og cron
 ## Beslutnings-gate
 **STOP** efter anbefalingen. Mads vælger host. Først derefter: skriv hosting-ADR (næste ledige
 nummer) + tilføj deploy-job til `ci.yml` + host-specifik secret-store.
+
+## Konklusion (2026-07-21)
+
+**Valgt: Netlify** (Mads). Se **ADR 0012**. `netlify.toml` tilføjet (`@netlify/plugin-nextjs`,
+Node 22). Deploy sker via Netlifys Git-integration (ikke et Actions-job). Secret-store =
+Netlify Environment variables (lukker ADR 0008-opfølgningen). Åbent verifikationspunkt:
+🔴 funktions-region skal sættes til EU (Ireland, `dub`) i Netlify-UI'et (kræver ≥ Pro-plan).

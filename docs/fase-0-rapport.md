@@ -19,7 +19,7 @@ Alt nedenstående kører/bygger/testes **uden** accounts eller API-nøgler:
 - **Adapter-/port-lag for alle 9 sub-processorer** (stubs bag feature-flags) — klar til
   at blive "fyldt ind" når nøgler lander. Se §4.
 - Env-baseret feature-flag-system (alle integrationer OFF; in-app messaging mørklagt).
-- Provider-agnostisk auth-abstraktion (`src/server/auth`) — afventer auth-spiken.
+- Provider-agnostisk auth-abstraktion (`src/server/auth`) — nu udfyldt med Supabase Auth (ADR 0013).
 - Supabase-schema (rolle-enum + bruger↔rolle + board) med RLS aktiv og **negative
   policy-tests** mod lokal Postgres (kontofrit).
 - CI (lint · type · build · unit · integration · db) tilpasset fra qlim8 — **uden** CD.
@@ -34,11 +34,15 @@ Verifikation lokalt: `npm run lint`, `npm run check`, `npm run build`, `npm run 
 
 | Spike | Punkt | Hvad mangler | Bliver til |
 |---|---|---|---|
-| **Hosting** (Henosia DK vs. Netlify IE) | 24 + 26 | Deploy hello-world til begge; test SSR + cron; verificér EU-residens | ADR + valg → deploy-job + secret-store |
-| **Auth** (Supabase Auth vs. eget) | 25 | Vurdér RLS-samspil, EU-residens, senere Stripe/MobilePay-flow; minimal login-prøve | ADR + integration bag `src/server/auth` |
 | **Cal.com multi-host** | 5 + 6 | Verificér 2-3 værter + ejer (Platform managed users + Atoms); EU-residens; native optagelse på valgt plan | ADR + rigtig `BookingProvider`/`VideoProvider` |
 
-Alle tre spikes kræver enten live-accounts eller ejer/Mads-beslutning og er derfor udskudt.
+**✅ AFKLARET siden første udkast:**
+- **Hosting** (punkt 24 + 26) → **Netlify** (ADR 0012). `netlify.toml` + deploy via Netlifys
+  Git-integration; secret-store = Netlify env vars. Åbent: 🔴 sæt EU-funktions-region i UI'et.
+- **Auth** (punkt 25) → **Supabase Auth**, eu-north-1 (ADR 0013). `SupabaseSessionProvider`
+  integreret bag `src/server/auth`; rolle-tabeller RLS-hærdet.
+
+Tilbage er kun **Cal.com multi-host**, som kræver live-account/ejer-beslutning og er udskudt.
 
 > **GDPR-arkitektur (Trin 10): LEVERET** (ADR 0011). Leverandør-register, sletteflow-skitse
 > og opt-in samtykke-model er på plads (`docs/gdpr/`, `src/server/consent`). Tilbage er
@@ -63,7 +67,11 @@ Markeret i kode med `// TODO(ejer):` / `// TODO(mads):`.
 - LLM EU-dataresidens/DPA (`LlmProvider` — Claude API vs. EU-hostet).
 - Transskription: dansk/EU-udbyder (`TranscriptionProvider`).
 - Alunta vs. Stripe Billing; Stripe/Supabase-dataflow (`PaymentProvider`).
-- Host-specifik secret-store (afhænger af hosting-spiken).
+- 🔴 TODO(mads): Netlify Functions region = EU (Ireland) i UI'et (ADR 0012) — sidste
+  EU-residens-punkt for hosting; kræver ≥ Pro-plan.
+
+_(Afklaret: host-specifik secret-store = Netlify env vars, ADR 0008/0012; auth-valg = Supabase
+Auth, ADR 0013.)_
 
 ---
 
@@ -75,7 +83,7 @@ den uændrede port. Pr. sub-processor:
 
 | Sub-processor | Port | Env-variabler | Flag | Blokeret af |
 |---|---|---|---|---|
-| Supabase (DB/auth) | — / `src/server/auth` | `DATABASE_URL` | — | Projekt (EU) + auth-spike |
+| Supabase (DB + auth) | — / `src/server/auth` | `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | — | Projekt (eu-north-1) — auth-valg ✅ (ADR 0013) |
 | Cal.com (booking) | `BookingProvider` | `CALCOM_API_KEY` | `FLAG_BOOKING` | multi-host-spike + plan |
 | Cal Video | `VideoProvider` | `CALVIDEO_API_KEY` | `FLAG_VIDEO` | plan/EU-residens |
 | Stripe + MobilePay | `PaymentProvider` | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `MOBILEPAY_MERCHANT_ID` | `FLAG_PAYMENTS` | dataflow + priser (ejer) |
@@ -90,7 +98,7 @@ den uændrede port. Pr. sub-processor:
 
 ## 5. Bevidst udeladt (governance vinder)
 
-- **CD/deploy:** intet deploy-job — hosting er en åben spike (ADR 0009). Tilføjes efter valg.
+- **CD/deploy:** intet Actions-deploy-job — deploy sker via Netlifys Git-integration (ADR 0012).
 - **Branch protection på `main`:** kan ikke committes — slå til i GitHub-settings (kræv
   grøn CI + PR). Indtil da gælder kravet kun konventionelt.
 - **Live Supabase-projekt / live PostHog-nøgle:** afventer adgang; kører på stub/lokal
@@ -98,9 +106,10 @@ den uændrede port. Pr. sub-processor:
 
 ## 6. Næste skridt når adgang lander
 
-1. Hosting-spike → ADR + deploy-job + secret-store.
-2. Auth-spike → ADR + integration bag `src/server/auth`.
-3. Supabase-projekt (EU) + staging/prod-review-flow.
+1. ✅ Hosting → **Netlify** (ADR 0012). Rest: sæt EU-funktions-region i Netlify-UI + Netlify-DPA.
+2. ✅ Auth → **Supabase Auth** integreret bag `src/server/auth` (ADR 0013).
+3. Supabase-projekt (eu-north-1) + staging/prod-review-flow + udfyld `NEXT_PUBLIC_SUPABASE_*`
+   og `SUPABASE_SERVICE_ROLE_KEY` i Netlify env vars.
 4. Cal.com multi-host-spike → ADR + rigtige booking/video-adaptere.
 5. PostHog EU live + verificér events/exception-capture (Trin 8).
-6. GDPR-arkitektur (leverandør→region→status, sletteflow, samtykke-hook) → ADR.
+6. GDPR: underskriv DPA'er pr. leverandør; hold `docs/gdpr/leverandoer-register.md` ajour.

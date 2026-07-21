@@ -22,11 +22,14 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.3",
+    "@supabase/supabase-js": "^2.110.8",
     "next": "^16.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.15.12",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^22.10.7",
     "@types/pg": "^8.11.10",

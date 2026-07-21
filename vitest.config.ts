@@ -7,7 +7,10 @@ export default defineConfig({
   test: {
     coverage: {
       provider: "v8",
-      include: ["src/components/**", "src/server/flags/**"],
+      include: ["src/components/**", "src/server/flags/**", "src/server/auth/**"],
+      // supabase-client.ts er SDK-/request-glue (next/headers + @supabase/*); den dækkes
+      // af integration/manuel verifikation, ikke unit-tests, så den holdes ude af tærsklen.
+      exclude: ["src/server/auth/supabase-client.ts"],
       reporter: ["text", "html"],
       thresholds: { lines: 70, functions: 70, statements: 70, branches: 60 },
     },

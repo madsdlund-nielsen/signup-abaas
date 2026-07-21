@@ -1,15 +1,18 @@
 /**
  * Provider-agnostisk auth-abstraktion (fase 0).
  *
- * Auth-LEVERANDØREN (Supabase Auth vs. eget system) er en åben 🟡 SPIKE — se
- * docs/fase-0-eksekvering.md, Trin 4. Denne port lader features og domænekode
- * tale om "den nuværende bruger" og roller uden at binde sig til leverandøren.
- * RLS hænger på rolle-relationen i databasen, ikke på auth-leverandøren, så
- * RLS-fundamentet (Trin 5) kan bygges uafhængigt af dette valg.
+ * Auth-LEVERANDØREN er afgjort: Supabase Auth (ADR 0013). Denne port lader features
+ * og domænekode tale om "den nuværende bruger" og roller uden at binde sig til
+ * leverandøren. RLS hænger på rolle-relationen i databasen, ikke på auth-leverandøren.
  *
- * TODO(mads): auth-valg (spike) — implementér en rigtig SessionProvider oven på
- * den valgte leverandør og registrér den via setSessionProvider().
+ * createSessionProvider() vælger implementering ud fra env (samme mønster som
+ * adapterne i src/lib): er Supabase Auth konfigureret, bruges SupabaseSessionProvider;
+ * ellers StubSessionProvider (kontofri CI/tests). Registrér på serveren via
+ * registerSessionProvider().
  */
+
+import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "./supabase-config";
+import { SupabaseSessionProvider } from "./supabase-provider";
 
 export type Role = "ejer" | "partner" | "lead_partner" | "admin";
 
@@ -49,4 +52,31 @@ export function getSessionProvider(): SessionProvider {
 
 export function setSessionProvider(next: SessionProvider): void {
   provider = next;
+}
+
+/**
+ * Vælg SessionProvider ud fra env. Supabase Auth når URL + anon-nøgle + service-role
+ * er sat, ellers stub. SDK'et loades kun dynamisk (og først ved getCurrentUser), så
+ * stub-stien aldrig trækker @supabase/* eller next/headers ind.
+ */
+export function createSessionProvider(
+  env: Record<string, string | undefined> = process.env,
+): SessionProvider {
+  const config = readSupabaseAuthConfig(env);
+  if (!isSupabaseAuthConfigured(config)) {
+    return new StubSessionProvider();
+  }
+  return new SupabaseSessionProvider(async () => {
+    const { createSupabaseGateway } = await import("./supabase-client");
+    return createSupabaseGateway(config);
+  });
+}
+
+/** Byg og registrér den valgte provider (kald én gang i server-bootstrap). */
+export function registerSessionProvider(
+  env: Record<string, string | undefined> = process.env,
+): SessionProvider {
+  const next = createSessionProvider(env);
+  setSessionProvider(next);
+  return next;
 }
