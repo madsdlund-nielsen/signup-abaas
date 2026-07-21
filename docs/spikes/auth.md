@@ -31,3 +31,11 @@ Stripe/MobilePay-flow.
 ## Beslutnings-gate
 **STOP** efter anbefalingen. Mads vælger. Derefter: auth-ADR + integrér den valgte leverandør
 bag `src/server/auth` (registrér via `setSessionProvider`).
+
+## Konklusion (2026-07-21)
+
+**Valgt: Supabase Auth**, region eu-north-1 (Mads). Se **ADR 0013**. `SupabaseSessionProvider`
+integreret bag `src/server/auth` (registreres via `registerSessionProvider`/`setSessionProvider`);
+`auth.uid()`-samspil bekræftet af de eksisterende RLS-tests. Rolle-tabellerne blev RLS-hærdet
+(`0003_auth_rls.sql` + `supabase/policies/roles.sql`) så brugere ikke kan selv-tildele roller.
+Login/signup-UI hører til fase 1-onboarding.

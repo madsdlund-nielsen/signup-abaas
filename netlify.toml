@@ -1,0 +1,26 @@
+# Netlify-konfiguration (ADR 0012). Hosting-valg = Netlify (self-host som exit).
+#
+# GDPR / EU-residens (SKAL-krav, jf. docs/gdpr/leverandoer-register.md):
+#   Netlifys funktioner kører som standard i US East (Ohio, "cmh"). Next.js-funktioner
+#   genereres på build-tid, så pr.-funktion `region` i denne fil gælder IKKE for dem —
+#   funktions-regionen SKAL sættes projekt-bredt i Netlify-UI'et:
+#     Project configuration > Build & deploy > Continuous deployment > Functions region
+#       → EU (Ireland) "dub"   [self-serve på Pro/Enterprise]
+#   TODO(mads): sæt Functions region = EU (Ireland) i Netlify-UI'et og bekræft i ADR 0012.
+#   Bemærk: region-valg kræver mindst Pro-plan (Free = kun US-default).
+#
+# Secrets: runtime-env-variabler (DATABASE_URL, NEXT_PUBLIC_SUPABASE_*, SUPABASE_SERVICE_ROLE_KEY
+#   m.fl. — se .env.example) sættes i Netlify > Environment variables, IKKE som GitHub-secrets.
+#   Dette lukker den udskudte host-secret-store i ADR 0008.
+
+[build]
+  command = "npm run build"
+
+[build.environment]
+  # Matcher .nvmrc og package.json engines.
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+# Officielt Next.js-runtime for Netlify (SSR + App Router). Installeret som devDependency.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

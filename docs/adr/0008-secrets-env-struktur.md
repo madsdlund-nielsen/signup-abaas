@@ -29,3 +29,10 @@ når hosting er valgt.
 - Negative/pris: den endelige secret-mekanik (hvordan prod henter secrets) er udeladt
   indtil hosting-valg.
 - Opfølgning: 🔴 host-specifik secrets-store + CI-secrets afventer hosting-spiken (Trin 3).
+
+## Opdatering (2026-07-21) — host-secret-store afklaret
+
+Hosting = Netlify (ADR 0012). Den udskudte host-specifikke secret-store er nu: **prod-runtime-
+secrets sættes i Netlify > Environment variables** (ikke GitHub-secrets, som kun er synlige for
+GitHub Actions og ikke når den kørende app). CI forbliver kontofri på stubs; ægte nøgler lever kun
+i Netlify. Selve `.env.example`-strukturen fra denne ADR er uændret.

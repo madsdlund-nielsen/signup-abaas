@@ -9,7 +9,7 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
 
 | Leverandør | Rolle i appen | Persondata behandlet | Region | EU-residens | DPA | Flag |
 |---|---|---|---|---|---|---|
-| **Supabase** | DB + (evt.) auth — sandhedskilde | Navn, e-mail, roller, al forretningsdata | EU (vælges ved projektoprettelse) | 🔴 afventer projekt (EU-region) | 🔴 afventer underskrift (Supabase DPA findes) | — |
+| **Supabase** | DB + auth — sandhedskilde | Navn, e-mail, roller, al forretningsdata | EU — eu-north-1 (Stockholm) | ✅ EU (eu-north-1, ADR 0013) | 🔴 afventer underskrift (Supabase DPA findes) | — |
 | **Cal.com** | Booking (multi-host) | Navne, e-mails, mødetider | 🔴 afventer multi-host-spike | 🔴 afventer (punkt 5) | 🔴 afventer | `booking` |
 | **Cal Video** | Multi-party video + optagelse | Billede/lyd af møder | 🔴 afventer plan/spike | 🔴 afventer (punkt 6) | 🔴 afventer | `video` |
 | **Stripe** | Betaling ind | Navn, e-mail, betalingsmetadata (ikke fulde kortdata — tokeniseret) | Global (EU-databehandling muligt) | 🔴 afventer dataflow (Mads) | 🔴 afventer (Stripe DPA findes) | `payments` |
@@ -20,15 +20,16 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
 | **Resend** | Transaktionsmails | E-mailadresser, mailindhold | EU (Dublin) | ✅ EU (Dublin) | 🔴 afventer underskrift (Resend DPA findes) | `email` |
 | **inMobile** | SMS | Telefonnumre, beskedindhold | DK | ✅ DK | 🔴 afventer underskrift | `sms` |
 | **PostHog** | Analytics + fejlovervågning | Pseudonyme events, evt. IP/enhed | EU (eu.posthog.com) | ✅ EU | 🔴 afventer underskrift (PostHog DPA findes) | `analytics` |
-| **Hosting (Henosia / Netlify)** | SSR, logs, cron | Request-/session-metadata, logs | 🔴 afventer hosting-spike | 🔴 afventer (punkt 24/26) | 🔴 afventer | — |
+| **Netlify** (hosting) | SSR, logs, cron | Request-/session-metadata, logs | EU — Ireland (`dub`) | 🟡 kræver UI-region-valg + Pro-plan (ADR 0012) | 🔴 afventer underskrift (Netlify DPA findes) | — |
 | **GitHub Actions** | CI/CD | Kildekode (ingen prod-PII), CI-metadata | Global | n/a (ingen prod-persondata) | dækket af GitHub-vilkår | — |
 
 ## Noter
 
-- **EU-residens fra fase 0:** EU-hostede leverandører (Resend, inMobile, PostHog) er
-  bekræftet. De ⚠/🔴-markerede afhænger af en spike (Cal.com/hosting), et leverandørvalg
-  (regnskab, transskription, LLM) eller account-oprettelse — alle uden for Claude Codes
-  beslutningsret.
+- **EU-residens fra fase 0:** EU-hostede leverandører (Supabase eu-north-1, Resend, inMobile,
+  PostHog) er bekræftet. Netlify (hosting) er valgt (ADR 0012) med EU-region (Ireland) — men
+  regionen skal aktivt sættes i Netlify-UI'et (🟡). De resterende 🔴-markerede afhænger af et
+  leverandørvalg (regnskab, transskription, LLM), Cal.com-spiken eller account-oprettelse —
+  alle uden for Claude Codes beslutningsret.
 - **DPA-struktur:** alle databehandlere skal have en underskrevet DPA før produktion.
   Underskrifterne er en ejer-opgave; registret her er kilden til "hvilke mangler".
   🔴 TODO(ejer): indhent + underskriv DPA pr. leverandør; arkivér reference her.

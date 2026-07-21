@@ -1,8 +1,8 @@
 name: CI
 
 # Tilpasset fra qlim8-app: lint · type check · build · test (unit/integration/db).
-# Ingen deploy/CD endnu — hosting (Henosia vs. Netlify) er en uafgjort 🟡 SPIKE
-# (Trin 3). CD-jobbet tilføjes når Mads har valgt host. Se docs/fase-0-rapport.md.
+# Intet CD-job her: hosting = Netlify (ADR 0012), og deploy sker via Netlifys
+# Git-integration — ikke GitHub Actions. Se docs/fase-0-rapport.md.
 
 on:
   push:
@@ -100,8 +100,8 @@ jobs:
       - run: npm run test:db
 
   # ───────────────────────────────────────────────────────────────────────────
-  # deploy: BEVIDST UDELADT i fase 0.
-  # Hosting (Henosia DK vs. Netlify IE) er en uafgjort 🟡 SPIKE (Trin 3) — Claude
-  # Code må ikke vælge host. Når Mads har valgt, tilføjes et deploy-job her +
-  # ADR for hosting + host-specifik secret-store. Indtil da: kun CI, ingen CD.
+  # deploy: håndteres af Netlify (ADR 0012), ikke af GitHub Actions.
+  # Netlify bygger og deployer fra Git-integrationen (`netlify.toml`,
+  # @netlify/plugin-nextjs). Runtime-secrets lever i Netlify > Environment
+  # variables (ADR 0008). Derfor intet CD-job her.
   # ───────────────────────────────────────────────────────────────────────────
