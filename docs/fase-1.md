@@ -25,6 +25,12 @@
 - Byg login/signup oven på fase 0-beslutningen (Supabase Auth eller eget).
 - Rolletildeling ved signup; RLS håndhæver adgang.
 
+> **Status (2026-07-21): leveret — mønster på plads (ADR 0014).** Login/signup/logout via
+> server-actions, `proxy`-session-refresh, `provisionOwner` (ejer-rolle, service-role), og
+> side-guard (`getCurrentUser` → `/login`). UI via tokens (`Field`/`AuthForm`, `/login`,
+> `/signup`, `/dashboard`). Logik enhedstestet med injiceret klient; siderne rendrer stub-stien
+> kontofrit. 🔴 Mangler: ende-til-ende-verifikation mod et live Supabase-projekt (eu-north-1).
+
 ### 1.2 Quiz — admin-UI
 - CRUD på spørgsmål. **Preview af quiz inden gem** (eksplicit krav).
 - Drag-n-drop til at knytte kompetence-tags til spørgsmål/svar.

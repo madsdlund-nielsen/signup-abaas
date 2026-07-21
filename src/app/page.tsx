@@ -1,4 +1,4 @@
-import { PrimaryButton } from "@/components/PrimaryButton";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -9,7 +9,9 @@ export default function Home() {
         Fase 0 — fundament. Dette skelet etablerer design-tokens, adapter-laget for
         sub-processorer, feature-flags og RBAC/RLS, før der bygges features.
       </p>
-      <PrimaryButton>Kom i gang</PrimaryButton>
+      <Link className="btn-primary" href="/signup">
+        Kom i gang
+      </Link>
     </main>
   );
 }

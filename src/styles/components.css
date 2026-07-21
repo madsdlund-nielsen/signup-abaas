@@ -129,3 +129,68 @@
   letter-spacing: var(--letter-spacing-ui);
   text-transform: uppercase;
 }
+
+/* --- Auth-panel: centreret, boxet, firkantet --- */
+.auth-card {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: var(--space-5);
+  background: var(--color-white);
+  border: 1px solid var(--color-grey-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
+}
+
+/* --- Formular + felter (kun tokens; firkantet) --- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.field__label {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-navy);
+}
+.field__input {
+  padding: var(--space-3);
+  font: var(--fw-regular) var(--fs-body) / 1.3 var(--font-base);
+  color: var(--color-text);
+  background: var(--color-white);
+  border: 1px solid var(--color-slate);
+  border-radius: var(--radius);
+}
+.field__input:focus {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 0;
+  border-color: var(--color-gold);
+}
+
+/* Notits/fejl-panel. Signalerer med eksisterende tokens (navy tekst, guld-kant, grå
+   baggrund). TODO(ejer): dedikeret validerings-/fejlfarve er et design-valg — ingen rød
+   i paletten endnu; bekræft mod high-end-udtrykket før en ny brandfarve tilføjes. */
+.form__notice {
+  padding: var(--space-3);
+  background: var(--color-grey-bg);
+  border-left: 3px solid var(--color-gold);
+  color: var(--color-navy);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-body);
+}
+
+/* Sekundær tekstlink-linje under formularen (fx "har du ingen konto?"). */
+.form__alt {
+  font-size: var(--fs-body);
+  color: var(--color-text-muted);
+}
+.form__alt a {
+  color: var(--color-gold);
+  font-weight: var(--fw-semibold);
+}
