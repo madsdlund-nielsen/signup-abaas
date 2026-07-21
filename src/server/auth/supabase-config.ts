@@ -30,3 +30,19 @@ export function readSupabaseAuthConfig(
 export function isSupabaseAuthConfigured(config: PartialConfig): config is SupabaseAuthConfig {
   return Boolean(config.url && config.anonKey && config.serviceRoleKey);
 }
+
+export type SupabaseBrowserConfig = {
+  url: string;
+  anonKey: string;
+  serviceRoleKey: string | undefined;
+};
+
+/**
+ * Kun URL + anon-nøgle (uden service-role). Bruges i kontekster der ikke skal se
+ * service-role-hemmeligheden — fx middleware/edge, der blot refresher session-cookies.
+ */
+export function isSupabaseBrowserConfigured(
+  config: PartialConfig,
+): config is SupabaseBrowserConfig {
+  return Boolean(config.url && config.anonKey);
+}

@@ -80,3 +80,14 @@ export function registerSessionProvider(
   setSessionProvider(next);
   return next;
 }
+
+/**
+ * Bekvem adgang til den nuværende bruger i server-komponenter/-actions uden global
+ * bootstrap: vælger provider ud fra env og henter brugeren. Returnerer null hvis
+ * ikke logget ind (eller auth ikke konfigureret → stub).
+ */
+export function getCurrentUser(
+  env: Record<string, string | undefined> = process.env,
+): Promise<AuthUser | null> {
+  return createSessionProvider(env).getCurrentUser();
+}
