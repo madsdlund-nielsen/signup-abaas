@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react";
 import { QuizRenderer } from "@/components/QuizRenderer";
 import { QuestionPreviewForm } from "@/components/QuestionPreviewForm";
@@ -83,6 +83,54 @@ describe("QuizRenderer (ejer-look, kun token-klasser)", () => {
     fireEvent.click(b);
     expect(a.getAttribute("aria-pressed")).toBe("true");
     expect(b.getAttribute("aria-pressed")).toBe("true");
+  });
+});
+
+describe("QuizRenderer (kontrolleret tilstand — ejer-flow)", () => {
+  it("afspejler `selected` og kalder `onToggle` uden at ændre intern state", () => {
+    const onToggle = vi.fn();
+    const { getByRole } = render(
+      <QuizRenderer
+        question={{
+          prompt: "Vælg",
+          kind: "multi",
+          options: [
+            { id: "a", label: "A", kind: "tag" },
+            { id: "b", label: "B", kind: "tag" },
+          ],
+        }}
+        selected={["a"]}
+        onToggle={onToggle}
+      />,
+    );
+    const a = getByRole("button", { name: "A" });
+    const b = getByRole("button", { name: "B" });
+    expect(a.getAttribute("aria-pressed")).toBe("true");
+    expect(b.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(b);
+    expect(onToggle).toHaveBeenCalledWith("b");
+    // Kontrolleret: intern state ændrer ikke visningen (b forbliver ikke-valgt uden ny prop).
+    expect(b.getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("free_text er redigerbar med `onFreeText` (ellers readOnly)", () => {
+    const onFreeText = vi.fn();
+    const { getByPlaceholderText } = render(
+      <QuizRenderer
+        question={{
+          prompt: "Andet?",
+          kind: "multi",
+          options: [{ id: "ft", label: "Andre kompetencer", kind: "free_text" }],
+        }}
+        freeText={{ ft: "start" }}
+        onFreeText={onFreeText}
+      />,
+    );
+    const input = getByPlaceholderText("Andre kompetencer") as HTMLInputElement;
+    expect(input.readOnly).toBe(false);
+    expect(input.value).toBe("start");
+    fireEvent.change(input, { target: { value: "eksport" } });
+    expect(onFreeText).toHaveBeenCalledWith("ft", "eksport");
   });
 });
 

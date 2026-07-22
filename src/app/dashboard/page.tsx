@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/server/auth";
@@ -23,6 +24,13 @@ export default async function DashboardPage() {
       <p className="body">
         Roller: {user.roles.length > 0 ? user.roles.join(", ") : "ingen tildelt endnu"}.
       </p>
+      {user.roles.includes("ejer") ? (
+        <p className="body">
+          <Link className="btn-secondary" href="/onboarding">
+            Start onboarding
+          </Link>
+        </p>
+      ) : null}
       <form action={signOutAction}>
         <PrimaryButton type="submit">Log ud</PrimaryButton>
       </form>

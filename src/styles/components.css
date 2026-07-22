@@ -335,6 +335,49 @@
   opacity: 0.5;
 }
 
+/* --- Ejer-onboarding (conversational quiz-flow) --- */
+.onboarding {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.progress__meta {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-navy);
+  margin: 0 0 var(--space-2);
+}
+.progress__track {
+  height: 4px;
+  background: var(--color-grey-bg);
+}
+.progress__bar {
+  height: 100%;
+  background: var(--color-gold);
+  transition: width 200ms ease;
+}
+.onboarding__nav {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* Blød overgang mellem trin (Typeform-agtig). */
+.step-fade {
+  animation: step-fade-in 220ms ease;
+}
+@keyframes step-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Simpel admin-navigationsliste. */
 .admin-nav {
   list-style: none;
