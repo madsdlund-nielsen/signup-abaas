@@ -11,6 +11,7 @@
 import { redirect } from "next/navigation";
 
 import type { AuthFormState } from "@/components/AuthForm";
+import { translateAuthError } from "./error-messages";
 import { provisionOwner } from "./provisioning";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "./supabase-config";
 import { createServerSupabase, createServiceSupabase } from "./supabase-server";
@@ -26,7 +27,10 @@ export async function signInAction(_prev: AuthFormState, formData: FormData): Pr
 
   const supabase = await createServerSupabase(config);
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: "Forkert e-mail eller adgangskode." };
+  if (error) {
+    console.error(`[auth] signIn fejlede: ${error.message}`);
+    return { error: translateAuthError(error.message) };
+  }
 
   redirect("/dashboard");
 }
@@ -40,7 +44,10 @@ export async function signUpAction(_prev: AuthFormState, formData: FormData): Pr
 
   const supabase = await createServerSupabase(config);
   const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) return { error: `Kunne ikke oprette konto: ${error.message}` };
+  if (error) {
+    console.error(`[auth] signUp fejlede: ${error.message}`);
+    return { error: translateAuthError(error.message) };
+  }
   if (!data.user) return { error: "Uventet: Supabase returnerede ingen bruger ved signup." };
 
   // Provisionér ejer-rolle server-side (bypasser RLS). Fejler dette, får brugeren den KONKRETE
@@ -53,8 +60,10 @@ export async function signUpAction(_prev: AuthFormState, formData: FormData): Pr
     };
   }
 
-  // TODO(mads): e-mail-bekræftelses-flow afhænger af Supabase-projektets indstilling.
-  // Uden aktiv session sender dashboard-vagten brugeren til /login.
+  // Har e-mailbekræftelse slået til, oprettes ingen session ved signup (data.session == null).
+  // Send brugeren til en "tjek din e-mail"-side i stedet for dashboardet (som ville bounce til login).
+  if (!data.session) redirect("/check-email");
+
   redirect("/dashboard");
 }
 

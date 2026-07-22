@@ -26,3 +26,20 @@ export async function asUser<T>(
     await client.end();
   }
 }
+
+/**
+ * Kør fn som DB-ejeren (postgres, uden rolleskift → RLS bypasses), i en transaktion der
+ * rulles tilbage. Til test af schema-mekanik der ikke handler om RLS — fx triggere.
+ */
+export async function asPostgres<T>(fn: (client: Client) => Promise<T>): Promise<T> {
+  const client = new Client({ connectionString: DB_URL });
+  await client.connect();
+  try {
+    await client.query("begin");
+    const result = await fn(client);
+    await client.query("rollback");
+    return result;
+  } finally {
+    await client.end();
+  }
+}
