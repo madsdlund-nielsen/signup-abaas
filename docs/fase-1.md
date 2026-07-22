@@ -25,11 +25,17 @@
 - Byg login/signup oven på fase 0-beslutningen (Supabase Auth eller eget).
 - Rolletildeling ved signup; RLS håndhæver adgang.
 
-> **Status (2026-07-21): leveret — mønster på plads (ADR 0014).** Login/signup/logout via
-> server-actions, `proxy`-session-refresh, `provisionOwner` (ejer-rolle, service-role), og
-> side-guard (`getCurrentUser` → `/login`). UI via tokens (`Field`/`AuthForm`, `/login`,
-> `/signup`, `/dashboard`). Logik enhedstestet med injiceret klient; siderne rendrer stub-stien
-> kontofrit. 🔴 Mangler: ende-til-ende-verifikation mod et live Supabase-projekt (eu-north-1).
+> **Status (2026-07-22): leveret + verificeret ende-til-ende i prod (ADR 0014).** Login/signup/
+> logout via server-actions, `proxy`-session-refresh, `provisionOwner` (ejer-rolle, service-role),
+> og side-guard (`getCurrentUser` → `/login`). UI via tokens (`Field`/`AuthForm`, `/login`,
+> `/signup`, `/dashboard`). Bekræftet på Netlify + Supabase eu-north-1: signup → session → ejer-rolle
+> → dashboard.
+>
+> **Hardening (backlog ryddet):** auth-bruger-sletning cascader nu app-data (migration 0004, ingen
+> forældreløse rækker); provisioneringsfejl råber i stedet for tavs "ingen rolle"; danske
+> fejlbeskeder + `/check-email`-side når e-mailbekræftelse er slået til; migration-til-prod-flow via
+> Supabase CLI (ADR 0015, `docs/supabase-migrations.md`). 🔴 Ejer-opgaver: Netlify-region → EU før
+> rigtige persondata; Resend-SMTP + gen-aktivér e-mailbekræftelse.
 
 ### 1.2 Quiz — admin-UI
 - CRUD på spørgsmål. **Preview af quiz inden gem** (eksplicit krav).

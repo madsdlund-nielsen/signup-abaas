@@ -11,3 +11,8 @@ as $$
 $$;
 
 grant usage on schema auth to public;
+
+-- Minimal stand-in for Supabase' auth.users (som findes i forvejen i prod). Kun de kolonner
+-- vi rører: id. Lader betingede triggere på auth.users (fx sletning-cascade i 0004) blive
+-- oprettet og dækket af db-tests lokalt.
+create table if not exists auth.users (id uuid primary key);

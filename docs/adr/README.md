@@ -45,6 +45,7 @@ det gjort sådan?", så skriv en ADR.
 | 0012 | Hosting: Netlify | Accepteret | 0 |
 | 0013 | Auth: Supabase Auth | Accepteret | 0 |
 | 0014 | Auth-flow-mønster (login/signup/guard) | Accepteret | 1 |
+| 0015 | Migrationer til produktion (Supabase CLI) | Accepteret | 1 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så
