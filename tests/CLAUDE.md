@@ -44,7 +44,7 @@ tests/
 | `src/components/**` | unit (token-only) | `tests/unit/components.test.tsx` |
 | `src/server/flags`, `src/server/consent` | unit | `tests/unit/flags.test.ts`, `consent.test.ts` |
 | `src/lib/<vendor>/**` (adaptere) | integration (registry/wiring) | `tests/integration/adapters.test.ts` |
-| `supabase/migrations/**`, `supabase/policies/**` | db (RLS) | `tests/db/rls.test.ts` |
+| `supabase/migrations/**` (incl. RLS-policies) | db (RLS) | `tests/db/rls.test.ts` |
 
 ## Konventioner
 
