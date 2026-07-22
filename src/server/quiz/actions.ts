@@ -235,6 +235,40 @@ export async function moveOption(formData: FormData): Promise<void> {
 }
 
 /**
+ * Skriv en ny rækkefølge for ALLE options i ét spørgsmål (bulk). Bruges af drag-omordning:
+ * `order` er komma-adskilte option-ids i ny rækkefølge. sort_order sættes = index+1. Idsæt skal
+ * matche spørgsmålets faktiske options (ingen fremmede/manglende) — ellers no-op.
+ */
+export async function reorderOptions(formData: FormData): Promise<void> {
+  const config = await requireAdminConfig();
+  const questionId = String(formData.get("question_id") ?? "");
+  const order = String(formData.get("order") ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  if (!questionId || order.length === 0) return;
+
+  const service = createServiceSupabase(config);
+  const { data: existing, error } = await service
+    .from("quiz_option")
+    .select("id")
+    .eq("quiz_question_id", questionId);
+  if (error || !existing) {
+    throw new Error(`Kunne ikke læse options: ${error?.message ?? "ingen data"}`);
+  }
+
+  const existingIds = new Set((existing as Array<{ id: string }>).map((o) => o.id));
+  const sameMembers =
+    order.length === existingIds.size && order.every((id) => existingIds.has(id));
+  if (!sameMembers) return; // uoverensstemmelse → no-op (undgå delvis skrivning)
+
+  for (let i = 0; i < order.length; i++) {
+    await service.from("quiz_option").update({ sort_order: i + 1 }).eq("id", order[i]);
+  }
+  revalidatePath(`/admin/quiz/${questionId}`);
+}
+
+/**
  * Sæt kompetence-tag-koblingen for én option (erstat-hele-sættet). Checkbox-picker sender 0..n
  * 'tag'-værdier. Frekvens/fritekst-options har ingen mapping. Dette er hvad 1.5 matching læser.
  */
