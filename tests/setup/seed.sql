@@ -30,3 +30,17 @@ insert into board (id, owner_id, name) values
 
 insert into board_partner (board_id, partner_id, is_lead) values
   ('00000000-0000-0000-0000-0000000b0a4d', '00000000-0000-0000-0000-00000000000b', true);
+
+-- Quiz-seed (til RLS-tests): ét published + ét draft spørgsmål, én option + én tag-mapping.
+insert into quiz_question (id, key, prompt, kind, sort_order, is_published) values
+  ('00000000-0000-0000-0000-0000000c0001', 'kompetencer',    'Hvilke kompetencer ønsker du?', 'multi',  1, true),
+  ('00000000-0000-0000-0000-0000000c0002', 'kladde-spoergsmaal', 'Kladde-spørgsmål',          'single', 2, false);
+
+insert into quiz_option (id, quiz_question_id, label, kind, sort_order) values
+  ('00000000-0000-0000-0000-0000000c0a01', '00000000-0000-0000-0000-0000000c0001', 'Salg og marketing', 'tag', 1),
+  ('00000000-0000-0000-0000-0000000c0a02', '00000000-0000-0000-0000-0000000c0002', 'Kladde-svar',       'tag', 1);
+
+insert into quiz_option_competence_tag (quiz_option_id, competence_tag_id)
+  select '00000000-0000-0000-0000-0000000c0a01', id from competence_tag where slug = 'salg-og-marketing';
+insert into quiz_option_competence_tag (quiz_option_id, competence_tag_id)
+  select '00000000-0000-0000-0000-0000000c0a02', id from competence_tag where slug = 'oekonomi-og-noegletal';

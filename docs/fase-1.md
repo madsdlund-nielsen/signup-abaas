@@ -47,6 +47,13 @@
 - CRUD på spørgsmål. **Preview af quiz inden gem** (eksplicit krav).
 - Drag-n-drop til at knytte kompetence-tags til spørgsmål/svar.
 
+> **Status (2026-07-22, ADR 0017):** dependency-fri, leveres i 3 PR'er. **PR 1 (denne):** schema
+> (migration 0007: quiz_question/quiz_option/quiz_option_competence_tag + RLS) + `src/server/quiz`
+> data-access + spørgsmåls-CRUD på `/admin/quiz` (opret/redigér/slet + op/ned-reorder) +
+> `Select`/`TextArea`-komponenter. **PR 2:** options + checkbox-tag-mapping. **PR 3:** `QuizRenderer`
+> preview-inden-gem + native HTML5-drag. Ingen dnd-library (op/ned + native drag; @dnd-kit ville
+> kræve egen ADR).
+
 ### 1.3 Quiz — ejer-flow (conversational)
 - Conversational/trinvis flow for ejeren. Svar → kompetence-signal til matching.
 
