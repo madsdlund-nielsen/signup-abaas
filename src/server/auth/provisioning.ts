@@ -25,4 +25,19 @@ export async function provisionOwner(
     .from("user_role_assignment")
     .upsert({ user_id: userId, role: "ejer" }, { onConflict: "user_id,role" });
   if (roleError) throw new Error(`rolletildeling fejlede: ${roleError.message}`);
+
+  // Verificér at rollen faktisk landede. En upsert kan returnere uden fejl men uden at skrive,
+  // hvis klienten ikke reelt har service-role (fx den publishable-nøgle i stedet for secret →
+  // RLS blokerer). Så fanger vi den tavse fejl her i stedet for at ende med "ingen rolle".
+  const { data: check, error: checkError } = await service
+    .from("user_role_assignment")
+    .select("role")
+    .eq("user_id", userId);
+  if (checkError) throw new Error(`verifikation af rolletildeling fejlede: ${checkError.message}`);
+  if (!check || !check.some((row) => (row as { role: string }).role === "ejer")) {
+    throw new Error(
+      "rollen 'ejer' blev ikke skrevet — er SUPABASE_SERVICE_ROLE_KEY den hemmelige (sb_secret_…) " +
+        "nøgle og ikke den publishable? Uden service-role blokerer RLS skrivningen.",
+    );
+  }
 }

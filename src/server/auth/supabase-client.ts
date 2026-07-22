@@ -28,7 +28,12 @@ export function createSupabaseGateway(config: SupabaseAuthConfig): SupabaseAuthG
         .from("user_role_assignment")
         .select("role")
         .eq("user_id", userId);
-      if (error || !data) return [];
+      if (error) {
+        // Tavs [] her var det der gjorde "ingen rolle" svær at fejlfinde — log årsagen.
+        console.error(`[auth] getRoles fejlede for ${userId}: ${error.message}`);
+        return [];
+      }
+      if (!data) return [];
       return (data as Array<{ role: Role }>).map((row) => row.role);
     },
   };
