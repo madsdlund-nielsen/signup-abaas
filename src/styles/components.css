@@ -194,3 +194,66 @@
   color: var(--color-gold);
   font-weight: var(--fw-semibold);
 }
+
+/* --- Sekundær knap: firkantet navy-kontur til mindre handlinger (gem/slet i admin) --- */
+.btn-secondary {
+  background: transparent;
+  color: var(--color-navy);
+  border: 1px solid var(--color-navy);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  font: var(--fw-bold) var(--fs-button) / 1 var(--font-base);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  background: var(--color-grey-bg);
+}
+
+/* --- Datatabel (admin) — firkantet, tynde skillelinjer, versal head --- */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+}
+.table__head {
+  text-align: left;
+  padding: var(--space-3);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-navy);
+  border-bottom: 1px solid var(--color-slate);
+}
+.table__row {
+  border-bottom: 1px solid var(--color-grey-bg);
+}
+.table__cell {
+  padding: var(--space-3);
+  vertical-align: middle;
+  color: var(--color-text);
+}
+
+/* Kompakt inline-form i en tabelrække (fx redigér-felter + knap). */
+.row-form {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Simpel admin-navigationsliste. */
+.admin-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.admin-nav a {
+  color: var(--color-gold);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-ui);
+  font-size: var(--fs-label);
+}
