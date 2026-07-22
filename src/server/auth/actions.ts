@@ -41,10 +41,16 @@ export async function signUpAction(_prev: AuthFormState, formData: FormData): Pr
   const supabase = await createServerSupabase(config);
   const { data, error } = await supabase.auth.signUp({ email, password });
   if (error) return { error: `Kunne ikke oprette konto: ${error.message}` };
+  if (!data.user) return { error: "Uventet: Supabase returnerede ingen bruger ved signup." };
 
-  // Provisionér ejer-rolle server-side (bypasser RLS). Idempotent.
-  if (data.user) {
+  // Provisionér ejer-rolle server-side (bypasser RLS). Fejler dette, får brugeren den KONKRETE
+  // årsag i stedet for en tavs "ingen rolle"-tilstand (session er allerede sat af signUp).
+  try {
     await provisionOwner(createServiceSupabase(config), data.user.id, email);
+  } catch (e) {
+    return {
+      error: `Konto oprettet, men rolletildeling fejlede: ${e instanceof Error ? e.message : String(e)}`,
+    };
   }
 
   // TODO(mads): e-mail-bekræftelses-flow afhænger af Supabase-projektets indstilling.
