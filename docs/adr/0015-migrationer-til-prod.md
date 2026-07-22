@@ -41,8 +41,18 @@ Se runbook: `docs/supabase-migrations.md`. Bekvem-scripts: `npm run db:link|db:p
 - Negative / pris: kræver Supabase-CLI + projekt-adgang (Mads). Manuel kørsel = et menneske skal
   huske at pushe efter merge (bevidst — sikkerhed over bekvemmelighed indtil vi stoler på flowet).
 - Opfølgning:
-  - 🔴 TODO(mads): kør `init` + `link` + `migration repair` på prod-projektet én gang.
-  - 🟡 Filnavne: CLI'en genererer normalt tidsstemplede versioner. Vi beholder `NNNN_`-serien
-    (ADR 0006) som baseline; hvis `db push` afviser prefikset, skiftes til tidsstempler fra næste
-    migration (beslutning udskudt til første konflikt — flag til Mads).
   - 🟡 Senere: evt. auto-`db push` i CI på merge til main, når flowet er kørt manuelt et par gange.
+
+## Opdatering (2026-07-22) — Supabase↔GitHub-integrationen deployer migrations automatisk
+
+Verificeret i prod (`select * from supabase_migrations.schema_migrations`): 0001–0005 er alle
+anvendt, uden at nogen har kørt `db push` manuelt. **Supabase' GitHub-integration deployer
+`supabase/migrations/` automatisk ved merge til main.** Konsekvenser:
+
+- Den manuelle `db push`-runbook er nu **fallback/nødplan**, ikke det normale flow. Ingen skal
+  huske at pushe — merge = deploy.
+- 🟢 `NNNN_`-prefikset (ADR 0006) accepteres (0001–0005 er sporet) → det åbne filnavns-flag lukkes.
+- 🔴 **Vigtigt hul, nu rettet:** integrationen anvender KUN `supabase/migrations/` — ikke den
+  tidligere `supabase/policies/`-mappe. RLS-policies nåede derfor aldrig prod. Policies er flyttet
+  ind i migrations (0006, jf. ADR 0007-opdatering). Fremover: alt der skal i prod, ligger i
+  `supabase/migrations/`.

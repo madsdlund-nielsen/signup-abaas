@@ -36,3 +36,13 @@ uændret på Supabase (hvor `auth.uid()` er indbygget). Negative tests er obliga
   strammes når flere forretningstabeller kommer til.
 - Opfølgning: når auth-spiken (Trin 4) er afgjort, integreres den valgte leverandør bag
   `src/server/auth` uden at røre policies.
+
+## Opdatering (2026-07-22) — policies bor i migrations, ikke en separat mappe
+
+Policies lå oprindeligt i `supabase/policies/*.sql`, anvendt separat af db-testenes globalSetup.
+Men **Supabase' deploy (og GitHub-integrationen) anvender kun `supabase/migrations/`** — aldrig
+den mappe. I prod var RLS derfor slået til uden policies → authed-læsning gav 0 rækker (verificeret
+via `pg_policies`). Rettelse: alle policies flyttet ind i migrations (catch-up i `0006_rls_policies.sql`),
+og `supabase/policies/`-mappen er fjernet. **Fremover:** en tabels RLS-policies skrives i SAMME
+migration som tabellen (eller en efterfølgende migration) — så de deployes automatisk. Navngivning
+(`<tabel>_<operation>_<rolle>`) og negative-test-kravet er uændret.

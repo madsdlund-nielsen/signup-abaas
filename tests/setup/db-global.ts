@@ -21,7 +21,7 @@ function sqlDir(relDir: string): string[] {
 
 /**
  * Global setup for db-projektet: nulstil databasen og anvend
- * auth-shim → migrationer → policies → app-rolle/grants/seed.
+ * auth-shim → migrationer (inkl. RLS-policies) → app-rolle/grants/seed.
  */
 export default async function setup(): Promise<void> {
   const client = new Client({ connectionString: DB_URL });
@@ -30,9 +30,10 @@ export default async function setup(): Promise<void> {
     await client.query("drop schema if exists public cascade; create schema public;");
     await client.query("drop schema if exists auth cascade;");
 
+    // Policies ligger nu i migrations (ADR 0007) — ikke i en separat mappe, som Supabase'
+    // deploy ellers ikke ville anvende. Derfor kun migrations + seed her.
     await client.query(sqlFile("tests/setup/auth-shim.sql"));
     for (const sql of sqlDir("supabase/migrations")) await client.query(sql);
-    for (const sql of sqlDir("supabase/policies")) await client.query(sql);
     await client.query(sqlFile("tests/setup/seed.sql"));
   } finally {
     await client.end();

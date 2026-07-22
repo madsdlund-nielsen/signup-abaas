@@ -1,42 +1,27 @@
 # Supabase-migrationer til produktion — runbook
 
-> Se ADR 0015 for beslutningen. Migrationer ligger i `supabase/migrations/*.sql` og policies i
-> `supabase/policies/*.sql` (samme filer som db-testene kører). Denne runbook er hvordan de rammer
-> det rigtige Supabase-projekt sporbart — ikke via håndkørt SQL.
+> Se ADR 0015. **Migrationer deployes automatisk:** Supabase' GitHub-integration anvender
+> `supabase/migrations/*.sql` (inkl. RLS-policies) ved merge til `main`. Ingen manuel `db push`
+> under normal drift. Verificér i Supabase → SQL Editor:
+> `select * from supabase_migrations.schema_migrations order by version;`
 
-## Forudsætninger (Mads, én gang)
+## Sådan tilføjer du en ændring
 
-CLI: `npx --yes supabase --version` (eller installér globalt: <https://supabase.com/docs/guides/cli>).
+1. Skriv en ny fil i `supabase/migrations/` (fortsæt `NNNN_navn.sql`-serien). **RLS-policies hører
+   med i migrationen** — ikke i en separat mappe (ADR 0007-opdatering; den mappe deployes ikke).
+2. Tilføj db-tests (positiv + negativ RLS) — `npm run test:db`.
+3. Merge PR → integrationen anvender migrationen på prod automatisk.
 
-```bash
-npm run db:link        # = supabase link --project-ref <ref>   (kræver projekt-ref + DB-password)
-```
+## Fejlfinding
 
-`supabase init` køres første gang hvis `supabase/config.toml` ikke findes endnu.
-
-## Reconciliation (én gang — fordi 0001–0003 blev påført prod manuelt)
-
-CLI'en tror 0001–0003 mangler (de blev kørt via SQL-editoren, ikke via CLI). Markér dem som
-allerede kørte, så de IKKE gen-anvendes:
-
-```bash
-npx --yes supabase migration repair --status applied 0001 0002 0003
-```
-
-> Bemærk: policies i `supabase/policies/` er ikke en del af CLI'ens migrationssporing. Ved første
-> reconciliation anvendes `supabase/policies/*.sql` manuelt én gang (de blev også påført i hånden).
-> Fremover holdes RLS-ændringer i migrationsfiler (så `db push` dækker dem), jf. ADR 0015-opfølgning.
-
-## Løbende brug
-
-```bash
-npm run db:diff        # se hvad der er anderledes mellem lokal og prod
-npm run db:push        # anvend ikke-kørte migrationer på prod
-```
-
-- Skriv nye ændringer som en ny fil i `supabase/migrations/` (fortsæt `NNNN_navn.sql`-serien).
-- Efter merge til main: kør `npm run db:push` mod prod (manuelt, bevidst — jf. ADR 0015).
+- **Ser en authed-læsning 0 rækker, selv om data findes?** Tjek at tabellens policy findes i prod:
+  `select tablename, policyname from pg_policies where schemaname='public';`. Mangler den, ligger
+  policyen sandsynligvis i en fil integrationen ikke deployer — flyt den ind i en migration.
+- **Er en migration ikke anvendt?** Tjek `supabase_migrations.schema_migrations`. Er integrationen
+  nede, kan CLI'en bruges som fallback: `npm run db:link` + `npm run db:push` (kræver projekt-ref +
+  DB-adgang).
 
 ## Aktuel baseline
 
-`0001` roller · `0002` board · `0003` RLS-hærdning · `0004` auth-bruger-cascade.
+`0001` roller · `0002` board · `0003` RLS-hærdning · `0004` auth-bruger-cascade ·
+`0005` kompetence-tags + `has_role` · `0006` RLS-policies (flyttet ind i migrations).
