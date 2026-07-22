@@ -60,4 +60,35 @@ describe("quiz RLS (0007) — admin ser alt, ejer ser kun published", () => {
     });
     expect(affected).toBe(0);
   });
+
+  it("NEGATIV: ikke-admin kan ikke indsætte en option (ingen write-policy → RLS blokerer)", async () => {
+    await expect(
+      asUser(USER.ejerA, (client) =>
+        client.query(
+          "insert into quiz_option (quiz_question_id, label, kind) values ('00000000-0000-0000-0000-0000000c0001', 'X', 'tag')",
+        ),
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("NEGATIV: ikke-admin kan ikke opdatere en option (RLS → 0 rækker ramt)", async () => {
+    const affected = await asUser(USER.ejerA, async (client) => {
+      const res = await client.query(
+        "update quiz_option set label = 'hack' where id = '00000000-0000-0000-0000-0000000c0a01'",
+      );
+      return res.rowCount ?? 0;
+    });
+    expect(affected).toBe(0);
+  });
+
+  it("NEGATIV: ikke-admin kan ikke koble et tag til en option (RLS blokerer join-insert)", async () => {
+    await expect(
+      asUser(USER.ejerA, (client) =>
+        client.query(
+          `insert into quiz_option_competence_tag (quiz_option_id, competence_tag_id)
+             select '00000000-0000-0000-0000-0000000c0a01', id from competence_tag limit 1`,
+        ),
+      ),
+    ).rejects.toThrow();
+  });
 });
