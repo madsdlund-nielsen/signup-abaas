@@ -176,6 +176,9 @@ planlægning og må ikke startes før fase 0 og 1 er grønne.
   board-anbefaling med profiler, lead-partner flag.
 - **Fase 2 — Booking + video:** Cal.com, webhooks → meetings, Cal Video,
   mødestatus + noter, booking/flytning/aflysning i app.
+  **+ Partner-login + self-service-profil-redigering** (udskudt fra 1.4, ADR 0019): indgang til
+  partner-portalen — auth-bruger-oprettelse/-invitation, partner-ruter, partner redigerer egen
+  profil (men IKKE tags), og katalogpost↔auth-bruger kobles. `// TODO(mads): partner-login`.
 - **Fase 3 — Betaling:** prisberegner, prisregler i admin, Stripe Checkout +
   MobilePay, webhook → memberships, varierende betalingsfrekvenser, op/nedgradering.
 - **Fase 4 — Forberedelse, rating, AI & notifikationer.**

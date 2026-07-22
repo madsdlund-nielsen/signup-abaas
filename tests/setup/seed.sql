@@ -49,3 +49,11 @@ insert into quiz_option_competence_tag (quiz_option_id, competence_tag_id)
 -- Indsættes som superuser → RLS-with-check bypasses her. Ejer-E har bevidst INGEN svar (isolation).
 insert into quiz_answer (id, owner_id, quiz_option_id) values
   ('00000000-0000-0000-0000-0000000d0a01', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000c0a01');
+
+-- Partner-katalog-seed (til partner_profile-RLS-tests): to admin-forfattede profiler + én tag-kobling.
+insert into partner_profile (id, name, title, is_internal, sort_order) values
+  ('00000000-0000-0000-0000-0000000e0001', 'Partner Én',  'Rådgiver', true,  1),
+  ('00000000-0000-0000-0000-0000000e0002', 'Partner To',  'Rådgiver', false, 2);
+
+insert into partner_profile_competence_tag (partner_profile_id, competence_tag_id)
+  select '00000000-0000-0000-0000-0000000e0001', id from competence_tag where slug = 'salg-og-marketing';
