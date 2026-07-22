@@ -9,8 +9,24 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 import { isSupabaseBrowserConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
+import { GATE_COOKIE, isGateActive, readGateConfig } from "@/server/gate";
+import { verifyToken } from "@/server/gate/token";
 
 export async function proxy(request: NextRequest) {
+  // Adgangsport FØR alt andet (ADR 0020): uden en gyldig, signeret gate-cookie sendes enhver
+  // request (også /login) til /gate. Selve /gate er undtaget. Edge-sikker verifikation (Web Crypto).
+  const gate = readGateConfig();
+  if (isGateActive(gate) && request.nextUrl.pathname !== "/gate") {
+    const token = request.cookies.get(GATE_COOKIE)?.value;
+    const passed = token ? await verifyToken(token, gate.cookieSecret as string) : false;
+    if (!passed) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/gate";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+  }
+
   const config = readSupabaseAuthConfig();
   if (!isSupabaseBrowserConfigured(config)) return NextResponse.next();
 
