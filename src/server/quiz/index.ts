@@ -79,6 +79,33 @@ function rowToQuestion(row: QuestionRow): QuizQuestion {
   };
 }
 
+/**
+ * Alle PUBLISHED spørgsmål med deres options (til ejer-onboarding, Fase 1.3). Ét embedded select;
+ * RLS giver kun published for en authed ejer, og `.eq(is_published)` sikrer det også for admin.
+ * Options sorteres i JS. Ukonfigureret → [].
+ */
+export async function listPublishedQuestions(
+  env: Record<string, string | undefined> = process.env,
+): Promise<QuizQuestionDetail[]> {
+  const config = readSupabaseAuthConfig(env);
+  if (!isSupabaseAuthConfigured(config)) return [];
+
+  const supabase = await createServerSupabase(config);
+  const { data, error } = await supabase
+    .from("quiz_question")
+    .select(`${QUESTION_COLUMNS}, quiz_option(${OPTION_COLUMNS})`)
+    .eq("is_published", true)
+    .order("sort_order");
+  if (error) {
+    console.error(`[quiz] listPublishedQuestions fejlede: ${error.message}`);
+    return [];
+  }
+  return ((data ?? []) as Array<QuestionRow & { quiz_option: OptionRow[] | null }>).map((row) => ({
+    ...rowToQuestion(row),
+    options: (row.quiz_option ?? []).map(rowToOption).sort((a, b) => a.sortOrder - b.sortOrder),
+  }));
+}
+
 export async function listQuestions(
   env: Record<string, string | undefined> = process.env,
 ): Promise<QuizQuestion[]> {
