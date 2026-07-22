@@ -12,6 +12,9 @@ export default function AdminHome() {
         <li>
           <Link href="/admin/tags">Kompetence-tags</Link>
         </li>
+        <li>
+          <Link href="/admin/quiz">Quiz</Link>
+        </li>
       </ul>
     </main>
   );
