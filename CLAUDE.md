@@ -197,3 +197,7 @@ planlægning og må ikke startes før fase 0 og 1 er grønne.
    beslutningen, før du går videre. Følg `docs/adr/README.md`. En fase er ikke
    færdig hvis dens beslutninger ikke er dokumenteret. Dokumentationen opstår
    synkront med koden, ikke bagud i fase 6.
+5. **Planlægning af en ny fase (stående ordre, Mads 2026-07-22):** send Explore-
+   agenter for at afdække kode/krav, men **skriv selv planen** når de vender
+   tilbage — brug ikke en separat Plan-agent (den er for langsom). Explore →
+   egen plan → gennemgang med Mads.

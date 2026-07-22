@@ -57,6 +57,13 @@
 ### 1.3 Quiz — ejer-flow (conversational)
 - Conversational/trinvis flow for ejeren. Svar → kompetence-signal til matching.
 
+> **Status (2026-07-22, ADR 0018):** leveres i 2 PR'er (backend-først). **PR 1 (denne):** migration
+> 0008 (`quiz_answer` — første ejer-skrivbare tabel + RLS *write*-policies) + data-access
+> (`listPublishedQuestions`, `getMyAnswers`, `saveMyAnswers` via authed klient). **PR 2:**
+> `/onboarding`-rute + conversational `OnboardingFlow` (ét spørgsmål pr. skærm, progressindikator,
+> firkantede touch-knapper) + `QuizRenderer`-udvidelse (kontrolleret) + kvittering. Scope: fanger
+> kun kompetence-signalet; matching (1.5), board-anbefaling (1.6) og pris/kort/booking er senere.
+
 ### 1.4 Partner-katalog
 - Admin opretter partnere, redigerer profiler, **tildeler tags** (autoritativt).
 - Partner kan redigere egen profil-info, men tags er read-only for partner.

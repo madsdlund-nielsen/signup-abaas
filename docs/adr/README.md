@@ -48,6 +48,7 @@ det gjort sådan?", så skriv en ADR.
 | 0015 | Migrationer til produktion (Supabase CLI) | Accepteret | 1 |
 | 0016 | Business-data-access-mønster + admin-fundament + has_role | Accepteret | 1 |
 | 0017 | Quiz-datamodel + admin-UI-tilgang (dependency-fri) | Accepteret | 1 |
+| 0018 | Ejer-skrivbar RLS + quiz-svar-datamodel | Accepteret | 1 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så
