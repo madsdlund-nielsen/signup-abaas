@@ -252,6 +252,35 @@
   flex-wrap: wrap;
 }
 
+/* --- Afkrydsningsfelt + gruppe (fx tag-picker; firkantet, guld-accent) --- */
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+.checkbox__input {
+  accent-color: var(--color-gold);
+}
+.checkbox__label {
+  font-size: var(--fs-body);
+  color: var(--color-text);
+}
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* Ét option-blok i redigér-visningen: tynd skillelinje, luftigt. */
+.option-item {
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--color-grey-bg);
+}
+.option-item > * + * {
+  margin-top: var(--space-3);
+}
+
 /* Simpel admin-navigationsliste. */
 .admin-nav {
   list-style: none;
