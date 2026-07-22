@@ -21,6 +21,12 @@
 
 ## Arbejdspakker
 
+> **Fundament før features (2026-07-22, ADR 0016):** Da 1.2 (quiz) og 1.4 (katalog) deler samme
+> forudsætninger, bygges det fælles backend-fundament først: `/admin`-rute + rolle-guard,
+> business-data-access-mønster (`src/server/tags`), `has_role()` RLS-helper og den delte
+> `competence_tag`-taksonomi med admin-CRUD (migration 0005). Herefter køres 1.2 → 1.3 → 1.4 →
+> 1.5 → 1.6 i rækkefølge ovenpå fundamentet.
+
 ### 1.1 Auth-flow
 - Byg login/signup oven på fase 0-beslutningen (Supabase Auth eller eget).
 - Rolletildeling ved signup; RLS håndhæver adgang.
