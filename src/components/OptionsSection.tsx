@@ -61,9 +61,11 @@ export function OptionsSection({
 
   async function persistOrder() {
     dragIndex.current = null;
+    // `order` er fra seneste render: hver drag-over kalder setOrder → re-render → drop-handleren
+    // lukker over den aktuelle rækkefølge.
     const formData = new FormData();
     formData.set("question_id", questionId);
-    formData.set("order", orderRef.current.map((o) => o.id).join(","));
+    formData.set("order", order.map((o) => o.id).join(","));
     await reorderOptions(formData);
   }
 
