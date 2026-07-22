@@ -204,3 +204,7 @@ planlægning og må ikke startes før fase 0 og 1 er grønne.
    agenter for at afdække kode/krav, men **skriv selv planen** når de vender
    tilbage — brug ikke en separat Plan-agent (den er for langsom). Explore →
    egen plan → gennemgang med Mads.
+6. **Merge-økonomi (stående ordre, Mads 2026-07-22):** hver merge til `main`
+   udløser en Netlify-produktions-redeploy med **fast kreditomkostning uanset
+   PR-størrelse.** Saml derfor en hel fase (backend + UI) i ÉN PR = én merge;
+   undgå mange små merges. Draft-PR'er kan samle flere commits før merge.
