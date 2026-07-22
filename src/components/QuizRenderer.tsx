@@ -4,9 +4,12 @@ import { useState } from "react";
 
 /**
  * Præsentations-renderer for ét quiz-spørgsmål i EJER-look (firkantede, store, flade svarknapper
- * jf. designnoter). Bruges både til admin-preview "inden gem" (Fase 1.2) og senere i ejer-flowet
- * (Fase 1.3) — dermed er preview == produktion. Ren visning: valg-state er lokal og præsentational
- * (ingen persistering her). Al styling via token-klasser (.quiz*).
+ * jf. designnoter). Bruges både til admin-preview "inden gem" (Fase 1.2) og i ejer-flowet
+ * (Fase 1.3) — dermed er preview == produktion. Al styling via token-klasser (.quiz*).
+ *
+ * Valg-state er valgfrit KONTROLLERET: uden `selected`/`onToggle` styrer komponenten selv (admin-
+ * preview, ren visning); med dem ejer forælderen valgene (ejer-flowet, der persisterer). Tilsvarende
+ * er free_text redigerbar når `onFreeText` gives, ellers readOnly (preview).
  */
 
 export type QuizRendererKind = "single" | "multi";
@@ -31,18 +34,37 @@ function optionText(option: QuizRendererOption): string {
   return option.label;
 }
 
-export function QuizRenderer({ question }: { question: QuizRendererQuestion }) {
-  const [selected, setSelected] = useState<string[]>([]);
+export function QuizRenderer({
+  question,
+  selected: controlledSelected,
+  onToggle,
+  freeText,
+  onFreeText,
+  ariaLabel = "Preview af spørgsmål",
+}: {
+  question: QuizRendererQuestion;
+  selected?: string[];
+  onToggle?: (id: string) => void;
+  freeText?: Record<string, string>;
+  onFreeText?: (id: string, value: string) => void;
+  ariaLabel?: string;
+}) {
+  const [internalSelected, setInternalSelected] = useState<string[]>([]);
+  const selected = controlledSelected ?? internalSelected;
 
   function toggle(id: string) {
-    setSelected((current) => {
+    if (onToggle) {
+      onToggle(id);
+      return;
+    }
+    setInternalSelected((current) => {
       if (question.kind === "single") return current.includes(id) ? [] : [id];
       return current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
     });
   }
 
   return (
-    <section className="quiz" aria-label="Preview af spørgsmål">
+    <section className="quiz" aria-label={ariaLabel}>
       <h3 className="quiz__prompt">{question.prompt || "Spørgsmålstekst mangler"}</h3>
       {question.options.length === 0 ? (
         <p className="body">Ingen svarmuligheder endnu.</p>
@@ -52,7 +74,14 @@ export function QuizRenderer({ question }: { question: QuizRendererQuestion }) {
             option.kind === "free_text" ? (
               <label key={option.id} className="field quiz__freetext">
                 <span className="field__label">{option.label}</span>
-                <input className="field__input" type="text" placeholder={option.label} readOnly />
+                <input
+                  className="field__input"
+                  type="text"
+                  placeholder={option.label}
+                  value={onFreeText ? (freeText?.[option.id] ?? "") : undefined}
+                  onChange={onFreeText ? (event) => onFreeText(option.id, event.target.value) : undefined}
+                  readOnly={!onFreeText}
+                />
               </label>
             ) : (
               <button
