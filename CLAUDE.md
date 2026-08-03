@@ -168,12 +168,13 @@ booking, træk sker ved afholdelse. Frekvensvalg: 4 / 8 / 12 uger.
 Se `docs/fase-0.md` og `docs/fase-1.md` for detaljer. Resten er overordnede til
 planlægning og må ikke startes før fase 0 og 1 er grønne.
 
-- **Fase 0 — Fundament (kritisk):** repo/CI, Next.js+Supabase-skelet, RBAC/RLS,
+- **Fase 0 — Fundament (kritisk): ✅ LUKKET.** repo/CI, Next.js+Supabase-skelet, RBAC/RLS,
   feature-flags, env/secrets, PostHog, multi-host-spike, hosting-spike,
-  GDPR-arkitektur, auth-valg.
-- **Fase 1 — Onboarding & board:** auth, quiz (admin-UI + drag-n-drop tags +
+  GDPR-arkitektur, auth-valg. Rapport: `docs/fase-0-rapport.md`.
+- **Fase 1 — Onboarding & board: ✅ LUKKET 2026-08-03.** auth, quiz (admin-UI + drag-n-drop tags +
   conversational flow + preview), partner-katalog, board-matching (2-3),
-  board-anbefaling med profiler, lead-partner flag.
+  board-anbefaling med profiler, lead-partner flag. Rapport: `docs/fase-1-rapport.md`
+  (åbne 🔴 punkter til ejer/Mads står samlet dér).
 - **Fase 2 — Booking + video:** Cal.com, webhooks → meetings, Cal Video,
   mødestatus + noter, booking/flytning/aflysning i app.
   **+ Partner-login + self-service-profil-redigering** (udskudt fra 1.4, ADR 0019): indgang til
