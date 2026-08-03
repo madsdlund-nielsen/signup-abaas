@@ -6,18 +6,25 @@
 
 ## Leverancekriterier (Definition of Done for fase 1)
 
-- [ ] Auth-flow fungerer (login/signup) oven på fase 0's auth-valg.
-- [ ] Quiz: admin-UI til at oprette/redigere spørgsmål, **med preview inden gem.**
-- [ ] Quiz: drag-n-drop af kompetence-tags.
-- [ ] Quiz: conversational flow på ejer-siden.
-- [ ] Partner-katalog: admin kan oprette partnere + tildele kompetence-tags
-      (**partner kan IKKE selv redigere egne tags**).
-- [ ] Board-matching: pulje-filtrering → match til 2-3 partnere.
-- [ ] Board-anbefaling vist med partner-profiler.
-- [ ] "Udskift"-knap på matchet partner → dynamisk infobar + (i)-ikon der
-      forklarer matchændringen.
-- [ ] Lead-partner-flag på board (mindst 1 intern partner markeres).
-- [ ] Fuld test suite grøn.
+> **Fase 1 er lukket 2026-08-03.** Alle punkter opfyldt; se `docs/fase-1-rapport.md` for
+> leverancer, verifikation og de 🔴 punkter fasen efterlader til ejer/Mads.
+
+- [x] Auth-flow fungerer (login/signup) oven på fase 0's auth-valg.
+- [x] Quiz: admin-UI til at oprette/redigere spørgsmål, **med preview inden gem.**
+- [x] Quiz: drag-n-drop af kompetence-tags. — native HTML5-drag; bevidst uden dnd-library (ADR 0017).
+- [x] Quiz: conversational flow på ejer-siden.
+- [x] Partner-katalog: admin kan oprette partnere + tildele kompetence-tags
+      (**partner kan IKKE selv redigere egne tags**). — håndhævet ved fravær af partner-policies.
+      Bemærk: kriteriet dækker admin-siden. Den *partner-vendte* halvdel i 1.4 nedenfor (partneren
+      redigerer egen profil-info) er udskudt til Fase 2, ikke glemt — ADR 0019.
+- [x] Board-matching: pulje-filtrering → match til 2-3 partnere.
+- [x] Board-anbefaling vist med partner-profiler.
+- [x] "Udskift"-knap på matchet partner → dynamisk infobar + (i)-ikon der
+      forklarer matchændringen. — infobaren forklarer **kompetence-delta**; byggespec §5.2's
+      prisvariant afventer startpris/meeting-fee (🔴 ejer).
+- [x] Lead-partner-flag på board (mindst 1 intern partner markeres). — manuel markering bag
+      flaget `leadPartner`; tildelingsregler uafklarede (🔴 ejer).
+- [x] Fuld test suite grøn. — 74 unit · 15 integration · 53 db.
 
 ## Arbejdspakker
 
