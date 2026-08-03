@@ -15,6 +15,9 @@ export default function AdminHome() {
         <li>
           <Link href="/admin/quiz">Quiz</Link>
         </li>
+        <li>
+          <Link href="/admin/partners">Partner-katalog</Link>
+        </li>
       </ul>
     </main>
   );

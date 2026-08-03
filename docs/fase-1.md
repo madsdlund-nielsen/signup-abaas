@@ -68,6 +68,15 @@
 - Admin opretter partnere, redigerer profiler, **tildeler tags** (autoritativt).
 - Partner kan redigere egen profil-info, men tags er read-only for partner.
 
+> **Status (2026-07-22, ADR 0019):** leveres i ÉN PR (backend + UI samlet — merge-økonomi, CLAUDE.md):
+> migration 0009 (`partner_profile` afkoblet fra auth + `partner_profile_competence_tag` M2M +
+> admin-only RLS) + `src/server/partners` (reads + admin-CRUD + `setPartnerTags`) + admin-UI
+> `/admin/partners` (liste/opret/redigér + checkbox-tag-picker). **Scope:** kun det admin-forfattede
+> katalog (det 1.5 matcher imod). Kun sikre
+> §5.3-felter; honorarsats (🔴 pris), rating/antal-møder (fase 4), tilgængelighedsvindue (fase 5) er
+> udeladt. **Partner-login + self-service-profil-redigering er UDSKUDT → spores i Fase 2** (indgang
+> til partner-portalen). `// TODO(mads): partner-login`. Lead-partner-udpegning: `// TODO(ejer): lead-partner regler`.
+
 ### 1.5 Board-matching
 - Pulje-filtrering på kompetence-tags → match til **2-3 partnere** (ikke 2-6).
 - "Udskift"-knap: vælg anden partner fra puljen.
