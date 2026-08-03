@@ -20,7 +20,8 @@ export type FeatureFlag =
   | "email"
   | "sms"
   | "analytics"
-  | "inAppMessaging";
+  | "inAppMessaging"
+  | "leadPartner";
 
 export const ALL_FLAGS: readonly FeatureFlag[] = [
   "booking",
@@ -33,6 +34,9 @@ export const ALL_FLAGS: readonly FeatureFlag[] = [
   "sms",
   "analytics",
   "inAppMessaging",
+  // Manuel lead-partner-markering (fase 1.6). OFF indtil ejer beslutter tildelings-/rotationsregler.
+  // TODO(ejer): lead-partner regler.
+  "leadPartner",
 ] as const;
 
 const TRUTHY = new Set(["1", "true", "on", "yes"]);

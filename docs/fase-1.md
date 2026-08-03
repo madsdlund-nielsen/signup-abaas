@@ -87,6 +87,25 @@
 - Marker lead-partner (mindst 1 intern). ⚠ Tildelingsregler uafklaret — brug
   et midlertidigt flag/manuel markering og `// TODO(ejer): lead-partner regler`.
 
+> **Status 1.5 + 1.6 (2026-08-03, ADR 0021 + 0022):** leveret i ÉN PR (merge-økonomi, CLAUDE.md).
+> Migration 0010: `board_partner.partner_id` peger nu på `partner_profile(id)` (matchingen kunne
+> ellers ikke skrive sit resultat), RLS aktiveret på `board_partner` (manglede helt siden 0002 —
+> enhver authed bruger kunne skrive sig ind på et vilkårligt board), og ejeren fik en read-policy på
+> kataloget scopet til eget board. `src/server/matching` (grådig set-cover, DB-fri + unit-testet) +
+> `src/server/boards` (læs/gem, godkend, udskift, lead). Ny rute `/board`; onboardingens kvittering
+> og dashboard peger derind.
+>
+> **Flag — ikke besluttet her:** tie-break ved lige gode kandidater er uafklaret *og spec'ens
+> henvisning (§5.2 → §12) er dangling* — midlertidig neutral rækkefølge (`sort_order`, navn, id),
+> `TODO(ejer)`. Infobaren viser **kompetence-delta**, ikke pris (§5.2 kræver pris, men
+> startpris/meeting-fee er uafklaret) — denne fil er styrende jf. CLAUDE.md. Lead-markering ligger
+> bag flaget `leadPartner` (OFF), default-lead er den første interne som pladsholder.
+> Udskift viser hele puljen; §5.2's "kun partnere med kalenderplads" kræver Cal.com multi-host
+> (fase 2), `TODO(mads)`.
+>
+> **Udskudt:** partnere kan ikke se deres eget board — `board_select_partner` er fjernet indtil
+> partner-login i Fase 2 kobler katalogpost ↔ auth-bruger (ADR 0021).
+
 ## Uafklarede punkter berørt i fase 1 (flag, beslut ikke)
 - Lead-partner tildelings-/rotationsregler (ejer) — byg manuel markering bag flag.
 - Board-livscyklus (ejer) — påvirker ikke selve anbefalingen endnu, men hold

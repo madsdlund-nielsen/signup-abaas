@@ -24,4 +24,6 @@
 ## Aktuel baseline
 
 `0001` roller · `0002` board · `0003` RLS-hærdning · `0004` auth-bruger-cascade ·
-`0005` kompetence-tags + `has_role` · `0006` RLS-policies (flyttet ind i migrations).
+`0005` kompetence-tags + `has_role` · `0006` RLS-policies (flyttet ind i migrations) ·
+`0007` quiz · `0008` quiz-svar · `0009` partner-katalog ·
+`0010` board-matching (FK → `partner_profile`, RLS på `board_partner`, ejer-read-policy på kataloget).
