@@ -25,11 +25,30 @@ insert into user_role_assignment (user_id, role) values
   ('00000000-0000-0000-0000-00000000000d', 'admin'),
   ('00000000-0000-0000-0000-00000000000e', 'ejer');
 
+-- Partner-katalog-seed. Ligger FØR board_partner, som siden 0010 refererer partner_profile(id)
+-- i stedet for app_user(id). Fire profiler: Én er tagget salg (og sidder på A's board), To er
+-- utagget pulje-støj, Tre dækker økonomi, Fire dækker begge (så set-cover kan vælge 1 vs. 2).
+insert into partner_profile (id, name, title, is_internal, sort_order) values
+  ('00000000-0000-0000-0000-0000000e0001', 'Partner Én',   'Rådgiver', true,  1),
+  ('00000000-0000-0000-0000-0000000e0002', 'Partner To',   'Rådgiver', false, 2),
+  ('00000000-0000-0000-0000-0000000e0003', 'Partner Tre',  'Rådgiver', true,  3),
+  ('00000000-0000-0000-0000-0000000e0004', 'Partner Fire', 'Rådgiver', false, 4);
+
+insert into partner_profile_competence_tag (partner_profile_id, competence_tag_id)
+  select '00000000-0000-0000-0000-0000000e0001', id from competence_tag where slug = 'salg-og-marketing';
+insert into partner_profile_competence_tag (partner_profile_id, competence_tag_id)
+  select '00000000-0000-0000-0000-0000000e0003', id from competence_tag where slug = 'oekonomi-og-noegletal';
+insert into partner_profile_competence_tag (partner_profile_id, competence_tag_id)
+  select '00000000-0000-0000-0000-0000000e0004', id from competence_tag
+  where slug in ('salg-og-marketing', 'oekonomi-og-noegletal');
+
 insert into board (id, owner_id, name) values
   ('00000000-0000-0000-0000-0000000b0a4d', '00000000-0000-0000-0000-00000000000a', 'A''s board');
 
+-- Partner Én sidder på A's board som lead. Profil To/Tre/Fire er UDEN for boardet → negativ-cases
+-- for ejer-read-policyen (ejeren må kun se katalogposter der sidder på hendes eget board).
 insert into board_partner (board_id, partner_id, is_lead) values
-  ('00000000-0000-0000-0000-0000000b0a4d', '00000000-0000-0000-0000-00000000000b', true);
+  ('00000000-0000-0000-0000-0000000b0a4d', '00000000-0000-0000-0000-0000000e0001', true);
 
 -- Quiz-seed (til RLS-tests): ét published + ét draft spørgsmål, én option + én tag-mapping.
 insert into quiz_question (id, key, prompt, kind, sort_order, is_published) values
@@ -49,11 +68,3 @@ insert into quiz_option_competence_tag (quiz_option_id, competence_tag_id)
 -- Indsættes som superuser → RLS-with-check bypasses her. Ejer-E har bevidst INGEN svar (isolation).
 insert into quiz_answer (id, owner_id, quiz_option_id) values
   ('00000000-0000-0000-0000-0000000d0a01', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000c0a01');
-
--- Partner-katalog-seed (til partner_profile-RLS-tests): to admin-forfattede profiler + én tag-kobling.
-insert into partner_profile (id, name, title, is_internal, sort_order) values
-  ('00000000-0000-0000-0000-0000000e0001', 'Partner Én',  'Rådgiver', true,  1),
-  ('00000000-0000-0000-0000-0000000e0002', 'Partner To',  'Rådgiver', false, 2);
-
-insert into partner_profile_competence_tag (partner_profile_id, competence_tag_id)
-  select '00000000-0000-0000-0000-0000000e0001', id from competence_tag where slug = 'salg-og-marketing';

@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { asUser } from "./helpers";
 
-// Seed (tests/setup/seed.sql): to admin-forfattede partner-profiler (e0001 intern, e0002 ekstern)
-// + én tag-kobling (e0001 → salg-og-marketing). Kun admin har adgang i 1.4.
+// Seed (tests/setup/seed.sql): fire admin-forfattede partner-profiler + fire tag-koblinger.
+// Kataloget er admin-only. 0010 tilføjede ÉN undtagelse: en ejer må se de profiler der sidder på
+// hendes eget board — den scoping testes i board-matching-rls.test.ts. Her bruges derfor ejer-E
+// (som bevidst ikke har noget board) til de negative katalog-cases.
 const USER = {
-  ejerA: "00000000-0000-0000-0000-00000000000a",
+  ejerE: "00000000-0000-0000-0000-00000000000e",
   partnerB: "00000000-0000-0000-0000-00000000000b",
   adminD: "00000000-0000-0000-0000-00000000000d",
 };
@@ -16,16 +18,16 @@ function countAs(sub: string | null, sql: string): Promise<number> {
 
 describe("partner_profile RLS (0009) — kun admin i 1.4", () => {
   it("admin ser alle profiler og tag-koblinger", async () => {
-    expect(await countAs(USER.adminD, "select id from partner_profile")).toBe(2);
+    expect(await countAs(USER.adminD, "select id from partner_profile")).toBe(4);
     expect(
       await countAs(USER.adminD, "select partner_profile_id from partner_profile_competence_tag"),
-    ).toBe(1);
+    ).toBe(4);
   });
 
-  it("NEGATIV: ejer ser ingen profiler eller koblinger", async () => {
-    expect(await countAs(USER.ejerA, "select id from partner_profile")).toBe(0);
+  it("NEGATIV: ejer uden board ser ingen profiler eller koblinger", async () => {
+    expect(await countAs(USER.ejerE, "select id from partner_profile")).toBe(0);
     expect(
-      await countAs(USER.ejerA, "select partner_profile_id from partner_profile_competence_tag"),
+      await countAs(USER.ejerE, "select partner_profile_id from partner_profile_competence_tag"),
     ).toBe(0);
   });
 
@@ -45,7 +47,7 @@ describe("partner_profile RLS (0009) — kun admin i 1.4", () => {
       ),
     ).rejects.toThrow();
     await expect(
-      asUser(USER.ejerA, (client) =>
+      asUser(USER.ejerE, (client) =>
         client.query("insert into partner_profile (name) values ('Snyd')"),
       ),
     ).rejects.toThrow();

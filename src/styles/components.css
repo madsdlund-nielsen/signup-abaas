@@ -391,3 +391,75 @@
   letter-spacing: var(--letter-spacing-ui);
   font-size: var(--fs-label);
 }
+
+/* --- Partner-kort til board-anbefaling (fase 1.5/1.6) --- */
+/* Modsat .card (foto-fyldt med overlay-titel) er dette et redaktionelt profilkort:
+   foto øverst, tekst nedenunder, plads til kompetence-tags og en udskift-form. */
+.partner-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-white);
+  border: 1px solid var(--color-grey-bg);
+  border-radius: var(--radius);
+}
+.partner-card__media {
+  aspect-ratio: 4 / 3;
+  background-color: var(--color-navy);
+  background-size: cover;
+  background-position: center;
+}
+.partner-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+.partner-card__lead {
+  color: var(--color-gold);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-ui);
+}
+.partner-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.partner-card__footer {
+  margin-top: auto;
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-grey-bg);
+}
+
+/* Kompetence-tag som chip. --match = et tag ejeren faktisk efterspurgte (guld som sparsom accent). */
+.partner-tag {
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-grey-bg);
+  border-radius: var(--radius);
+  color: var(--color-navy);
+  font-size: var(--fs-label);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-ui);
+}
+.partner-tag--match {
+  border-left: 3px solid var(--color-gold);
+}
+
+/* Infobar der forklarer hvorfor et match ændrede sig (fase-1.md §1.5). */
+.board-infobar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-grey-bg);
+  border-left: 3px solid var(--color-gold);
+  color: var(--color-navy);
+}
+.board-infobar__detail {
+  color: var(--color-slate);
+  font-size: var(--fs-label);
+}

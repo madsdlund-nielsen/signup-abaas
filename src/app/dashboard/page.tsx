@@ -25,9 +25,12 @@ export default async function DashboardPage() {
         Roller: {user.roles.length > 0 ? user.roles.join(", ") : "ingen tildelt endnu"}.
       </p>
       {user.roles.includes("ejer") ? (
-        <p className="body">
+        <p className="body row-form">
           <Link className="btn-secondary" href="/onboarding">
             Start onboarding
+          </Link>
+          <Link className="btn-secondary" href="/board">
+            Se dit board
           </Link>
         </p>
       ) : null}

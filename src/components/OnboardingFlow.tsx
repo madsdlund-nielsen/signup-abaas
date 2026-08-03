@@ -126,10 +126,10 @@ export function OnboardingFlow({
       <section className="onboarding stack">
         <h1 className="heading-2 heading--on-light">Tak</h1>
         <p className="body">
-          Dine svar er gemt. Dit board sammensættes i næste trin ud fra de kompetencer, du valgte.
+          Dine svar er gemt. Dit board sammensættes ud fra de kompetencer, du valgte.
         </p>
-        <a className="btn-secondary" href="/dashboard">
-          Til dashboard
+        <a className="btn-primary" href="/board">
+          Se dit board
         </a>
       </section>
     );
