@@ -14,7 +14,7 @@ udføre ægte kald, og lader være med at foregive andet.
 
 | Modul | Flag | Låses op af | Skylder svar |
 |---|---|---|---|
-| `src/lib/booking/` (Cal.com) | `FLAG_BOOKING` | Cal.com-konto + multi-host-spike (`docs/spikes/multi-host.md`, aldrig kørt) + EU-residens på valgt niveau | Mads |
+| `src/lib/booking/` (Cal.com) | `FLAG_BOOKING` | **Adapteren ER bygget** (fase 2, `calcom.ts`) — stubben er aktiv fordi flag+nøgler mangler. Låses op af: Cal.com-konto + `CALCOM_API_KEY`/`CALCOM_EVENT_TYPE_ID` + liveverifikation (`docs/spikes/multi-host.md`); plan-/tier-valg er STOP-gate | Mads |
 | `src/lib/video/` (Cal Video) | `FLAG_VIDEO` | Cal.com-plan + EU-residens; mødeoptagelse kræver desuden samtykkeflow | Mads + ejer |
 | `src/lib/payments/` (Alunta) | `FLAG_PAYMENTS` | Alunta-nøgler, Alunta/Supabase-dataflow, MobilePay-verifikation (ADR 0023) | Mads |
 | `src/lib/accounting/` | `FLAG_ACCOUNTING` | Leverandørvalg: e-conomic vs. Dinero | Ejer |
@@ -50,6 +50,9 @@ deterministiske frem for plausible — se `docs/stub-politik.md`.
 | `src/server/boards/actions.ts:88,162,195` | Lead-partner sættes på den første interne partner | Tildelings- og rotationsregler (byggespec §12 pkt. 15). Manuel markering ligger bag flaget `leadPartner` (OFF) | Ejer |
 | `src/server/matching/index.ts:101` | Udskift viser hele puljen | §5.2 kræver "kun partnere med kalenderplads" — forudsætter Cal.com multi-host (fase 2) | Mads |
 | `src/server/flags/index.ts:53` | `inAppMessaging` er hårdkodet `false` uanset env | Hele modulet er uafklaret — scope og om det overhovedet skal med | Ejer |
+| `src/server/meetings/actions.ts` (reschedule/cancel) | **Intet ændre-/aflyse-vindue håndhæves** — ejeren kan flytte/aflyse frit | Byggespec §12 pkt. 4: hvor langt inden mødet må der ændres/aflyses? Reglen tilføjes som konfiguration | Ejer |
+| `src/server/meetings/actions.ts` (registerMeetingStatus) | `forsinket_afbud`/`udeblivelse` registreres uden konsekvens | Honorar ved udeblivelse/sent afbud (§12 pkt. 13) — fase 5 beregner når reglen findes | Ejer |
+| `supabase/migrations/0012_meeting.sql` (meeting_note-RLS) | Note-synlighed: restriktiv default (forfatter + board-ejer) | Hvem må se møde-noter (§12 pkt. 16)? Udvidelse er én policy | Ejer |
 
 ## Bevidst tomme — ikke stubs
 

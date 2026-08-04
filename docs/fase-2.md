@@ -14,13 +14,16 @@
 - [ ] Cal.com integreret via adapteren i `src/lib/booking/` (Platform managed users +
       Atoms) — **ingen direkte SDK-kald uden for adapteren**.
 - [ ] Multi-host booking virker: 2-3 partnere + ejer på samme møde.
-      ⚠ **Blokeret indtil multi-host-spiken er kørt** — se 2.2.
+      ⚠ Bygges mod porten med stub aktiv; **liveverifikation (multi-host-spiken) udestår
+      til Cal.com-nøglerne lander** (gate fjernet af Mads 2026-08-04, se 2.2).
 - [ ] Webhooks fra Cal.com → `meeting` i Supabase (oprettet, flyttet, aflyst,
       afholdt). Idempotent og signaturverificeret.
 - [ ] Møde varer 60 min + **15 min betalt forberedelse** afspejlet i
       datamodellen (honorargrundlag = 75 min).
 - [ ] Cal Video som mødelokale, link tilgængeligt for alle deltagere i appen.
-- [ ] Mødestatus-livscyklus i app: planlagt → afholdt / aflyst / udeblevet.
+- [ ] Mødestatus i app er **to felter** (ADR 0026, jf. byggespec §5.6): mødets
+      livscyklus (planlagt → afholdt / aflyst) + partnerens registrering pr. møde
+      (afholdt / forsinket afbud / udeblivelse — honorargrundlaget).
 - [ ] Booking, flytning og aflysning kan udføres i appen — ikke kun i Cal.com.
 - [ ] Møde-noter (efter møde) kan oprettes og læses jf. rolleadgang via RLS.
 - [ ] Lead-partner ser og kan initiere **næste møde** for sit board.
@@ -31,8 +34,9 @@
 
 ## Arbejdspakker
 
-> **Rækkefølge:** 2.8 er den eneste pakke der ikke afhænger af en Cal.com-konto, og
-> den lukker en åben regression fra fase 1. Byg den først, mens spiken afventer.
+> **Rækkefølge:** 2.8 bygges først — den lukker en åben regression fra fase 1, og dens
+> `app_user_id`-kobling er en teknisk forudsætning for at booking-flowet kan få
+> host-id'er (`board_partner.partner_id` peger på kataloget, ikke auth — ADR 0021/0025).
 
 ### 2.1 Cal.com-adapter
 - Udfyld den eksisterende port i `src/lib/booking/` med et snævert domænevendt
@@ -43,12 +47,13 @@
 - Aktiveres af `FLAG_BOOKING` + `CALCOM_API_KEY`; uden dem forbliver stubben aktiv
   (`docs/stub-politik.md`).
 
-### 2.2 Multi-host booking 🚩 blokeret
+### 2.2 Multi-host booking
 - Implementér booking med 2-3 partnere + ejer som deltagere på ét møde.
-- ⚠ **Spiken er aldrig kørt.** `docs/spikes/multi-host.md` er forberedt, men kræver en
-  Cal.com-konto. Der findes derfor **ingen ADR med en multi-host-konklusion** — den
-  skrives når spiken køres, og først da kan denne pakke bygges færdig.
-- Afdækker spiken en blokering: byg bag feature-flag og flag det — improvisér ikke.
+- **Gate fjernet (Mads, 2026-08-04):** pakken bygges færdigt mod porten med stub aktiv —
+  spiken (`docs/spikes/multi-host.md`) køres som **verifikation under byg** når
+  Cal.com-nøglerne lander, og multi-host-ADR'en skrives dér. **STOP-gaten ved
+  plan-/tier-valg (pris + dataresidens) består** — adapteren må ikke binde et plan-valg.
+- Afdækker liveverifikationen en blokering: flag det — improvisér ikke.
 
 ### 2.3 Webhooks → Supabase
 - Modtag Cal.com-webhooks; verificér signatur; afvis ikke-verificerede.
@@ -105,12 +110,32 @@
 - Negative RLS-tests: en partner må ikke kunne redigere egne tags, ikke se andres
   board, og ikke se andre partneres profiler ud over sit eget board.
 
+> **Status (2026-08-04, ADR 0025 + 0026 + 0027):** leveret i ÉN PR (merge-økonomi).
+> Migration 0011 (partner-login: `app_user_id`-kobling, `is_partner_on_board`-hjælper,
+> genoplivet `board_select_partner` + partner-read-policies) og 0012 (`meeting`,
+> `meeting_partner` med to-felt-status, `meeting_note` restriktiv default,
+> `meeting_webhook_event` som idempotensnøgle). `src/server/meetings` (book/flyt/aflys —
+> ejer; initiér næste møde — lead; statusregistrering + noter — partner),
+> `src/server/partners` (invitation, portal-læsning, self-service uden tags),
+> `CalComBookingProvider` (første ægte adapter) og webhook-endpointet (første route
+> handler). UI: `/moeder`, `/partner`, invitation på `/admin/partners/[id]`.
+>
+> **DoD krydses IKKE af endnu:** alt Cal.com-vendt er bygget og testet mod porten med
+> stub aktiv — **liveverifikationen** (multi-host, EU-residens, join-URL-mapping,
+> webhook-payload-form, managed users) udestår til nøglerne lander, og plan-/tier-valget
+> er fortsat STOP-gate. Booking-UI viser den ærlige NotConfiguredError-besked indtil da.
+>
+> **Flag:** ændre/aflyse-vindue (intet håndhævet), note-synlighed (restriktiv default),
+> udeblivelses-konsekvens (kun registrering) — alle `TODO(ejer)`, samlet i
+> `docs/stub-register.md`. Noter under møde og optagelse/samtykke: ikke bygget.
+
 ## Uafklarede punkter berørt i fase 2 (flag, beslut ikke)
 
 - Ændre/aflyse-vindue inden møde (ejer).
 - Samtykke til mødeoptagelse (ejer) + Cal.com-optagelse på valgt plan (Mads).
 - Cal.com EU-residens på valgt niveau (Mads) — verificér før produktionsbrug.
-- Cal.com multi-host-spike (Mads) — **blokerer 2.2**.
+- Cal.com multi-host-liveverifikation + plan-/tier-valg (Mads/ejer) — spiken køres
+  når nøglerne lander; plan-valget er STOP-gate.
 - Note-synlighed: hvem ser møde-noter (ejer).
 - Noter under møde (ejer).
 - Honorar ved udeblivelse/sent afbud (ejer) — påvirker statusmodellen; registrér

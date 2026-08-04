@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getPartner } from "@/server/partners";
-import { setPartnerTags, updatePartner } from "@/server/partners/actions";
+import { invitePartner, setPartnerTags, updatePartner } from "@/server/partners/actions";
 import { listTags } from "@/server/tags";
+import { AuthForm } from "@/components/AuthForm";
 import { Field } from "@/components/Field";
 import { TextArea } from "@/components/TextArea";
 import { Checkbox } from "@/components/Checkbox";
@@ -27,6 +28,24 @@ export default async function AdminPartnerEditPage({
         <Link href="/admin">Admin</Link> · <Link href="/admin/partners">Partner-katalog</Link> · Redigér
       </p>
       <h1 className="heading-2 heading--on-light">Redigér partner</h1>
+
+      <section className="stack measure">
+        <h2 className="heading-3 heading--on-light">Partner-login</h2>
+        {partner.appUserId ? (
+          <p className="body">Denne partner er koblet til en login-konto.</p>
+        ) : (
+          <>
+            <p className="body">
+              Ingen login-konto endnu. Invitér partneren pr. e-mail — invitationen opretter
+              kontoen, tildeler partner-rollen og kobler den til denne katalogpost.
+            </p>
+            <AuthForm action={invitePartner} submitLabel="Invitér partner">
+              <input type="hidden" name="partner_id" value={partner.id} />
+              <Field name="email" label="E-mail" type="email" required />
+            </AuthForm>
+          </>
+        )}
+      </section>
 
       <form className="form measure" action={updatePartner}>
         <input type="hidden" name="id" value={partner.id} />

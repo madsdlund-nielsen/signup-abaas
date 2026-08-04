@@ -31,8 +31,13 @@ describe("partner_profile RLS (0009) — kun admin i 1.4", () => {
     ).toBe(0);
   });
 
-  it("NEGATIV: partner-rolle ser intet katalog (ingen partner-adgang i 1.4)", async () => {
-    expect(await countAs(USER.partnerB, "select id from partner_profile")).toBe(0);
+  // 0011: partner-B ser egen profil (= e0001, som også er eneste medlem på eget board) —
+  // men IKKE resten af puljen (e0002-e0004).
+  it("partner ser egen profil + eget boards medlemmer, ikke puljen (0011)", async () => {
+    expect(await countAs(USER.partnerB, "select id from partner_profile")).toBe(1);
+    expect(
+      await countAs(USER.partnerB, "select id from partner_profile where id = '00000000-0000-0000-0000-0000000e0002'"),
+    ).toBe(0);
   });
 
   it("NEGATIV: uden session ses intet", async () => {

@@ -28,11 +28,13 @@ insert into user_role_assignment (user_id, role) values
 -- Partner-katalog-seed. Ligger FØR board_partner, som siden 0010 refererer partner_profile(id)
 -- i stedet for app_user(id). Fire profiler: Én er tagget salg (og sidder på A's board), To er
 -- utagget pulje-støj, Tre dækker økonomi, Fire dækker begge (så set-cover kan vælge 1 vs. 2).
-insert into partner_profile (id, name, title, is_internal, sort_order) values
-  ('00000000-0000-0000-0000-0000000e0001', 'Partner Én',   'Rådgiver', true,  1),
-  ('00000000-0000-0000-0000-0000000e0002', 'Partner To',   'Rådgiver', false, 2),
-  ('00000000-0000-0000-0000-0000000e0003', 'Partner Tre',  'Rådgiver', true,  3),
-  ('00000000-0000-0000-0000-0000000e0004', 'Partner Fire', 'Rådgiver', false, 4);
+-- Partner-login (0011): profil Én er koblet til auth-bruger partner-B (app_user_id).
+-- Partner-C har BEVIDST ingen katalogkobling → negativ-case for partner-synlighed.
+insert into partner_profile (id, name, title, is_internal, sort_order, app_user_id) values
+  ('00000000-0000-0000-0000-0000000e0001', 'Partner Én',   'Rådgiver', true,  1, '00000000-0000-0000-0000-00000000000b'),
+  ('00000000-0000-0000-0000-0000000e0002', 'Partner To',   'Rådgiver', false, 2, null),
+  ('00000000-0000-0000-0000-0000000e0003', 'Partner Tre',  'Rådgiver', true,  3, null),
+  ('00000000-0000-0000-0000-0000000e0004', 'Partner Fire', 'Rådgiver', false, 4, null);
 
 insert into partner_profile_competence_tag (partner_profile_id, competence_tag_id)
   select '00000000-0000-0000-0000-0000000e0001', id from competence_tag where slug = 'salg-og-marketing';
@@ -68,3 +70,16 @@ insert into quiz_option_competence_tag (quiz_option_id, competence_tag_id)
 -- Indsættes som superuser → RLS-with-check bypasses her. Ejer-E har bevidst INGEN svar (isolation).
 insert into quiz_answer (id, owner_id, quiz_option_id) values
   ('00000000-0000-0000-0000-0000000d0a01', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000c0a01');
+
+-- Møde-seed (0012, til meeting-RLS-tests): to møder på A's board — ét planlagt (fremtid),
+-- ét afholdt (fortid, registrering åben). Partner Én deltager i begge; note på det afholdte.
+insert into meeting (id, board_id, starts_at, status) values
+  ('00000000-0000-0000-0000-0000000f0001', '00000000-0000-0000-0000-0000000b0a4d', '2026-09-01T10:00:00Z', 'planlagt'),
+  ('00000000-0000-0000-0000-0000000f0002', '00000000-0000-0000-0000-0000000b0a4d', '2026-07-01T10:00:00Z', 'afholdt');
+
+insert into meeting_partner (meeting_id, partner_profile_id) values
+  ('00000000-0000-0000-0000-0000000f0001', '00000000-0000-0000-0000-0000000e0001'),
+  ('00000000-0000-0000-0000-0000000f0002', '00000000-0000-0000-0000-0000000e0001');
+
+insert into meeting_note (id, meeting_id, partner_profile_id, body) values
+  ('00000000-0000-0000-0000-0000000f0a01', '00000000-0000-0000-0000-0000000f0002', '00000000-0000-0000-0000-0000000e0001', 'Note fra Partner Én');

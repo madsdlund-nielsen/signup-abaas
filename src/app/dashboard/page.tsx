@@ -32,6 +32,16 @@ export default async function DashboardPage() {
           <Link className="btn-secondary" href="/board">
             Se dit board
           </Link>
+          <Link className="btn-secondary" href="/moeder">
+            Møder
+          </Link>
+        </p>
+      ) : null}
+      {user.roles.includes("partner") ? (
+        <p className="body">
+          <Link className="btn-secondary" href="/partner">
+            Partnerportal
+          </Link>
         </p>
       ) : null}
       <form action={signOutAction}>

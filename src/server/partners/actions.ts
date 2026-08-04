@@ -9,7 +9,9 @@
 
 import { revalidatePath } from "next/cache";
 
+import type { AuthFormState } from "@/components/AuthForm";
 import { getCurrentUser, requireRole } from "@/server/auth";
+import { provisionPartner } from "@/server/auth/provisioning";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import type { SupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServiceSupabase } from "@/server/auth/supabase-server";
@@ -135,4 +137,43 @@ export async function setPartnerTags(formData: FormData): Promise<void> {
     }
   }
   revalidatePath(`/admin/partners/${partnerId}`);
+}
+
+/**
+ * Invitér en katalogpartner som auth-bruger (Fase 2.8, ADR 0025). Admin-initieret:
+ * auth.admin.inviteUserByEmail opretter brugeren og sender invitationsmailen (Supabase-SMTP),
+ * hvorefter provisionPartner tildeler rollen 'partner' og kobler katalogpost ↔ bruger.
+ * Returnerer { error } til AuthForm-mønsteret frem for at kaste (admin ser årsagen i UI'et).
+ */
+export async function invitePartner(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  let config: SupabaseAuthConfig;
+  try {
+    config = await requireAdminConfig();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
+
+  const partnerId = String(formData.get("partner_id") ?? "");
+  const email = String(formData.get("email") ?? "").trim();
+  if (!partnerId || !email) return { error: "Partner-id og e-mail er påkrævet." };
+
+  const service = createServiceSupabase(config);
+  const { data, error } = await service.auth.admin.inviteUserByEmail(email);
+  if (error || !data.user) {
+    return { error: `Invitation fejlede: ${error?.message ?? "ingen bruger returneret"}` };
+  }
+
+  try {
+    await provisionPartner(service, data.user.id, email, partnerId);
+  } catch (e) {
+    return {
+      error: `Bruger inviteret, men provisionering fejlede: ${e instanceof Error ? e.message : String(e)}`,
+    };
+  }
+
+  revalidatePath(`/admin/partners/${partnerId}`);
+  return {};
 }
