@@ -35,7 +35,7 @@
 | **Anthropic Claude API** (el. EU-LLM) | `LLM_API_KEY` | `FLAG_AIFOLLOWUP` | EU-residens/DPA (Mads) |
 | **Cal.com** (booking) | `CALCOM_API_KEY` | `FLAG_BOOKING` | multi-host-spike + plan |
 | **Cal Video** | `CALVIDEO_API_KEY` | `FLAG_VIDEO` | plan / EU-residens |
-| **Stripe + MobilePay** | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `MOBILEPAY_MERCHANT_ID` | `FLAG_PAYMENTS` | dataflow (Mads) + priser (ejer); Alunta-alternativ åbent |
+| **Alunta** (betaling ind, ADR 0023) | `ALUNTA_API_KEY`, `ALUNTA_WEBHOOK_SECRET` | `FLAG_PAYMENTS` | dataflow-afsøgning + MobilePay-verifikation (Mads); priser (ejer) |
 | **e-conomic ELLER Dinero** | `ACCOUNTING_API_KEY` | `FLAG_ACCOUNTING` | leverandørvalg (ejer) |
 | **Transskription** (DK/EU) | `TRANSCRIPTION_API_KEY` | `FLAG_TRANSCRIPTION` | udbydervalg |
 

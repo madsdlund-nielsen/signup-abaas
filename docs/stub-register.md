@@ -16,7 +16,7 @@ udføre ægte kald, og lader være med at foregive andet.
 |---|---|---|---|
 | `src/lib/booking/` (Cal.com) | `FLAG_BOOKING` | **Adapteren ER bygget** (fase 2, `calcom.ts`) — stubben er aktiv fordi flag+nøgler mangler. Låses op af: Cal.com-konto + `CALCOM_API_KEY`/`CALCOM_EVENT_TYPE_ID` + liveverifikation (`docs/spikes/multi-host.md`); plan-/tier-valg er STOP-gate | Mads |
 | `src/lib/video/` (Cal Video) | `FLAG_VIDEO` | Cal.com-plan + EU-residens; mødeoptagelse kræver desuden samtykkeflow | Mads + ejer |
-| `src/lib/payments/` (Alunta) | `FLAG_PAYMENTS` | Alunta-nøgler, Alunta/Supabase-dataflow, MobilePay-verifikation (ADR 0023) | Mads |
+| `src/lib/payments/` (Alunta) | `FLAG_PAYMENTS` | **Adapteren er BEVIDST ikke skrevet** (ADR 0029): Aluntas API er uafsøgt, og stubben forbliver aktiv selv med flag+nøgle. Låses op af dataflow-afsøgningen (Mads, §12 pkt. 10): AluntaPaymentProvider + verificeret webhook-form + MobilePay-verifikation | Mads |
 | `src/lib/accounting/` | `FLAG_ACCOUNTING` | Leverandørvalg: e-conomic vs. Dinero | Ejer |
 | `src/lib/llm/` (Ordbogen Odin) | `FLAG_AIFOLLOWUP` | Ordbogen-DPA (ADR 0024) | Mads |
 | `src/lib/transcription/` (ordbogen.ai) | `FLAG_TRANSCRIPTION` | Ordbogen-DPA **og** samtykke til optagelse (ADR 0024) | Mads + ejer |
@@ -53,6 +53,10 @@ deterministiske frem for plausible — se `docs/stub-politik.md`.
 | `src/server/meetings/actions.ts` (reschedule/cancel) | **Intet ændre-/aflyse-vindue håndhæves** — ejeren kan flytte/aflyse frit | Byggespec §12 pkt. 4: hvor langt inden mødet må der ændres/aflyses? Reglen tilføjes som konfiguration | Ejer |
 | `src/server/meetings/actions.ts` (registerMeetingStatus) | `forsinket_afbud`/`udeblivelse` registreres uden konsekvens | Honorar ved udeblivelse/sent afbud (§12 pkt. 13) — fase 5 beregner når reglen findes | Ejer |
 | `supabase/migrations/0012_meeting.sql` (meeting_note-RLS) | Note-synlighed: restriktiv default (forfatter + board-ejer) | Hvem må se møde-noter (§12 pkt. 16)? Udvidelse er én policy | Ejer |
+| `pricing_rule` (0013) | **Ingen aktiv prisregel findes** — beregning og charge-grundlag er slået fra indtil admin aktiverer en version | Startpris/meeting-fee + frekvensfaktorer (§12 pkt. 2). Tal indtastes af admin, aldrig af kode | Ejer |
+| `src/server/pricing/algorithm.ts` | Beløb er rå øre uden momslogik | Moms på partner-honorar/beløbsvisning (§12 pkt. 14) | Ejer |
+| `src/server/charges/` | Fejlet træk registreres (status + årsag) uden konsekvens for honorar eller adgang | §5.10 udløser honorar uafhængigt af betaling; koblingen er uafklaret (afledt af §12 pkt. 13) | Ejer |
+| `src/server/charges/webhook.ts` | Alunta-payload/-signaturskema er PROVISORISK (leverandørneutral HMAC-form) | Dataflow-afsøgningen verificerer den faktiske form | Mads |
 
 ## Bevidst tomme — ikke stubs
 

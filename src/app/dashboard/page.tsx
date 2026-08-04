@@ -35,6 +35,9 @@ export default async function DashboardPage() {
           <Link className="btn-secondary" href="/moeder">
             Møder
           </Link>
+          <Link className="btn-secondary" href="/betaling">
+            Betaling
+          </Link>
         </p>
       ) : null}
       {user.roles.includes("partner") ? (

@@ -228,3 +228,84 @@ export async function setBoardLead(formData: FormData): Promise<void> {
 
   revalidatePath("/board");
 }
+
+/**
+ * Op-/nedgradering af boardstørrelse (Fase 3, ADR 0028): tilføj/fjern én partner med
+ * fase 1-invarianten håndhævet (2-3 partnere, mindst 1 intern). Prisen følger automatisk —
+ * meeting-fee beregnes af boardstørrelsen ved næste afholdelse (ingen proratering, §5.9).
+ */
+export async function addBoardPartner(formData: FormData): Promise<void> {
+  const context = await requireOwnerContext();
+  const boardId = String(formData.get("board_id") ?? "");
+  const partnerId = String(formData.get("partner") ?? "");
+  if (!boardId || !partnerId) throw new Error("Board og partner er påkrævet.");
+  await requireOwnedBoard(context, boardId);
+
+  const { data: current, error: currentError } = await context.service
+    .from("board_partner")
+    .select("partner_id")
+    .eq("board_id", boardId);
+  if (currentError) throw new Error(`Kunne ikke læse boardet: ${currentError.message}`);
+  const currentIds = ((current ?? []) as Array<{ partner_id: string }>).map((r) => r.partner_id);
+  if (currentIds.includes(partnerId)) throw new Error("Partneren sidder allerede på boardet.");
+
+  const nextIds = [...currentIds, partnerId];
+  const internalById = await readInternalFlags(context, nextIds);
+  assertBoardShape(nextIds, internalById);
+
+  const { data, error } = await context.service
+    .from("board_partner")
+    .insert({ board_id: boardId, partner_id: partnerId, is_lead: false })
+    .select("partner_id")
+    .single();
+  if (error || !data) {
+    throw new Error(`Kunne ikke tilføje partneren: ${error?.message ?? "ingen række skrevet"}`);
+  }
+  revalidatePath("/board");
+  revalidatePath("/betaling");
+}
+
+export async function removeBoardPartner(formData: FormData): Promise<void> {
+  const context = await requireOwnerContext();
+  const boardId = String(formData.get("board_id") ?? "");
+  const partnerId = String(formData.get("partner") ?? "");
+  if (!boardId || !partnerId) throw new Error("Board og partner er påkrævet.");
+  await requireOwnedBoard(context, boardId);
+
+  const { data: current, error: currentError } = await context.service
+    .from("board_partner")
+    .select("partner_id, is_lead")
+    .eq("board_id", boardId);
+  if (currentError) throw new Error(`Kunne ikke læse boardet: ${currentError.message}`);
+  const rows = (current ?? []) as Array<{ partner_id: string; is_lead: boolean }>;
+  if (!rows.some((r) => r.partner_id === partnerId)) {
+    throw new Error("Partneren sidder ikke på boardet.");
+  }
+
+  const nextIds = rows.map((r) => r.partner_id).filter((id) => id !== partnerId);
+  const internalById = await readInternalFlags(context, nextIds);
+  assertBoardShape(nextIds, internalById);
+
+  const { error } = await context.service
+    .from("board_partner")
+    .delete()
+    .eq("board_id", boardId)
+    .eq("partner_id", partnerId);
+  if (error) throw new Error(`Kunne ikke fjerne partneren: ${error.message}`);
+
+  // Fjernede vi lead'en, udpeges den første interne igen (samme pladsholder som ved
+  // oprettelse/udskift). TODO(ejer): lead-partner regler.
+  const removedWasLead = rows.some((r) => r.partner_id === partnerId && r.is_lead);
+  if (removedWasLead) {
+    const fallbackLead = nextIds.find((id) => internalById.get(id));
+    if (fallbackLead) {
+      await context.service
+        .from("board_partner")
+        .update({ is_lead: true })
+        .eq("board_id", boardId)
+        .eq("partner_id", fallbackLead);
+    }
+  }
+  revalidatePath("/board");
+  revalidatePath("/betaling");
+}
