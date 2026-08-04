@@ -41,8 +41,9 @@ describe("board_partner RLS (0010) — hullet fra 0002 er lukket", () => {
     expect(await countAs(USER.ejerE, "select partner_id from board_partner")).toBe(0);
   });
 
-  it("NEGATIV: partner-rolle ser ingen medlemskaber (ingen partner-policy før partner-login)", async () => {
-    expect(await countAs(USER.partnerB, "select partner_id from board_partner")).toBe(0);
+  // 0011: partner-B (koblet til e0001 på boardet) ser nu eget boards medlemskaber.
+  it("partner på boardet ser eget boards medlemskaber (0011)", async () => {
+    expect(await countAs(USER.partnerB, "select partner_id from board_partner")).toBe(1);
   });
 
   it("NEGATIV: uden session ses intet", async () => {

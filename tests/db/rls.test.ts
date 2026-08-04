@@ -26,12 +26,13 @@ describe("RLS: board-synlighed", () => {
     expect(await visibleBoardCount(USER.adminD)).toBe(1);
   });
 
-  // 0010 fjernede board_select_partner: board_partner.partner_id peger nu på en katalogpost
-  // (partner_profile), ikke på en auth-bruger, så en partner kan ikke længere identificere sig selv
-  // via medlemskabet. Partner-synlighed genindføres i Fase 2 sammen med partner-login.
-  // TODO(mads): partner-login — genindfør board_select_partner via partner_profile.app_user_id.
-  it("NEGATIV: partner ser intet board (partner-synlighed venter på partner-login, ADR 0021)", async () => {
-    expect(await visibleBoardCount(USER.partnerB)).toBe(0);
+  // 0011 genoplivede board_select_partner via partner_profile.app_user_id (ADR 0025):
+  // partner-B er koblet til katalogpost e0001, som sidder på A's board.
+  it("partner på boardet ser eget board igen (0011, ADR 0025)", async () => {
+    expect(await visibleBoardCount(USER.partnerB)).toBe(1);
+  });
+
+  it("NEGATIV: partner uden katalogkobling ser intet board", async () => {
     expect(await visibleBoardCount(USER.partnerC)).toBe(0);
   });
 

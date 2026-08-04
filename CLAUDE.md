@@ -114,7 +114,9 @@ webhook-signaturverifikation, idempotens eller samtykke.
 - Cal.com EU-residens på valgt niveau
 - Cal.com mødeoptagelse — native på valgt plan?
 - Cal.com multi-host-spike: **aldrig kørt** (kræver konto). `docs/spikes/multi-host.md`
-  er forberedt; ADR skrives når den køres. Blokerer fase 2.2
+  er forberedt; ADR skrives når den køres. **Ikke længere byggegate** (Mads, 2026-08-04):
+  fase 2 bygges mod porten med stub aktiv, og spiken køres som verifikation når nøglerne
+  lander. STOP ved plan-/tier-valg består
 - Ordbogen DPA/databehandleraftale — dækker både tale-til-tekst og LLM. Dansk
   hosting er på plads; den formelle aftale skal foreligge før produktionsbrug
 - Alunta/Supabase dataflow (kortregistrering, varierende betalingsfrekvenser,

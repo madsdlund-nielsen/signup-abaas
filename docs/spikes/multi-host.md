@@ -3,6 +3,13 @@
 > 🟡 SPIKE (Trin 9, arbejdspakke 0.5). Rører ⚠ punkt 5 + 6. **Verificér og dokumentér —
 > beslut ikke.** STOP ved valg der binder Cal.com-plan/-tier (pris + dataresidens er
 > ejer-/Mads-territorium). Forberedelse er kontofri; kørsel kræver en Cal.com-konto (afventer).
+>
+> **Gate-ændring (Mads, 2026-08-04):** spiken er ikke længere en *byggegate* for fase 2 —
+> adapter, webhook-flow og UI bygges færdigt mod porten med stub aktiv, og spørgsmålene
+> nedenfor besvares som **verifikation under byg** når Cal.com-nøglerne lander.
+> **STOP-gaten ved plan-/tier-valg består uændret** — den er pris + dataresidens og
+> dermed ejer-/Mads-territorium. ADR'en med spike-konklusionen skrives stadig når
+> kørslen sker.
 
 ## Formål
 Bekræft at Cal.com (Platform managed users + Atoms) kan håndtere et møde med flere værter:

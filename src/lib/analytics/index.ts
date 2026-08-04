@@ -22,8 +22,9 @@ class StubAnalytics implements Analytics {
   async capture(event: AnalyticsEvent): Promise<void> {
     console.info(`[analytics:stub] event ${event.event} (${event.distinctId})`);
   }
-  async captureException(error: unknown): Promise<void> {
-    console.warn("[analytics:stub] exception", error);
+  async captureException(error: unknown, context?: Record<string, unknown>): Promise<void> {
+    // Kontekst med i dev/CI-loggen — droppes ikke, selv om der ingen backend er.
+    console.warn("[analytics:stub] exception", error, context ?? {});
   }
 }
 
