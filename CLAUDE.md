@@ -28,14 +28,14 @@ Board er kerneproduktet. Alt andet er støttefunktioner.
 | Database/backend | Supabase | **Sandhedskilde for forretningsdata** |
 | Booking | Cal.com (Platform managed users + Atoms) | self-host som exit. Multi-host fra launch |
 | Video | Cal Video (multi-party) | RealtimeKit udgår. Cal.com ansvarlig for optag |
-| Betaling ind | Stripe + MobilePay | ⚠ Alunta undersøges som alternativ |
-| Bogføring ud | e-conomic eller Dinero | ⚠ ikke afklaret |
-| AI-opfølgning | Anthropic Claude API (eller EU-hostet LLM) | ⚠ EU/DPA verificeres |
-| Transskription | ⚠ dansk/EU-udbyder afsøges | til auto-resumé |
-| E-mail | Resend (EU, Dublin) | transaktionsmails |
+| Betaling ind | **Alunta** | ✅ besluttet (ADR 0023) — erstatter Stripe Billing |
+| Betaling ud / bogføring | ⚠ e-conomic ELLER Dinero | ikke afgjort — afventer ejer |
+| AI-opfølgning | **Ordbogen (chat.dk / Odin-LLM)** | ✅ besluttet (ADR 0024) — dansk model, dansk datacenter |
+| Transskription | **Ordbogen (ordbogen.ai)** | ✅ besluttet (ADR 0024) — samme danske leverandør som LLM |
+| E-mail | **Resend (EU, Dublin)** | ✅ besluttet — transaktionsmails |
 | SMS | inMobile (dansk) | rating/påmindelser |
 | Analytics & fejl | PostHog (EU) | erstatter Sentry |
-| Hosting | ⚠ Henosia (DK) ELLER Netlify (irsk) | spike i fase 0 |
+| Hosting | **Netlify** | ✅ besluttet (ADR 0012, irsk/EU). SSR + cron verificeret i fase 0 |
 | Kildekode/CI | GitHub + GitHub Actions + Claude Code | branch protection, tests i CI |
 
 ---
@@ -43,7 +43,7 @@ Board er kerneproduktet. Alt andet er støttefunktioner.
 ## Arkitekturprincipper
 
 1. **Supabase er sandhedskilde** for board-sammensætning, møder, honorar, ratings.
-2. **Eksterne systemer afkobles bag webhooks og adaptere** (Cal.com, Stripe,
+2. **Eksterne systemer afkobles bag webhooks og adaptere** (Cal.com, Alunta,
    video, LLM), så de kan udskiftes uden at røre kernedomænet. Skriv aldrig
    tredjeparts-SDK-kald direkte ind i domænelogik — gå altid gennem en adapter.
 3. **GDPR fra fase 0** — EU-residens, DPA-struktur, sletteflow og samtykke-banner
@@ -84,6 +84,13 @@ Når en opgave rører et af nedenstående punkter: **stop, marker med
 `// TODO(ejer): <punkt>` eller `// TODO(mads): <punkt>`, byg bag et feature-flag
 hvis muligt, og flag det i din opsummering.** Opfind ikke et svar.
 
+**Uafklarede punkter blokerer ikke byggeriet — vi bygger med stubs.** Følg
+`docs/stub-politik.md` og registrér hver stub i `docs/stub-register.md` i samme
+PR. Kernereglen: en stub er et *synligt hul*, ikke et midlertidigt svar. Den
+fejler højlydt i produktion frem for at gætte stille. Skriv aldrig et plausibelt
+forretningstal som placeholder, og stub aldrig autorisation, RLS,
+webhook-signaturverifikation, idempotens eller samtykke.
+
 **Afventer ejer (Andreas/Mette) — forretning:**
 - Honorarsats pr. partner pr. møde (binder meeting-fee opad)
 - Startpris / meeting-fee (ikke fastlagt)
@@ -92,6 +99,9 @@ hvis muligt, og flag det i din opsummering.** Opfind ikke et svar.
 - Honorar ved udeblivelse/sent afbud
 - Moms på partner-honorar
 - Lead-partner: tildelings- og rotationsregler
+- Board-matching: tie-break ved lige gode kandidater (rating? tilgængelighed?).
+  Byggespec §5.2 flager punktet og henviser til §12 — men **det punkt findes ikke**
+  i §12's tabel (3, 20 og 23 mangler). Fundet i fase 1.5; se `docs/fase-1-rapport.md`
 - Note-synlighed (hvem ser møde-noter)
 - Board-livscyklus (hvornår slutter et board)
 - In-app messaging: **hele modulet uafklaret** — byg ikke uden beslutning
@@ -103,13 +113,22 @@ hvis muligt, og flag det i din opsummering.** Opfind ikke et svar.
 **Afventer Mads — teknisk afklaring (spike/verificér før byg):**
 - Cal.com EU-residens på valgt niveau
 - Cal.com mødeoptagelse — native på valgt plan?
-- Transskription: dansk/EU-udbyder
-- LLM EU-dataresidens/DPA
-- Stripe/Supabase dataflow (kortregistrering, varierende betalingsfrekvenser, webhooks)
-- Alunta vs. Stripe Billing
-- Henosia vs. Netlify hosting-spike (SSR, cron)
-- Auth: Supabase Auth vs. eget system
-- SSR + cron-verifikation på valgt hosting
+- Cal.com multi-host-spike: **aldrig kørt** (kræver konto). `docs/spikes/multi-host.md`
+  er forberedt; ADR skrives når den køres. Blokerer fase 2.2
+- Ordbogen DPA/databehandleraftale — dækker både tale-til-tekst og LLM. Dansk
+  hosting er på plads; den formelle aftale skal foreligge før produktionsbrug
+- Alunta/Supabase dataflow (kortregistrering, varierende betalingsfrekvenser,
+  webhooks, signaturverifikation)
+- MobilePay gennem Alunta — understøttelsen skal verificeres, den følger ikke
+  automatisk med betalingsvalget
+
+**Lukket siden sidst:**
+- ~~Alunta vs. Stripe Billing~~ → **Alunta** (ADR 0023)
+- ~~Henosia vs. Netlify~~ → **Netlify** (irsk/EU, ADR 0012)
+- ~~LLM EU-dataresidens~~ → **Ordbogen/Odin-LLM, dansk datacenter** (ADR 0024; DPA udestår)
+- ~~Transskription: dansk/EU-udbyder~~ → **Ordbogen (ordbogen.ai)** (ADR 0024)
+- ~~SSR + cron-verifikation~~ → verificeret i fase 0
+- ~~Auth: Supabase Auth vs. eget system~~ → **Supabase Auth** (ADR 0013)
 
 ---
 
@@ -165,8 +184,10 @@ booking, træk sker ved afholdelse. Frekvensvalg: 4 / 8 / 12 uger.
 
 ## Byggefaser (overordnet)
 
-Se `docs/fase-0.md` og `docs/fase-1.md` for detaljer. Resten er overordnede til
-planlægning og må ikke startes før fase 0 og 1 er grønne.
+Hver fase har sin egen fil: `docs/fase-0.md` … `docs/fase-6.md`, plus
+`docs/fase-0-eksekvering.md` med trinsekvens og beslutnings-gates. **Læs den
+relevante fase-fil før arbejdet — oversigten nedenfor er kun til orientering.**
+En fase startes ikke før den foregående er grøn.
 
 - **Fase 0 — Fundament (kritisk): ✅ LUKKET.** repo/CI, Next.js+Supabase-skelet, RBAC/RLS,
   feature-flags, env/secrets, PostHog, multi-host-spike, hosting-spike,
@@ -175,13 +196,15 @@ planlægning og må ikke startes før fase 0 og 1 er grønne.
   conversational flow + preview), partner-katalog, board-matching (2-3),
   board-anbefaling med profiler, lead-partner flag. Rapport: `docs/fase-1-rapport.md`
   (åbne 🔴 punkter til ejer/Mads står samlet dér).
-- **Fase 2 — Booking + video:** Cal.com, webhooks → meetings, Cal Video,
+- **Fase 2 — Booking + video:** Cal.com, webhooks → `meeting`, Cal Video,
   mødestatus + noter, booking/flytning/aflysning i app.
-  **+ Partner-login + self-service-profil-redigering** (udskudt fra 1.4, ADR 0019): indgang til
-  partner-portalen — auth-bruger-oprettelse/-invitation, partner-ruter, partner redigerer egen
-  profil (men IKKE tags), og katalogpost↔auth-bruger kobles. `// TODO(mads): partner-login`.
-- **Fase 3 — Betaling:** prisberegner, prisregler i admin, Stripe Checkout +
-  MobilePay, webhook → memberships, varierende betalingsfrekvenser, op/nedgradering.
+  **+ Partner-login + self-service-profil-redigering** (udskudt fra 1.4, ADR 0019, afsnit 2.8):
+  indgang til partner-portalen — auth-bruger-oprettelse/-invitation, partner-ruter, partner
+  redigerer egen profil (men IKKE tags), og katalogpost↔auth-bruger kobles. Genopliver
+  `board_select_partner` (ADR 0021). `// TODO(mads): partner-login`.
+- **Fase 3 — Betaling:** prisberegner, prisregler i admin, Alunta-checkout
+  (kortregistrering + MobilePay), webhook → `membership`, varierende
+  betalingsfrekvenser, op/nedgradering.
 - **Fase 4 — Forberedelse, rating, AI & notifikationer.**
 - **Fase 5 — Honorar + tilgængelighed + dashboard.**
 - **Fase 6 — Verifikation & dokumentation.**

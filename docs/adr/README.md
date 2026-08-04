@@ -53,6 +53,8 @@ det gjort sådan?", så skriv en ADR.
 | 0020 | Adgangsport: delt adgangskode før auth | Accepteret | 1 |
 | 0021 | Board-medlemskab peger på partner-kataloget, ikke auth-brugere | Accepteret | 1 |
 | 0022 | Board-matching: grådig set-cover med deterministisk tie-break | Accepteret | 1 |
+| 0023 | Betaling ind: Alunta (erstatter Stripe Billing) | Accepteret | 2 |
+| 0024 | Transskription og LLM: Ordbogen (ordbogen.ai + chat.dk/Odin) | Accepteret | 2 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så
