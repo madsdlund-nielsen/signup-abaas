@@ -7,20 +7,27 @@ import { getMyMembership, getMyQuizFrequency } from "@/server/memberships";
 import { getActivePricingRule, listPricingRules } from "@/server/pricing";
 import { POST } from "@/app/api/webhooks/alunta/route";
 
-describe("payments-stub efter Alunta-omdøbningen (ADR 0029)", () => {
-  it("kaster NotConfiguredError med vendor 'alunta'", async () => {
+describe("payments-registry (ADR 0030): adapter ved flag+nøgler, ellers stub", () => {
+  it("uden konfiguration: stub der kaster NotConfiguredError med vendor 'alunta'", async () => {
     const stub = createPaymentProvider({});
+    expect(stub.name).toBe("stub");
     await expect(stub.registerCard({ customerRef: "m-1" })).rejects.toBeInstanceOf(NotConfiguredError);
     await expect(
-      stub.charge({ customerRef: "m-1", amountMinor: 1, currency: "DKK", frequencyWeeks: 4, description: "x" }),
+      stub.reportUsageCharge({ customerRef: "c-1", amountMinor: 1, idempotencyKey: "k", description: "x" }),
     ).rejects.toThrow(/alunta/);
   });
 
-  it("stub forbliver aktiv selv med flag+nøgle — adapteren er dataflow-leverancen", async () => {
-    const provider = createPaymentProvider({ FLAG_PAYMENTS: "true", ALUNTA_API_KEY: "nøgle" });
-    await expect(provider.registerCard({ customerRef: "m-1" })).rejects.toBeInstanceOf(
-      NotConfiguredError,
-    );
+  it("flag + api-nøgle uden ALUNTA_PLAN_ID er stadig stub (planen er påkrævet)", () => {
+    expect(createPaymentProvider({ FLAG_PAYMENTS: "true", ALUNTA_API_KEY: "nøgle" }).name).toBe("stub");
+  });
+
+  it("flag + nøgle + plan vælger den rigtige Alunta-adapter", () => {
+    const provider = createPaymentProvider({
+      FLAG_PAYMENTS: "true",
+      ALUNTA_API_KEY: "nøgle",
+      ALUNTA_PLAN_ID: "plan-1",
+    });
+    expect(provider.name).toBe("alunta");
   });
 });
 
@@ -34,7 +41,7 @@ describe("betalings-data-access uden Supabase-konfiguration (kontofri CI/dev)", 
   });
 });
 
-describe("alunta-webhook-endpointet — verifikation før alt andet (ADR 0027-mønstret)", () => {
+describe("alunta-webhook-endpointet — Signature-header, verifikation før alt (ADR 0027/0030)", () => {
   afterEach(() => vi.unstubAllEnvs());
 
   function post(body: string, signature?: string): Promise<Response> {
@@ -42,7 +49,7 @@ describe("alunta-webhook-endpointet — verifikation før alt andet (ADR 0027-m�
       new Request("http://localhost/api/webhooks/alunta", {
         method: "POST",
         body,
-        headers: signature ? { "x-alunta-signature": signature } : {},
+        headers: signature ? { Signature: signature } : {},
       }),
     );
   }
@@ -57,7 +64,7 @@ describe("alunta-webhook-endpointet — verifikation før alt andet (ADR 0027-m�
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://localhost:54321");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon");
     vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service");
-    const body = JSON.stringify({ eventId: "evt-1", type: "charge.gennemfoert" });
+    const body = JSON.stringify({ event: "invoice.paid", team_id: 1, timestamp: "2026-08-04T10:00:00Z" });
     expect((await post(body, "forkert")).status).toBe(401);
     expect((await post(body)).status).toBe(401);
   });
@@ -67,7 +74,7 @@ describe("alunta-webhook-endpointet — verifikation før alt andet (ADR 0027-m�
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://localhost:54321");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon");
     vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service");
-    const body = JSON.stringify({ eventId: "evt-1", type: "ukendt.type" });
+    const body = JSON.stringify({ event: "ukendt.type", team_id: 1, timestamp: "2026-08-04T10:00:00Z", data: {} });
     const response = await post(body, createHmac("sha256", "s3cret").update(body).digest("hex"));
     expect(response.status).toBe(200);
     expect(await response.text()).toMatch(/Ignoreret/);

@@ -7,7 +7,7 @@
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServerSupabase } from "@/server/auth/supabase-server";
 
-export type PaymentChargeStatus = "afventer" | "gennemfoert" | "fejlet";
+export type PaymentChargeStatus = "afventer" | "rapporteret" | "gennemfoert" | "fejlet";
 
 export interface PaymentCharge {
   id: string;

@@ -1,5 +1,9 @@
 # 0029 — Alunta-tilgangen: omdøbt config og webhook-skelet, ingen gættet adapter
 
+> **Opfølgning lukket (2026-08-04):** dataflow-afsøgningen er kørt — se **ADR 0030**.
+> Adapteren er skrevet mod den verificerede spec, og det provisoriske webhook-skema er
+> erstattet af den verificerede form.
+
 - **Status:** Accepteret
 - **Dato:** 2026-08-04
 - **Fase:** 3

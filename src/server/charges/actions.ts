@@ -1,20 +1,23 @@
 "use server";
 
 /**
- * Provider-træk af afventende opkrævninger (Fase 3, ADR 0028/0029). Admin-udløst — selve
- * trækket er BEVIDST afkoblet fra afholdelses-flippet, så partnerens registrering aldrig
- * afhænger af betalingsleverandøren. Med stub aktiv (ingen Alunta-nøgler) kaster porten
- * NotConfiguredError → rækkerne bliver ærligt stående som 'afventer', og admin ser årsagen.
+ * Indberetning af afventende opkrævninger til Alunta (Fase 3, ADR 0028/0030). Admin-udløst —
+ * bevidst afkoblet fra afholdelses-flippet, så partnerens registrering aldrig afhænger af
+ * betalingsleverandøren.
  *
- * Webhooken (ADR 0027-mønstret) er den autoritative kilde til gennemført/fejlet; dette
- * kald sætter kun provider_charge_ref + optimistisk status ved synkront svar.
+ * Alunta har intet synkront træk: succes her betyder at forbruget er INDBERETTET
+ * (status 'rapporteret') og afregnes på leverandørens næste periodefaktura. Webhooken
+ * (invoice.paid/payment_failed) er autoritativ for gennemført/fejlet. Indberetningen er
+ * idempotent hos leverandøren via idempotency_key = payment_charge.id (~30 dages vindue).
+ *
+ * Med stub aktiv (ingen nøgler) kaster porten NotConfiguredError → rækkerne bliver ærligt
+ * stående som 'afventer', og admin ser årsagen.
  */
 
 import { revalidatePath } from "next/cache";
 
 import type { AuthFormState } from "@/components/AuthForm";
 import { createPaymentProvider } from "@/lib/payments";
-import type { PaymentFrequencyWeeks } from "@/lib/payments";
 import { NotConfiguredError } from "@/lib/errors";
 import { getCurrentUser, requireRole } from "@/server/auth";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
@@ -23,11 +26,10 @@ import { createServiceSupabase } from "@/server/auth/supabase-server";
 interface PendingChargeRow {
   id: string;
   amount_minor: number;
-  currency: string;
-  membership: {
-    provider_customer_ref: string | null;
-    frequency_weeks: number;
-  } | Array<{ provider_customer_ref: string | null; frequency_weeks: number }> | null;
+  membership:
+    | { provider_customer_ref: string | null }
+    | Array<{ provider_customer_ref: string | null }>
+    | null;
 }
 
 export async function processPendingCharges(
@@ -45,36 +47,35 @@ export async function processPendingCharges(
   const service = createServiceSupabase(config);
   const { data, error } = await service
     .from("payment_charge")
-    .select("id, amount_minor, currency, membership(provider_customer_ref, frequency_weeks)")
+    .select("id, amount_minor, membership(provider_customer_ref)")
     .eq("status", "afventer");
-  if (error) return { error: `Kunne ikke læse afventende træk: ${error.message}` };
+  if (error) return { error: `Kunne ikke læse afventende opkrævninger: ${error.message}` };
 
   const rows = (data ?? []) as unknown as PendingChargeRow[];
-  if (rows.length === 0) return { error: "Ingen afventende træk." };
+  if (rows.length === 0) return { error: "Ingen afventende opkrævninger." };
 
   const provider = createPaymentProvider();
-  let processed = 0;
+  let reported = 0;
   for (const row of rows) {
     const membership = Array.isArray(row.membership) ? row.membership[0] : row.membership;
     if (!membership?.provider_customer_ref) continue; // kort ikke registreret — ærligt afventende
 
     try {
-      const result = await provider.charge({
+      const result = await provider.reportUsageCharge({
         customerRef: membership.provider_customer_ref,
         amountMinor: row.amount_minor,
-        currency: row.currency,
-        frequencyWeeks: membership.frequency_weeks as PaymentFrequencyWeeks,
+        idempotencyKey: row.id,
         description: "Advisory board-møde (60 min + 15 min forberedelse)",
       });
       await service
         .from("payment_charge")
         .update({
           provider_charge_ref: result.id,
-          status: "gennemfoert",
+          status: "rapporteret",
           updated_at: new Date().toISOString(),
         })
         .eq("id", row.id);
-      processed += 1;
+      reported += 1;
     } catch (e) {
       if (e instanceof NotConfiguredError) {
         // Stub aktiv: lad rækkerne stå som 'afventer' og fortæl admin præcis hvorfor.
@@ -93,5 +94,5 @@ export async function processPendingCharges(
 
   revalidatePath("/admin/priser");
   revalidatePath("/betaling");
-  return processed > 0 ? {} : { error: "Ingen træk kunne processeres (kort mangler?)." };
+  return reported > 0 ? {} : { error: "Intet kunne indberettes (kort mangler?)." };
 }

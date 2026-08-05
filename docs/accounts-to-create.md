@@ -35,7 +35,7 @@
 | **Anthropic Claude API** (el. EU-LLM) | `LLM_API_KEY` | `FLAG_AIFOLLOWUP` | EU-residens/DPA (Mads) |
 | **Cal.com** (booking) | `CALCOM_API_KEY` | `FLAG_BOOKING` | multi-host-spike + plan |
 | **Cal Video** | `CALVIDEO_API_KEY` | `FLAG_VIDEO` | plan / EU-residens |
-| **Alunta** (betaling ind, ADR 0023) | `ALUNTA_API_KEY`, `ALUNTA_WEBHOOK_SECRET` | `FLAG_PAYMENTS` | dataflow-afsøgning + MobilePay-verifikation (Mads); priser (ejer) |
+| **Alunta** (betaling ind, ADR 0023/0030) | `ALUNTA_API_KEY`, `ALUNTA_PLAN_ID`, `ALUNTA_WEBHOOK_SECRET` | `FLAG_PAYMENTS` | Opsætning i Alunta-UI: usage-plan + parameter `meeting_fee_oere` à 1 øre + webhook. Gateway-valg (OnPay/Stripe/QuickPay) afgør MobilePay. Priser (ejer) |
 | **e-conomic ELLER Dinero** | `ACCOUNTING_API_KEY` | `FLAG_ACCOUNTING` | leverandørvalg (ejer) |
 | **Transskription** (DK/EU) | `TRANSCRIPTION_API_KEY` | `FLAG_TRANSCRIPTION` | udbydervalg |
 

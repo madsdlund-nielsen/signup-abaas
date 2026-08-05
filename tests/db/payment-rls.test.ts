@@ -155,3 +155,23 @@ describe("payment_webhook_event (0013) — idempotens + admin-only", () => {
     expect(await countAs(USER.partnerB, "select id from payment_webhook_event")).toBe(0);
   });
 });
+
+describe("Alunta-integration (0014, ADR 0030)", () => {
+  it("enum-værdien 'rapporteret' accepteres og provider_invoice_ref findes", async () => {
+    await asPostgres(async (client) => {
+      await client.query(
+        `insert into pricing_rule (id, version, base_amount_minor, per_partner_amount_minor,
+           factor_4_weeks, factor_8_weeks, factor_12_weeks, is_active)
+         values ('00000000-0000-0000-0000-0000000ce002', 1, 100, 10, 1, 1, 1, true)`,
+      );
+      const inserted = await client.query(
+        `insert into payment_charge (meeting_id, membership_id, pricing_rule_id, amount_minor,
+           currency, status, provider_invoice_ref)
+         values ('${MEETING_AFHOLDT}', '${MEMBERSHIP}', '00000000-0000-0000-0000-0000000ce002',
+           120, 'DKK', 'rapporteret', 'inv-uuid-1')
+         returning status, provider_invoice_ref`,
+      );
+      expect(inserted.rows[0]).toEqual({ status: "rapporteret", provider_invoice_ref: "inv-uuid-1" });
+    });
+  });
+});

@@ -1,17 +1,20 @@
 /**
- * Alunta-webhook-endpoint (Fase 3) — ADR 0027-mønstret genbrugt fra Cal.com:
- * rå body → signatur → idempotensrække FØR mutation → mutér. Manglende secret/Supabase →
- * 503, aldrig fail-open. Webhooks OPRETTER aldrig charges/memberships — de opdaterer status
- * (Supabase er sandhedskilde; §5.9: "betaling gennemført/fejlet → opdaterer status").
- *
- * TODO(mads): header-navn og payload-form er provisoriske indtil dataflow-afsøgningen
- * (ADR 0029) — justeringer hører til i src/server/charges/webhook.ts, ikke her.
+ * Alunta-webhook-endpoint (Fase 3, ADR 0030 — verificeret mod OpenAPI-spec'en).
+ * ADR 0027-mønstret: rå body → signatur (`Signature`-header, HMAC-SHA256 hex) →
+ * idempotensrække FØR mutation → mutér. Manglende secret/Supabase → 503, aldrig
+ * fail-open. Alunta genleverer op til 8 gange over ~24 t og kræver 2xx inden 3 sek. —
+ * mutationerne her er små og hurtige. Webhooks opdaterer status; de opretter aldrig data.
  */
 
 import { getAdapters } from "@/lib";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServiceSupabase } from "@/server/auth/supabase-server";
-import { mapAluntaEvent, parseAluntaEvent, verifyAluntaSignature } from "@/server/charges/webhook";
+import {
+  buildEventId,
+  mapAluntaEvent,
+  parseAluntaEvent,
+  verifyAluntaSignature,
+} from "@/server/charges/webhook";
 
 export async function POST(request: Request): Promise<Response> {
   const secret = process.env.ALUNTA_WEBHOOK_SECRET;
@@ -21,17 +24,17 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const rawBody = await request.text();
-  if (!verifyAluntaSignature(rawBody, request.headers.get("x-alunta-signature"), secret)) {
+  if (!verifyAluntaSignature(rawBody, request.headers.get("signature"), secret)) {
     return new Response("Ugyldig signatur.", { status: 401 });
   }
 
-  let event;
+  let payload;
   try {
-    event = parseAluntaEvent(JSON.parse(rawBody));
+    payload = parseAluntaEvent(JSON.parse(rawBody));
   } catch {
-    event = null;
+    payload = null;
   }
-  if (!event) {
+  if (!payload) {
     return new Response("Ignoreret (ukendt event-form).", { status: 200 });
   }
 
@@ -40,9 +43,8 @@ export async function POST(request: Request): Promise<Response> {
 
   const { error: eventError } = await service.from("payment_webhook_event").insert({
     provider: "alunta",
-    provider_event_id: event.eventId,
-    event_type: event.type,
-    provider_charge_ref: event.chargeRef ?? null,
+    provider_event_id: buildEventId(payload),
+    event_type: payload.event,
   });
   if (eventError) {
     if (eventError.code === "23505") {
@@ -51,58 +53,86 @@ export async function POST(request: Request): Promise<Response> {
     await analytics.captureException(new Error(eventError.message), {
       source: "alunta-webhook",
       step: "event-insert",
-      type: event.type,
+      event: payload.event,
     });
     return new Response("Kunne ikke registrere event.", { status: 500 });
   }
 
-  const mutation = mapAluntaEvent(event);
-  if (!mutation) {
-    return new Response("Ignoreret (manglende reference).", { status: 200 });
-  }
+  const mutation = mapAluntaEvent(payload);
+  const fail = async (step: string, message: string): Promise<Response> => {
+    await analytics.captureException(new Error(message), {
+      source: "alunta-webhook",
+      step,
+      event: payload.event,
+    });
+    return new Response("Kunne ikke anvende event.", { status: 500 });
+  };
 
-  if (mutation.kind === "charge") {
-    const { data, error } = await service
-      .from("payment_charge")
-      .update({ ...mutation.update, updated_at: new Date().toISOString() })
-      .eq("provider_charge_ref", mutation.chargeRef)
-      .select("id");
-    if (error) {
-      await analytics.captureException(new Error(error.message), {
-        source: "alunta-webhook",
-        step: "charge-update",
-        chargeRef: mutation.chargeRef,
-      });
-      return new Response("Kunne ikke anvende event.", { status: 500 });
+  switch (mutation.kind) {
+    case "card_registered": {
+      const { data, error } = await service
+        .from("membership")
+        .update({
+          provider_customer_ref: mutation.aluntaCustomerUuid,
+          card_status: "registreret",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", mutation.externalCustomerId)
+        .select("id");
+      if (error) return fail("card-registered", error.message);
+      if (!data || data.length === 0) {
+        await analytics.capture({
+          event: "alunta_webhook_ukendt_membership",
+          distinctId: "system",
+          properties: { externalCustomerId: mutation.externalCustomerId },
+        });
+      }
+      break;
     }
-    if (!data || data.length === 0) {
-      await analytics.capture({
-        event: "alunta_webhook_ukendt_charge",
-        distinctId: "system",
-        properties: { chargeRef: mutation.chargeRef, type: event.type },
-      });
+    case "invoice_paid":
+    case "invoice_failed": {
+      const { data: membership, error: membershipError } = await service
+        .from("membership")
+        .select("id")
+        .eq("provider_customer_ref", mutation.aluntaCustomerUuid)
+        .maybeSingle();
+      if (membershipError) return fail("membership-lookup", membershipError.message);
+      if (!membership) {
+        await analytics.capture({
+          event: "alunta_webhook_ukendt_kunde",
+          distinctId: "system",
+          properties: { aluntaCustomerUuid: mutation.aluntaCustomerUuid, event: payload.event },
+        });
+        break;
+      }
+      // Fakturaen afregner membershipets RAPPORTEREDE forbrug (periode-aggregat, ADR 0030) —
+      // kobling pr. enkeltmøde findes ikke i payloaden.
+      const update =
+        mutation.kind === "invoice_paid"
+          ? { status: "gennemfoert", provider_invoice_ref: mutation.invoiceUuid }
+          : {
+              status: "fejlet",
+              provider_invoice_ref: mutation.invoiceUuid,
+              failure_reason: mutation.failureReason,
+            };
+      const { error } = await service
+        .from("payment_charge")
+        .update({ ...update, updated_at: new Date().toISOString() })
+        .eq("membership_id", (membership as { id: string }).id)
+        .eq("status", "rapporteret");
+      if (error) return fail("charge-update", error.message);
+      break;
     }
-  } else {
-    const { data, error } = await service
-      .from("membership")
-      .update({ card_status: "registreret", updated_at: new Date().toISOString() })
-      .eq("provider_customer_ref", mutation.customerRef)
-      .select("id");
-    if (error) {
-      await analytics.captureException(new Error(error.message), {
-        source: "alunta-webhook",
-        step: "card-update",
-        customerRef: mutation.customerRef,
-      });
-      return new Response("Kunne ikke anvende event.", { status: 500 });
+    case "membership_cancelled": {
+      const { error } = await service
+        .from("membership")
+        .update({ status: "opsagt", updated_at: new Date().toISOString() })
+        .eq("provider_customer_ref", mutation.aluntaCustomerUuid);
+      if (error) return fail("membership-cancel", error.message);
+      break;
     }
-    if (!data || data.length === 0) {
-      await analytics.capture({
-        event: "alunta_webhook_ukendt_kunde",
-        distinctId: "system",
-        properties: { customerRef: mutation.customerRef },
-      });
-    }
+    case "ignore":
+      break;
   }
 
   return new Response("OK", { status: 200 });

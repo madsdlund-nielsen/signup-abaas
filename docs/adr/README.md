@@ -62,6 +62,7 @@ det gjort sådan?", så skriv en ADR.
 | 0029 | Webhook-idempotens skal betyde "præcis én gang" (præciserer 0027) | Accepteret | 2 |
 | 0028 | Betalings-datamodel: versionerede prisregler + charge pr. afholdt møde | Accepteret | 3 |
 | 0029 | Alunta-tilgangen: omdøbt config og webhook-skelet, ingen gættet adapter | Accepteret | 3 |
+| 0030 | Alunta-dataflow verificeret: usage-abonnement med øre-parameter | Accepteret | 3 |
 | 0033 | Vitest 3: sikkerhedsopgradering og projekter i `test.projects` | Accepteret | 3 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.

@@ -124,15 +124,9 @@ export async function registerCard(_prev: AuthFormState, formData: FormData): Pr
       return { error: "Medlemskab ikke fundet." };
     }
 
-    // Vores membership-id er kunde-referencen mod leverandøren; den endelige semantik
-    // (kunde-oprettelse vs. checkout-session, og hvornår card_status flipper) fastlægges i
-    // dataflow-afsøgningen (ADR 0029). Kortstatus sættes af webhooken — ikke optimistisk her.
+    // Membership-id sendes som external_customer_id (ADR 0030); checkout.completed-webhooken
+    // kobler Aluntas customer-uuid på og flipper card_status — intet sættes optimistisk her.
     const session = await createPaymentProvider().registerCard({ customerRef: membershipId });
-
-    await service
-      .from("membership")
-      .update({ provider_customer_ref: membershipId, updated_at: new Date().toISOString() })
-      .eq("id", membershipId);
 
     revalidatePath("/betaling");
     checkoutUrl = session.url || null;

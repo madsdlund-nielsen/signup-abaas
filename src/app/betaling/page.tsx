@@ -17,7 +17,8 @@ export const metadata: Metadata = { title: "Betaling — Advisory Board Unlimite
 export const dynamic = "force-dynamic";
 
 const CHARGE_LABEL: Record<PaymentCharge["status"], string> = {
-  afventer: "Afventer træk",
+  afventer: "Afventer indberetning",
+  rapporteret: "Indberettet — afregnes på næste faktura",
   gennemfoert: "Gennemført",
   fejlet: "Fejlet",
 };

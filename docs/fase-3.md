@@ -104,10 +104,19 @@
 > board-op/nedgradering på `/board` (add/remove med invariant). `/api/webhooks/alunta` bygget
 > med ADR 0027-mønstret.
 >
-> **DoD krydses IKKE af endnu:** Alunta-adapteren er BEVIDST ikke skrevet — API'et er uafsøgt,
-> og dataflow-afsøgningen (Mads, §12 pkt. 10) leverer adapteren + verificeret webhook-form +
-> MobilePay-verifikation (ADR 0029). Stubben forbliver aktiv selv med nøgler. Ingen prisregel
-> er aktiv før admin/ejer sætter tal.
+> **Opdatering (2026-08-04, ADR 0030):** dataflow-afsøgningen ER kørt mod Aluntas
+> OpenAPI-spec, og `AluntaPaymentProvider` er skrevet mod den verificerede form:
+> usage-abonnement med øre-parameter (`meeting_fee_oere` à 1 øre — vores `pricing_rule`
+> forbliver den autoritative prisberegner), checkout-session til kortregistrering,
+> `Signature`-webhook (HMAC-SHA256 hex) med afledt event-id, charge-livscyklus
+> afventer → rapporteret → gennemført/fejlet (migration 0014).
+> **Fund:** MobilePay er IKKE en Alunta-gateway (afgøres af gateway-valget
+> OnPay/Stripe/QuickPay), og trækket opkræves som periodefaktura — ikke pr. møde
+> (§4-nuance, ejerne skal orienteres).
+>
+> **DoD krydses IKKE af endnu:** rest er Alunta-UI-opsætning (plan + parameter +
+> webhook-secret + interval), gateway-valg, og live-verifikation i test_mode.
+> Ingen prisregel er aktiv før admin/ejer sætter tal.
 >
 > **Flag:** startpris/frekvensfaktorer (ejer — struktur uden værdier), moms (ejer — rå øre),
 > fejlet træk vs. honorar (ejer — kun registrering), prisregel-pinning for eksisterende aftaler

@@ -1,31 +1,60 @@
 /**
- * Webhook-ingest for Alunta-betalingshændelser (Fase 3, ADR 0027-mønstret genbrugt) —
- * den RENE kerne, adskilt fra route handleren så signatur/parse/mapping kan unit-testes.
+ * Webhook-ingest for Alunta (Fase 3, ADR 0030 — VERIFICERET mod OpenAPI-spec'en).
+ * Ren kerne adskilt fra route handleren (ADR 0027-mønstret): signatur, event-id og
+ * mapping er unit-testbare uden HTTP/DB.
  *
- * ⚠ PROVISORISK FORM: Aluntas faktiske payload- og signaturskema er uafsøgt.
- * TODO(mads): dataflow-afsøgningen (§12 pkt. 10, ADR 0029) verificerer header-navn,
- * signaturformat og event-form; denne kerne er skrevet leverandørneutralt (HMAC-SHA256
- * hex over rå body + eksplicit event-id) så justeringen er lokal til denne fil.
+ * Verificeret form (spec'en, webhooks-afsnittet):
+ *   - Header `Signature`: HMAC-SHA256 hex over RÅ body, konstant-tids-sammenligning.
+ *   - Payload-rod: { event, team_id, timestamp, data, test_mode? }. INTET stabilt
+ *     event-id → nøglen afledes deterministisk af (event, primær ressource-uuid,
+ *     timestamp) — samme greb som Cal.com (ADR 0027). Alunta genleverer op til 8 gange
+ *     over ~24 t; genleverancer preller af på unique-constrainten.
+ *   - `test_mode` behandles ens (testmiljø-verifikation kræver reelle mutationer).
  *
- * Sikkerhedskrav (stub-politik — må ALDRIG stubbes): signaturverifikation (konstant-tid)
- * og idempotens (unique-constraint på payment_webhook_event, 0013).
+ * Sikkerhedskrav (stub-politik — må ALDRIG stubbes): signaturverifikation + idempotens.
  */
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-export type AluntaEventType = "charge.gennemfoert" | "charge.fejlet" | "kort.registreret";
+export type AluntaEventType =
+  | "checkout.completed"
+  | "invoice.created"
+  | "invoice.paid"
+  | "invoice.payment_failed"
+  | "invoice.refunded"
+  | "subscription.payment_failed"
+  | "subscription.cancelled"
+  | "subscription.ended"
+  | "customer.usage_recorded";
 
-export interface AluntaWebhookEvent {
-  /** Leverandørens stabile event-id — idempotensnøglen (modsat Cal.com afledes intet). */
-  eventId: string;
-  type: AluntaEventType;
-  /** Vores charge-reference (payment_charge.provider_charge_ref) hhv. kunde-reference. */
-  chargeRef?: string;
-  customerRef?: string;
-  failureReason?: string;
+const KNOWN_EVENTS: ReadonlySet<string> = new Set([
+  "checkout.completed",
+  "invoice.created",
+  "invoice.paid",
+  "invoice.payment_failed",
+  "invoice.refunded",
+  "subscription.payment_failed",
+  "subscription.cancelled",
+  "subscription.ended",
+  "customer.usage_recorded",
+]);
+
+export interface AluntaWebhookPayload {
+  event: AluntaEventType;
+  team_id: number;
+  timestamp: string;
+  data: {
+    customer?: { uuid?: string };
+    invoice?: { uuid?: string };
+    subscription?: { uuid?: string };
+    error?: { message?: string } | string;
+    external_customer_id?: string;
+    type?: string;
+  };
+  test_mode?: boolean;
 }
 
-/** HMAC-SHA256(hex) over rå body. Header-navn (route) og format er provisoriske. */
+/** HMAC-SHA256(hex) over rå body — verificeret: Aluntas `Signature`-header. */
 export function verifyAluntaSignature(rawBody: string, signature: string | null, secret: string): boolean {
   if (!signature) return false;
   const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
@@ -34,47 +63,102 @@ export function verifyAluntaSignature(rawBody: string, signature: string | null,
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-/** Parse + strukturel validering. Null ved ukendt form — handleren kvitterer 200 og ignorerer. */
-export function parseAluntaEvent(json: unknown): AluntaWebhookEvent | null {
-  const candidate = json as Partial<AluntaWebhookEvent> | null;
+/** Parse + strukturel validering mod spec'ens WebhookPayload. Null → 200 + ignorér. */
+export function parseAluntaEvent(json: unknown): AluntaWebhookPayload | null {
+  const candidate = json as Partial<AluntaWebhookPayload> | null;
   if (!candidate || typeof candidate !== "object") return null;
-  if (typeof candidate.eventId !== "string" || !candidate.eventId) return null;
-  const type = candidate.type;
-  if (type !== "charge.gennemfoert" && type !== "charge.fejlet" && type !== "kort.registreret") {
-    return null;
-  }
-  return candidate as AluntaWebhookEvent;
+  if (typeof candidate.event !== "string" || !KNOWN_EVENTS.has(candidate.event)) return null;
+  if (typeof candidate.timestamp !== "string" || !candidate.timestamp) return null;
+  if (!candidate.data || typeof candidate.data !== "object") return null;
+  return candidate as AluntaWebhookPayload;
 }
 
-export interface ChargeMutation {
-  kind: "charge";
-  /** Matcher payment_charge.provider_charge_ref. */
-  chargeRef: string;
-  update: { status: "gennemfoert" | "fejlet"; failure_reason?: string };
+/** Den primære ressource-uuid pr. event-type — indgår i den afledte idempotensnøgle. */
+export function primaryUuid(payload: AluntaWebhookPayload): string {
+  const { data } = payload;
+  if (payload.event.startsWith("invoice.")) return data.invoice?.uuid ?? "ukendt";
+  if (payload.event.startsWith("subscription.")) return data.subscription?.uuid ?? "ukendt";
+  return data.customer?.uuid ?? "ukendt";
 }
 
-export interface CardMutation {
-  kind: "card";
-  /** Matcher membership.provider_customer_ref. */
-  customerRef: string;
+/** Deterministisk idempotensnøgle: genleverance = samme nøgle; ny hændelse = ny timestamp. */
+export function buildEventId(payload: AluntaWebhookPayload): string {
+  return `${payload.event}:${primaryUuid(payload)}:${payload.timestamp}`;
 }
 
-/** Oversæt et verificeret event til én mutation. Null hvis referencen mangler i payloaden. */
-export function mapAluntaEvent(event: AluntaWebhookEvent): ChargeMutation | CardMutation | null {
-  switch (event.type) {
-    case "charge.gennemfoert":
-      return event.chargeRef
-        ? { kind: "charge", chargeRef: event.chargeRef, update: { status: "gennemfoert" } }
-        : null;
-    case "charge.fejlet":
-      return event.chargeRef
-        ? {
-            kind: "charge",
-            chargeRef: event.chargeRef,
-            update: { status: "fejlet", failure_reason: event.failureReason ?? "Ukendt årsag" },
-          }
-        : null;
-    case "kort.registreret":
-      return event.customerRef ? { kind: "card", customerRef: event.customerRef } : null;
+/** Mutationstyper — routen udfører; kernen beslutter. Webhooks opdaterer, opretter aldrig. */
+export type AluntaMutation =
+  | {
+      kind: "card_registered";
+      /** membership.id (vores external_customer_id) + Aluntas customer-uuid der kobles på. */
+      externalCustomerId: string;
+      aluntaCustomerUuid: string;
+    }
+  | {
+      kind: "invoice_paid";
+      /** Aluntas customer-uuid → membership.provider_customer_ref; fakturaen afregner
+       *  membershipets rapporterede forbrug (periode-aggregat, ADR 0030). */
+      aluntaCustomerUuid: string;
+      invoiceUuid: string;
+    }
+  | {
+      kind: "invoice_failed";
+      aluntaCustomerUuid: string;
+      invoiceUuid: string;
+      failureReason: string;
+    }
+  | { kind: "membership_cancelled"; aluntaCustomerUuid: string }
+  | { kind: "ignore"; reason: string };
+
+export function mapAluntaEvent(payload: AluntaWebhookPayload): AluntaMutation {
+  const { data } = payload;
+  const customerUuid = data.customer?.uuid;
+
+  switch (payload.event) {
+    case "checkout.completed": {
+      if (data.type && data.type !== "subscription") {
+        return { kind: "ignore", reason: `checkout-type '${data.type}' bruges ikke` };
+      }
+      if (!data.external_customer_id || !customerUuid) {
+        return { kind: "ignore", reason: "checkout.completed uden external_customer_id/customer" };
+      }
+      return {
+        kind: "card_registered",
+        externalCustomerId: data.external_customer_id,
+        aluntaCustomerUuid: customerUuid,
+      };
+    }
+    case "invoice.paid": {
+      if (!customerUuid || !data.invoice?.uuid) {
+        return { kind: "ignore", reason: "invoice.paid uden customer/invoice" };
+      }
+      return { kind: "invoice_paid", aluntaCustomerUuid: customerUuid, invoiceUuid: data.invoice.uuid };
+    }
+    case "invoice.payment_failed": {
+      if (!customerUuid || !data.invoice?.uuid) {
+        return { kind: "ignore", reason: "invoice.payment_failed uden customer/invoice" };
+      }
+      const error = data.error;
+      return {
+        kind: "invoice_failed",
+        aluntaCustomerUuid: customerUuid,
+        invoiceUuid: data.invoice.uuid,
+        failureReason:
+          (typeof error === "string" ? error : error?.message) ?? "Betaling fejlede hos leverandøren",
+      };
+    }
+    case "subscription.cancelled":
+    case "subscription.ended": {
+      if (!customerUuid) return { kind: "ignore", reason: `${payload.event} uden customer` };
+      return { kind: "membership_cancelled", aluntaCustomerUuid: customerUuid };
+    }
+    case "invoice.created":
+    case "invoice.refunded":
+    case "subscription.payment_failed":
+    case "customer.usage_recorded":
+      // Registreres (idempotensrækken) men muterer ikke: created afventer paid; refunded
+      // og payment_failed-retries er drift/fase-4-notifikationsstof; usage_recorded er
+      // ekko af vores egen indberetning.
+      return { kind: "ignore", reason: `${payload.event} registreres uden mutation` };
   }
 }

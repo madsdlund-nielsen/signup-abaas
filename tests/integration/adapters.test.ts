@@ -21,11 +21,10 @@ describe("adapter-registry uden nøgler/flag", () => {
   it("backend-stub (payments) kaster NotConfiguredError", async () => {
     const { payments } = getAdapters(emptyEnv);
     await expect(
-      payments.charge({
+      payments.reportUsageCharge({
         customerRef: "c1",
         amountMinor: 1000,
-        currency: "DKK",
-        frequencyWeeks: 4,
+        idempotencyKey: "test-key",
         description: "test",
       }),
     ).rejects.toBeInstanceOf(NotConfiguredError);
