@@ -53,6 +53,7 @@ export function OptionsSection({
     setOrder((prev) => {
       const next = [...prev];
       const [moved] = next.splice(from, 1);
+      if (!moved) return prev;
       next.splice(targetIndex, 0, moved);
       return next;
     });

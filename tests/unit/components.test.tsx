@@ -4,6 +4,8 @@ import { Heading } from "@/components/Heading";
 import { SectionBand } from "@/components/SectionBand";
 import { Eyebrow } from "@/components/Eyebrow";
 import { Card } from "@/components/Card";
+import { Container } from "@/components/Container";
+import { TopBar } from "@/components/TopBar";
 
 describe("design-komponenter (kun tokens via klasser)", () => {
   it("Heading bruger korrekt niveau-tag + token-klasse uden inline-style", () => {
@@ -40,5 +42,23 @@ describe("design-komponenter (kun tokens via klasser)", () => {
     const { getByRole, container } = render(<Card title="Strategi" />);
     expect(getByRole("heading", { level: 3, name: "Strategi" }).className).toBe("card__title");
     expect(container.querySelector(".card__media")?.getAttribute("style")).toBeNull();
+  });
+
+  it("Container renderer .container-x uden inline-style", () => {
+    const { container } = render(<Container>indhold</Container>);
+    const div = container.querySelector("div");
+    expect(div?.className).toBe("container-x");
+    expect(div?.textContent).toBe("indhold");
+    expect(div?.getAttribute("style")).toBeNull();
+  });
+
+  it("TopBar wrapper indhold i .topbar > .topbar__inner uden inline-style", () => {
+    const { container } = render(<TopBar>kontakt</TopBar>);
+    const outer = container.querySelector("div.topbar");
+    const inner = container.querySelector("div.topbar__inner");
+    expect(outer).not.toBeNull();
+    expect(inner?.textContent).toBe("kontakt");
+    expect(outer?.getAttribute("style")).toBeNull();
+    expect(inner?.getAttribute("style")).toBeNull();
   });
 });

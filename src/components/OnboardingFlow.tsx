@@ -67,8 +67,13 @@ export function OnboardingFlow({
 
   const total = questions.length;
   const question = questions[step];
+  // step holdes altid inden for questions af navigationen nedenfor. Guarden er det
+  // bevis noUncheckedIndexedAccess kræver — ikke en ny tilstand.
+  if (!question) return null;
 
-  function handleToggle(optionId: string) {
+  // Arrow-funktion, ikke function-declaration: declarations hoistes, og TypeScript
+  // bærer derfor ikke question-guarden ovenfor med ind i dem.
+  const handleToggle = (optionId: string) => {
     setSelectedByQuestion((prev) => {
       const current = prev[question.id] ?? [];
       const next =
@@ -81,7 +86,7 @@ export function OnboardingFlow({
             : [...current, optionId];
       return { ...prev, [question.id]: next };
     });
-  }
+  };
 
   function handleFreeText(optionId: string, value: string) {
     setFreeTextByOption((prev) => ({ ...prev, [optionId]: value }));
