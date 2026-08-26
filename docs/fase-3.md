@@ -13,23 +13,33 @@
 
 ## Leverancekriterier (Definition of Done for fase 3)
 
-- [ ] Betalingsmekanikken bygget mod porten i `src/lib/payments/` — **ingen direkte
+> **Status: BETINGET LUKKET 2026-08-26.** 8 af 9 punkter er verificeret og krydset af.
+> Punkt 5 er **omskrevet, ikke afkrydset**: kriteriet beskrev den model fasen blev bygget
+> efter, og den er siden ændret (ADR 0034). Liveverifikation mod Alunta/QuickPay udestår
+> til konti findes — checkliste i `docs/fase-3-rapport.md` §7, som er en gate før
+> **produktion**, ikke før fase 4. Begrundelse: rapportens §5.
+
+- [x] Betalingsmekanikken bygget mod porten i `src/lib/payments/` — **ingen direkte
       SDK-kald uden for adapteren**. Interfacet forbliver leverandørneutralt.
       ⚠ Selve Alunta-adapteren er dataflow-afsøgningens leverance (`TODO(mads)`,
       §12 pkt. 10) — API'et er uafsøgt, og en gættet adapter ville bryde stub-politikken.
-- [ ] Prisregler ligger i **admin-UI og database**, ikke i kode. Ingen beløb er
+- [x] Prisregler ligger i **admin-UI og database**, ikke i kode. Ingen beløb er
       hardcodet nogen steder.
-- [ ] Prisberegner: viser ejeren en pris ud fra boardstørrelse (2-3 partnere) og
+- [x] Prisberegner: viser ejeren en pris ud fra boardstørrelse (2-3 partnere) og
       frekvens (4 / 8 / 12 uger).
-- [ ] Checkout-mekanik via porten (kortregistrering + charge-grundlag); MobilePay
+- [x] Checkout-mekanik via porten (kortregistrering + charge-grundlag); MobilePay
       afventer Alunta-verifikation (`TODO(mads)`).
-- [ ] **Varierende betalingsfrekvenser** implementeret: kort registreres ved
-      booking, træk sker ved afholdelse.
-- [ ] Webhook → `membership` i Supabase. Signaturverificeret og **idempotent**.
-- [ ] Op- og nedgradering af abonnement virker (frekvens og boardstørrelse).
-- [ ] Betalingsstatus synlig for ejer; fejlede træk håndteres og logges via
+- [ ] ⚠ **KRITERIET ER FORÆLDET — ikke afkrydset.** Det lød: *"Varierende
+      betalingsfrekvenser implementeret: kort registreres ved booking, træk sker ved
+      afholdelse."* Modellen er siden ændret til et **fast abonnement der forfalder
+      hver 4. uge**, hvor størrelsen afhænger af antal rådgivere og mødefrekvens
+      (ADR 0034). Koden implementerer stadig den gamle model — rework spores som
+      `docs/backlog.md` B-19 og skal ske før betaling går live.
+- [x] Webhook → `membership` i Supabase. Signaturverificeret og **idempotent**.
+- [x] Op- og nedgradering af abonnement virker (frekvens og boardstørrelse).
+- [x] Betalingsstatus synlig for ejer; fejlede træk håndteres og logges via
       `src/lib/analytics/` (PostHog).
-- [ ] Fuld test suite grøn, inkl. webhook-integrationstests og RLS på
+- [x] Fuld test suite grøn, inkl. webhook-integrationstests og RLS på
       `membership` (en ejer må aldrig se en andens betalingsdata) — positive **og**
       negative cases.
 
