@@ -1,10 +1,52 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
 
-// Rod-konfiguration for tværgående options (projekter defineres i vitest.workspace.ts).
-// Coverage scopes til den enhedstestede flade, så `npm run test:coverage` er en
-// meningsfuld, ikke-flaky tærskel.
+/**
+ * Vitest-konfiguration (ADR 0003, opdateret i ADR 0033).
+ *
+ * De tre projekter lå tidligere i `vitest.workspace.ts`. Vitest 3 markerer workspace-filen
+ * som deprecated og fjerner den i næste major — projekterne bor derfor nu i `test.projects`
+ * her. Lagene og deres stier er UÆNDREDE; kun hvor de er defineret har flyttet sig.
+ * Se `tests/CLAUDE.md` for hvornår hvilket lag bruges.
+ */
+
+const srcAlias = { "@": fileURLToPath(new URL("./src", import.meta.url)) };
+
 export default defineConfig({
   test: {
+    projects: [
+      {
+        plugins: [react()],
+        resolve: { alias: srcAlias },
+        test: {
+          name: "unit",
+          environment: "jsdom",
+          include: ["tests/unit/**/*.test.{ts,tsx}"],
+          setupFiles: ["tests/setup/unit.ts"],
+        },
+      },
+      {
+        resolve: { alias: srcAlias },
+        test: {
+          name: "integration",
+          environment: "node",
+          include: ["tests/integration/**/*.test.ts"],
+        },
+      },
+      {
+        resolve: { alias: srcAlias },
+        test: {
+          name: "db",
+          environment: "node",
+          include: ["tests/db/**/*.test.ts"],
+          globalSetup: ["tests/setup/db-global.ts"],
+        },
+      },
+    ],
+
+    // Coverage scopes til den enhedstestede flade, så `npm run test:coverage` er en
+    // meningsfuld, ikke-flaky tærskel. Tærsklen håndhæves i CI (ADR 0028).
     coverage: {
       provider: "v8",
       include: ["src/components/**", "src/server/flags/**", "src/server/auth/**"],

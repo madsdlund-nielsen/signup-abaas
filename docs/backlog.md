@@ -63,7 +63,6 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 | **B-16** | **Dækningsmarginen er tynd.** Tærsklen er 70 % og den målte dækning er 70,7 % (ADR 0028) — næste utestede komponent kan tippe CI rød. `PartnerCard.tsx` (68 linjer) og `OptionsSection.tsx` (181 linjer) står begge på 0 %. | `vitest.config.ts`, `src/components/PartnerCard.tsx`, `src/components/OptionsSection.tsx` | Skriv tests for de to komponenter og hæv derefter tærsklen — hellere end at sænke den ved næste rødt. `OptionsSection` er drag-omordning og kræver mere end en render-test. | Mads |
 | **B-17** | **Merge-økonomi-reglen kan løsnes, når build-skippet er verificeret.** `netlify.toml` springer nu builds over for diffs der kun rører docs/tests/CI-config (ADR 0028), men reglen "saml en hel fase i ÉN PR" står uændret i `CLAUDE.md`. | `netlify.toml` (`TODO(mads)`), `CLAUDE.md` § Arbejdsform pkt. 5 | Bekræft på den første docs-only merge at Netlify rapporterer "Build skipped" og ikke trækker kredit. Derefter: beslut om reglen kan blive til "én PR pr. arbejdspakke", så review og `git bisect` bliver brugbare igen. **Ikke Claude Codes beslutning** — det er en stående ordre fra Mads. | Mads |
 
-| **B-18** | **Vitest 2.1.9 har en `critical` Dependabot-alarm** (vilkårlig fil kan læses/eksekveres når Vitest UI-serveren lytter). Første rettede version er **3.2.6** — et major-spring fra 2.1.x, altså breaking. | `package.json`, `vitest.config.ts`, `vitest.workspace.ts` | **Reel risiko er lav:** alarmen kræver at UI-serveren kører (`vitest --ui`), og repoet har intet UI-script — det er en dev-dependency, ikke runtime. Men et major-spring på test-runneren rører ADR 0003 og bør være en bevidst beslutning, ikke et `npm update`. Alle runtime-alarmer (next/postcss/nanoid/sharp) er lukket ved lockfile-bump i PR #30. | Mads |
 
 ## 5. Udviklingsmiljø
 
@@ -82,3 +81,4 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 | B-02 | Fase 2 leveret, men ikke lukket | 2026-08-26 | Betinget lukket — `docs/fase-2-rapport.md`, DoD i `docs/fase-2.md`, liveverifikations-checkliste i `docs/spikes/multi-host.md` |
 | B-06 | `supabase/policies/` refereret tre steder uden at findes | 2026-08-26 | Rettet i `ci.yml`, `docs/projektstruktur.md`, `auto-tests`-skillen |
 | B-15 | Fase 2 aldrig kodegennemgået | 2026-08-26 | Gennemgået ved lukning: tre fejl fundet og rettet — `docs/fase-2-rapport.md` §4 + ADR 0029 |
+| B-18 | Vitest 2.1.9 havde en `critical` Dependabot-alarm | 2026-08-26 | Opgraderet til 3.2.7 + projekter flyttet til `test.projects` — ADR 0033 |
