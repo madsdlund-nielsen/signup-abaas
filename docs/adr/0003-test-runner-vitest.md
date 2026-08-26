@@ -1,6 +1,6 @@
 # 0003 — Test-runner og teststruktur: Vitest
 
-- **Status:** Accepteret
+- **Status:** Accepteret — **opdateret af ADR 0033** (Vitest 3; projekterne flyttet til `test.projects`)
 - **Dato:** 2026-06-30
 - **Fase:** 0
 - **Berører uafklaret punkt:** nej (Spand A — test-runner og teststruktur)
@@ -20,7 +20,8 @@ test-runneren skal vælges (Spand A).
 
 ## Beslutning
 
-Vitest, med tre projekter i `vitest.workspace.ts`: `unit` (jsdom + React Testing
+Vitest, med tre projekter i `vitest.workspace.ts` (flyttet til `test.projects` i
+`vitest.config.ts` ved Vitest 3-opgraderingen — se ADR 0033): `unit` (jsdom + React Testing
 Library), `integration` (node) og `db` (node, `globalSetup` mod Postgres). Bevidst
 afvigelse fra qlim8's Jest: vi kopierer qlim8's CI-**struktur** (job-form,
 Postgres-service, gate-tankegang), men kører Vitest under, fordi det passer bedre til

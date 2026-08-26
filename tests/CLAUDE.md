@@ -5,7 +5,8 @@
 
 ## Runner og lag
 
-Test-runner er **Vitest** (ADR 0003), opdelt i tre projekter i `vitest.workspace.ts`:
+Test-runner er **Vitest** (ADR 0003), opdelt i tre projekter i `vitest.config.ts`
+(`test.projects` — workspace-filen udgik med Vitest 3, ADR 0033):
 
 | Lag | Miljø | Path | Hvornår |
 |---|---|---|---|
