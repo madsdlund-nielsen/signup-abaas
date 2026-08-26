@@ -60,6 +60,8 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 | **B-17** | **Merge-økonomi-reglen kan løsnes, når build-skippet er verificeret.** `netlify.toml` springer nu builds over for diffs der kun rører docs/tests/CI-config (ADR 0028), men reglen "saml en hel fase i ÉN PR" står uændret i `CLAUDE.md`. | `netlify.toml` (`TODO(mads)`), `CLAUDE.md` § Arbejdsform pkt. 5 | Bekræft på den første docs-only merge at Netlify rapporterer "Build skipped" og ikke trækker kredit. Derefter: beslut om reglen kan blive til "én PR pr. arbejdspakke", så review og `git bisect` bliver brugbare igen. **Ikke Claude Codes beslutning** — det er en stående ordre fra Mads. | Mads |
 
 
+| **B-20** | **Værktøjskæden skal på sigt til Vitest 4 + Vite 8 + `@vitejs/plugin-react` 6**, og `overrides` i `package.json` skal ryddes op når det sker. Udskudt fra Dependabot-PR #34 (ADR 0036) fordi tre koordinerede majors fire dage før MVP-aflevering ikke stod mål med dev-scope-alarmer. | `package.json` (`overrides`), `vitest.config.ts` | ⚠ Vitest 4 skifter v8-dækningen til AST-baseret remapping: på uændret kode faldt funktionsdækning 81,0 → 69,2 % og branch 87,3 → 71,1 %. Kræver enten flere tests (se B-16) eller en revideret tærskel — ikke bare et versionsbump. | Mads |
+
 ## 5. Udviklingsmiljø
 
 | ID | Punkt | Hvor | Note | Ejer |

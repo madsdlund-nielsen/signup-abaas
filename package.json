@@ -24,6 +24,10 @@
     "db:diff": "npx --yes supabase db diff",
     "prepare": "husky"
   },
+  "overrides": {
+    "vite": "^6.4.3",
+    "esbuild": "^0.25.0"
+  },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.8",
