@@ -1,4 +1,4 @@
--- Fase 3 — Alunta-integration (ADR 0030, dataflow-afsøgningen kørt mod verificeret OpenAPI-spec).
+-- Fase 3 — Alunta-integration (ADR 0032, dataflow-afsøgningen kørt mod verificeret OpenAPI-spec).
 -- Alunta har INTET synkront kort-træk: forbruget indberettes som usage-events, og Alunta
 -- fakturerer/trækker automatisk pr. periode. Deraf to udvidelser:
 

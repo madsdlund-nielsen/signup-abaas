@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * Admin-mutationer for prisregler (Fase 3, ADR 0028). Service-role bag requireRole('admin')
+ * Admin-mutationer for prisregler (Fase 3, ADR 0030). Service-role bag requireRole('admin')
  * med verify-readback. Versioner er APPEND-ONLY: en ny version oprettes, en version
  * aktiveres — eksisterende rækker redigeres aldrig (audit: payment_charge refererer den
  * version der blev anvendt). Værdierne kommer fra admins indtastning — aldrig fra kode.

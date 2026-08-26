@@ -1,9 +1,9 @@
 /**
- * Alunta-adapter (Fase 3, ADR 0030) — skrevet mod den VERIFICEREDE OpenAPI-spec
+ * Alunta-adapter (Fase 3, ADR 0032) — skrevet mod den VERIFICEREDE OpenAPI-spec
  * (https://app.alunta.com/docs/v1/openapi.yaml). Rå fetch, Bearer-auth, ingen SDK —
  * samme mønster som Cal.com-adapteren. Alunta-typer må aldrig lække ud af denne fil.
  *
- * Modellen (ADR 0030): checkout-session (type subscription) registrerer kortet via
+ * Modellen (ADR 0032): checkout-session (type subscription) registrerer kortet via
  * leverandørens hosted side; forbrug indberettes som usage-events i ØRE mod parameteren
  * `meeting_fee_oere` (Alunta-planens enhedspris = 1 øre), så vores versionerede
  * pricing_rule forbliver den autoritative prisberegner. Alunta fakturerer og trækker

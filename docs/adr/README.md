@@ -60,9 +60,9 @@ det gjort sådan?", så skriv en ADR.
 | 0027 | Webhook-ingest: signatur før alt, idempotens via event-tabel | Accepteret | 2 |
 | 0028 | Guardrails: lag-grænser som lint-regel og gates der faktisk kører | Accepteret | 2 |
 | 0029 | Webhook-idempotens skal betyde "præcis én gang" (præciserer 0027) | Accepteret | 2 |
-| 0028 | Betalings-datamodel: versionerede prisregler + charge pr. afholdt møde | Accepteret | 3 |
-| 0029 | Alunta-tilgangen: omdøbt config og webhook-skelet, ingen gættet adapter | Accepteret | 3 |
-| 0030 | Alunta-dataflow verificeret: usage-abonnement med øre-parameter | Accepteret | 3 |
+| 0030 | Betalings-datamodel: versionerede prisregler + charge pr. afholdt møde | Accepteret | 3 |
+| 0031 | Alunta-tilgangen: omdøbt config og webhook-skelet, ingen gættet adapter | Accepteret | 3 |
+| 0032 | Alunta-dataflow verificeret: usage-abonnement med øre-parameter | Accepteret | 3 |
 | 0033 | Vitest 3: sikkerhedsopgradering og projekter i `test.projects` | Accepteret | 3 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.

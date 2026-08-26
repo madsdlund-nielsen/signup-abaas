@@ -7,7 +7,7 @@ import { getMyMembership, getMyQuizFrequency } from "@/server/memberships";
 import { getActivePricingRule, listPricingRules } from "@/server/pricing";
 import { POST } from "@/app/api/webhooks/alunta/route";
 
-describe("payments-registry (ADR 0030): adapter ved flag+nøgler, ellers stub", () => {
+describe("payments-registry (ADR 0032): adapter ved flag+nøgler, ellers stub", () => {
   it("uden konfiguration: stub der kaster NotConfiguredError med vendor 'alunta'", async () => {
     const stub = createPaymentProvider({});
     expect(stub.name).toBe("stub");
@@ -41,7 +41,7 @@ describe("betalings-data-access uden Supabase-konfiguration (kontofri CI/dev)", 
   });
 });
 
-describe("alunta-webhook-endpointet — Signature-header, verifikation før alt (ADR 0027/0030)", () => {
+describe("alunta-webhook-endpointet — Signature-header, verifikation før alt (ADR 0027/0032)", () => {
   afterEach(() => vi.unstubAllEnvs());
 
   function post(body: string, signature?: string): Promise<Response> {

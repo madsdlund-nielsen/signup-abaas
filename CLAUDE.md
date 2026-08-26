@@ -119,7 +119,7 @@ webhook-signaturverifikation, idempotens eller samtykke.
   lander. STOP ved plan-/tier-valg består
 - Ordbogen DPA/databehandleraftale — dækker både tale-til-tekst og LLM. Dansk
   hosting er på plads; den formelle aftale skal foreligge før produktionsbrug
-- ~~Alunta/Supabase dataflow~~ → **afsøgt mod OpenAPI-spec'en (ADR 0030)**: usage-abonnement
+- ~~Alunta/Supabase dataflow~~ → **afsøgt mod OpenAPI-spec'en (ADR 0032)**: usage-abonnement
   med øre-parameter; adapter + webhooks bygget. Rest: opsætning i Alunta-UI (plan +
   parameter + webhook-secret + faktureringsinterval) og live-verifikation i test_mode
 - MobilePay gennem Alunta — **API-verificeret: MobilePay er IKKE en Alunta-gateway**

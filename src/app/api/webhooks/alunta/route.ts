@@ -1,5 +1,5 @@
 /**
- * Alunta-webhook-endpoint (Fase 3, ADR 0030 — verificeret mod OpenAPI-spec'en).
+ * Alunta-webhook-endpoint (Fase 3, ADR 0032 — verificeret mod OpenAPI-spec'en).
  * ADR 0027-mønstret: rå body → signatur (`Signature`-header, HMAC-SHA256 hex) →
  * idempotensrække FØR mutation → mutér. Manglende secret/Supabase → 503, aldrig
  * fail-open. Alunta genleverer op til 8 gange over ~24 t og kræver 2xx inden 3 sek. —
@@ -105,7 +105,7 @@ export async function POST(request: Request): Promise<Response> {
         });
         break;
       }
-      // Fakturaen afregner membershipets RAPPORTEREDE forbrug (periode-aggregat, ADR 0030) —
+      // Fakturaen afregner membershipets RAPPORTEREDE forbrug (periode-aggregat, ADR 0032) —
       // kobling pr. enkeltmøde findes ikke i payloaden.
       const update =
         mutation.kind === "invoice_paid"

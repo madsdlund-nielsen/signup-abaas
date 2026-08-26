@@ -1,5 +1,5 @@
 /**
- * Prisberegning (Fase 3, ADR 0028). Byggespec §4/§5.9: meeting-fee skalerer med
+ * Prisberegning (Fase 3, ADR 0030). Byggespec §4/§5.9: meeting-fee skalerer med
  * boardstørrelse og frekvens. Formlen er MEKANIK — værdierne kommer fra den aktive
  * prisregel som admin har indtastet. Der findes ingen tal her (stub-politik).
  *

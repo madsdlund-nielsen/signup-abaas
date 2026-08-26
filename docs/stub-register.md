@@ -16,7 +16,7 @@ udføre ægte kald, og lader være med at foregive andet.
 |---|---|---|---|
 | `src/lib/booking/` (Cal.com) | `FLAG_BOOKING` | **Adapteren ER bygget** (fase 2, `calcom.ts`) — stubben er aktiv fordi flag+nøgler mangler. Låses op af: Cal.com-konto + `CALCOM_API_KEY`/`CALCOM_EVENT_TYPE_ID` + liveverifikation (`docs/spikes/multi-host.md`); plan-/tier-valg er STOP-gate | Mads |
 | `src/lib/video/` (Cal Video) | `FLAG_VIDEO` | Cal.com-plan + EU-residens; mødeoptagelse kræver desuden samtykkeflow | Mads + ejer |
-| `src/lib/payments/` (Alunta) | `FLAG_PAYMENTS` | **Adapteren ER skrevet mod verificeret API** (ADR 0030, `alunta.ts`) — stubben er aktiv fordi nøgler mangler. Låses op af: Alunta-UI-opsætning (usage-plan + parameter `meeting_fee_oere` à 1 øre + webhook-secret + interval) → `ALUNTA_API_KEY`/`ALUNTA_PLAN_ID`/`ALUNTA_WEBHOOK_SECRET` + `FLAG_PAYMENTS` → live-verifikation i test_mode. Gateway-valget (OnPay/Stripe/QuickPay) afgør MobilePay | Mads |
+| `src/lib/payments/` (Alunta) | `FLAG_PAYMENTS` | **Adapteren ER skrevet mod verificeret API** (ADR 0032, `alunta.ts`) — stubben er aktiv fordi nøgler mangler. Låses op af: Alunta-UI-opsætning (usage-plan + parameter `meeting_fee_oere` à 1 øre + webhook-secret + interval) → `ALUNTA_API_KEY`/`ALUNTA_PLAN_ID`/`ALUNTA_WEBHOOK_SECRET` + `FLAG_PAYMENTS` → live-verifikation i test_mode. Gateway-valget (OnPay/Stripe/QuickPay) afgør MobilePay | Mads |
 | `src/lib/accounting/` | `FLAG_ACCOUNTING` | Leverandørvalg: e-conomic vs. Dinero | Ejer |
 | `src/lib/llm/` (Ordbogen Odin) | `FLAG_AIFOLLOWUP` | Ordbogen-DPA (ADR 0024) | Mads |
 | `src/lib/transcription/` (ordbogen.ai) | `FLAG_TRANSCRIPTION` | Ordbogen-DPA **og** samtykke til optagelse (ADR 0024) | Mads + ejer |
@@ -56,7 +56,7 @@ deterministiske frem for plausible — se `docs/stub-politik.md`.
 | `pricing_rule` (0013) | **Ingen aktiv prisregel findes** — beregning og charge-grundlag er slået fra indtil admin aktiverer en version | Startpris/meeting-fee + frekvensfaktorer (§12 pkt. 2). Tal indtastes af admin, aldrig af kode | Ejer |
 | `src/server/pricing/algorithm.ts` | Beløb er rå øre uden momslogik | Moms på partner-honorar/beløbsvisning (§12 pkt. 14) | Ejer |
 | `src/server/charges/` | Fejlet træk registreres (status + årsag) uden konsekvens for honorar eller adgang | §5.10 udløser honorar uafhængigt af betaling; koblingen er uafklaret (afledt af §12 pkt. 13) | Ejer |
-| ~~`src/server/charges/webhook.ts`~~ | ~~Provisorisk payload-form~~ → **verificeret mod spec'en (ADR 0030)**: `Signature`-header, WebhookPayload-form, afledt event-id | Lukket 2026-08-04 | — |
+| ~~`src/server/charges/webhook.ts`~~ | ~~Provisorisk payload-form~~ → **verificeret mod spec'en (ADR 0032)**: `Signature`-header, WebhookPayload-form, afledt event-id | Lukket 2026-08-04 | — |
 
 ## Bevidst tomme — ikke stubs
 

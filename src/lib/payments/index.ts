@@ -19,7 +19,7 @@ interface PaymentConfig {
   appUrl: string | null;
 }
 
-// Alunta er besluttet (ADR 0023); dataflow verificeret mod OpenAPI-spec'en (ADR 0030).
+// Alunta er besluttet (ADR 0023); dataflow verificeret mod OpenAPI-spec'en (ADR 0032).
 // MobilePay er IKKE en Alunta-gateway — evt. via valgt kort-gateway (OnPay/QuickPay), TODO(mads).
 function readConfig(env: Record<string, string | undefined>): PaymentConfig {
   return {

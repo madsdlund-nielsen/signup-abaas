@@ -1,6 +1,6 @@
-# 0029 — Alunta-tilgangen: omdøbt config og webhook-skelet, ingen gættet adapter
+# 0031 — Alunta-tilgangen: omdøbt config og webhook-skelet, ingen gættet adapter
 
-> **Opfølgning lukket (2026-08-04):** dataflow-afsøgningen er kørt — se **ADR 0030**.
+> **Opfølgning lukket (2026-08-04):** dataflow-afsøgningen er kørt — se **ADR 0032**.
 > Adapteren er skrevet mod den verificerede spec, og det provisoriske webhook-skema er
 > erstattet af den verificerede form.
 
@@ -41,7 +41,7 @@ API ville være præcis det.
 - **Porten forbliver `registerCard` + `charge`.** ADR 0023 nævnte "opsig, opgradér" —
   de udgår bevidst: med træk-pr-afholdelse (§4) findes intet abonnement hos
   leverandøren. Op-/nedgradering og opsigelse er membership-operationer i Supabase
-  (ADR 0028), og et provider-kald ville være en operation uden modtager.
+  (ADR 0030), og et provider-kald ville være en operation uden modtager.
 - **`/api/webhooks/alunta` bygges nu** med ADR 0027-mønstret (rå body → HMAC
   konstant-tid → idempotensrække før mutation → mutér; manglende secret → 503).
   Kernen (`src/server/charges/webhook.ts`) er leverandørneutral; **header-navn,

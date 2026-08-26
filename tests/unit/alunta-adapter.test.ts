@@ -6,7 +6,7 @@ import {
 } from "@/lib/payments/alunta";
 
 /**
- * Alunta-adapterens rene request-byggere (ADR 0030) — testet mod den verificerede spec-form:
+ * Alunta-adapterens rene request-byggere (ADR 0032) — testet mod den verificerede spec-form:
  * checkout-sessions kræver type/plan_id/external_customer_id; usage-events kræver
  * parameter/quantity og bærer idempotency_key.
  */

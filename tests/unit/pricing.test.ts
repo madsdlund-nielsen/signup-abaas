@@ -3,7 +3,7 @@ import { computeMeetingFee, factorFor, formatMinor } from "@/server/pricing/algo
 import type { FrequencyWeeks, PricingRuleInput } from "@/server/pricing/algorithm";
 
 /**
- * Prisberegning (fase 3, ADR 0028). Algoritmen er DB-fri. Testværdierne er åbenlyst
+ * Prisberegning (fase 3, ADR 0030). Algoritmen er DB-fri. Testværdierne er åbenlyst
  * syntetiske — de reelle satser er ejer-uafklarede og indtastes af admin i prod.
  */
 function rule(overrides: Partial<PricingRuleInput> = {}): PricingRuleInput {

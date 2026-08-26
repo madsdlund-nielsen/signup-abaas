@@ -1,5 +1,5 @@
 /**
- * Opkrævningsgrundlag (Fase 3, ADR 0028). Læsning via authed klient — RLS scoper til
+ * Opkrævningsgrundlag (Fase 3, ADR 0030). Læsning via authed klient — RLS scoper til
  * ejerens egne charges (via membership→board); partnere ser ALDRIG betalingsdata.
  * Oprettelse sker i ./create (kaldes fra afholdelses-flippet); provider-træk i ./actions.
  */

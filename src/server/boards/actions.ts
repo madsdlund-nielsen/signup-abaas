@@ -230,7 +230,7 @@ export async function setBoardLead(formData: FormData): Promise<void> {
 }
 
 /**
- * Op-/nedgradering af boardstørrelse (Fase 3, ADR 0028): tilføj/fjern én partner med
+ * Op-/nedgradering af boardstørrelse (Fase 3, ADR 0030): tilføj/fjern én partner med
  * fase 1-invarianten håndhævet (2-3 partnere, mindst 1 intern). Prisen følger automatisk —
  * meeting-fee beregnes af boardstørrelsen ved næste afholdelse (ingen proratering, §5.9).
  */

@@ -332,7 +332,7 @@ export async function registerMeetingStatus(formData: FormData): Promise<void> {
       .eq("id", meetingId)
       .eq("status", "planlagt")
       .select("id");
-    // Charge-grundlag KUN fra den registrering der faktisk flippede (ADR 0028) — ellers
+    // Charge-grundlag KUN fra den registrering der faktisk flippede (ADR 0030) — ellers
     // ville N partneres registreringer give N forsøg. `meeting_id unique` er andet lag.
     // createChargeForMeeting kaster aldrig; partnerens registrering afhænger ikke af betaling.
     if (flipped && flipped.length > 0) {

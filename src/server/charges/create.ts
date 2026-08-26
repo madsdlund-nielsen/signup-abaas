@@ -1,5 +1,5 @@
 /**
- * Opret opkrævningsgrundlag ved afholdelse (Fase 3, ADR 0028). Kaldes fra afholdelses-
+ * Opret opkrævningsgrundlag ved afholdelse (Fase 3, ADR 0030). Kaldes fra afholdelses-
  * flippet i registerMeetingStatus — KUN af den registrering der faktisk flippede
  * planlagt→afholdt (idempotenslag 1); `payment_charge.meeting_id unique` er lag 2.
  *

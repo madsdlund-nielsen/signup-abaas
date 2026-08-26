@@ -2,7 +2,7 @@ import { computeMeetingFee, formatMinor } from "@/server/pricing/algorithm";
 import type { FrequencyWeeks, PricingRuleInput } from "@/server/pricing/algorithm";
 
 /**
- * Det brudte prisregnestykke (Fase 3, ADR 0028) — DELT mellem admin-preview og ejer-flowet,
+ * Det brudte prisregnestykke (Fase 3, ADR 0030) — DELT mellem admin-preview og ejer-flowet,
  * så admin ser præcis det kunden ser (samme princip som QuizRenderer i preview, ADR 0017).
  * Ren props-komponent; beregningen er `computeMeetingFee` (samme funktion begge steder).
  */

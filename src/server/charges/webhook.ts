@@ -1,5 +1,5 @@
 /**
- * Webhook-ingest for Alunta (Fase 3, ADR 0030 — VERIFICERET mod OpenAPI-spec'en).
+ * Webhook-ingest for Alunta (Fase 3, ADR 0032 — VERIFICERET mod OpenAPI-spec'en).
  * Ren kerne adskilt fra route handleren (ADR 0027-mønstret): signatur, event-id og
  * mapping er unit-testbare uden HTTP/DB.
  *
@@ -97,7 +97,7 @@ export type AluntaMutation =
   | {
       kind: "invoice_paid";
       /** Aluntas customer-uuid → membership.provider_customer_ref; fakturaen afregner
-       *  membershipets rapporterede forbrug (periode-aggregat, ADR 0030). */
+       *  membershipets rapporterede forbrug (periode-aggregat, ADR 0032). */
       aluntaCustomerUuid: string;
       invoiceUuid: string;
     }

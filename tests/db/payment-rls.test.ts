@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { asPostgres, asUser } from "./helpers";
 
 /**
- * RLS for betalings-datamodellen (0013, ADR 0028).
+ * RLS for betalings-datamodellen (0013, ADR 0030).
  *
  * Seed: membership ba001 på A's board (frekvens 4). INGEN pricing_rule/payment_charge i seed —
  * tal er ejer-uafklarede, så testene indsætter egne rækker med ÅBENLYST syntetISKE værdier i
@@ -156,7 +156,7 @@ describe("payment_webhook_event (0013) — idempotens + admin-only", () => {
   });
 });
 
-describe("Alunta-integration (0014, ADR 0030)", () => {
+describe("Alunta-integration (0014, ADR 0032)", () => {
   it("enum-værdien 'rapporteret' accepteres og provider_invoice_ref findes", async () => {
     await asPostgres(async (client) => {
       await client.query(

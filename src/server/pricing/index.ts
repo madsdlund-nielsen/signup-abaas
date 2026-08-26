@@ -1,5 +1,5 @@
 /**
- * Business-data-access for prisregler (Fase 3, ADR 0028). Læsning via authed klient —
+ * Business-data-access for prisregler (Fase 3, ADR 0030). Læsning via authed klient —
  * RLS: den AKTIVE version er læsbar for alle authed (client-side prisberegner, §5.9);
  * alle versioner kun for admin. Writes i ./actions (service-role bag admin).
  * Ukonfigureret Supabase → null/[] (kontofri CI/dev).

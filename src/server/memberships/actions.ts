@@ -1,9 +1,9 @@
 "use server";
 
 /**
- * Ejer-mutationer for medlemskab (Fase 3, ADR 0028). Service-role bag requireRole('ejer') +
+ * Ejer-mutationer for medlemskab (Fase 3, ADR 0030). Service-role bag requireRole('ejer') +
  * eksplicit ejerskabstjek (service-role bypasser RLS). Op-/nedgradering er RENE
- * Supabase-operationer — intet abonnement hos betalingsleverandøren at opdatere (ADR 0029);
+ * Supabase-operationer — intet abonnement hos betalingsleverandøren at opdatere (ADR 0031);
  * ny frekvens/boardstørrelse slår igennem ved næste afholdelse (ingen proratering, §5.9).
  */
 
@@ -124,7 +124,7 @@ export async function registerCard(_prev: AuthFormState, formData: FormData): Pr
       return { error: "Medlemskab ikke fundet." };
     }
 
-    // Membership-id sendes som external_customer_id (ADR 0030); checkout.completed-webhooken
+    // Membership-id sendes som external_customer_id (ADR 0032); checkout.completed-webhooken
     // kobler Aluntas customer-uuid på og flipper card_status — intet sættes optimistisk her.
     const session = await createPaymentProvider().registerCard({ customerRef: membershipId });
 

@@ -1,11 +1,11 @@
-# 0030 — Alunta-dataflow verificeret: usage-abonnement med øre-parameter
+# 0032 — Alunta-dataflow verificeret: usage-abonnement med øre-parameter
 
 - **Status:** Accepteret
 - **Dato:** 2026-08-04
 - **Fase:** 3
 - **Berører uafklaret punkt:** ja — lukker "Alunta/Supabase dataflow" (§12 pkt. 10, Mads); efterlader gateway-valg, MobilePay-verifikation og priser åbne
 
-> Dataflow-afsøgningen fra ADR 0029 er kørt: Aluntas OpenAPI 3.1-spec
+> Dataflow-afsøgningen fra ADR 0031 er kørt: Aluntas OpenAPI 3.1-spec
 > (`https://app.alunta.com/docs/v1/openapi.yaml`, 10.802 linjer) er gennemlæst, og
 > adapteren er skrevet mod den **verificerede** form. Mads leverede docs-adgangen og
 > godkendte planen (2026-08-04).

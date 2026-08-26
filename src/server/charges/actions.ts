@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * Indberetning af afventende opkrævninger til Alunta (Fase 3, ADR 0028/0030). Admin-udløst —
+ * Indberetning af afventende opkrævninger til Alunta (Fase 3, ADR 0030/0032). Admin-udløst —
  * bevidst afkoblet fra afholdelses-flippet, så partnerens registrering aldrig afhænger af
  * betalingsleverandøren.
  *

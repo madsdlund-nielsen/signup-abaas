@@ -1,5 +1,5 @@
 /**
- * Business-data-access for medlemskab (Fase 3, ADR 0028). Læsning via authed klient —
+ * Business-data-access for medlemskab (Fase 3, ADR 0030). Læsning via authed klient —
  * RLS scoper til ejerens eget membership (via board). Writes i ./actions.
  * Ukonfigureret Supabase → null (kontofri CI/dev).
  */

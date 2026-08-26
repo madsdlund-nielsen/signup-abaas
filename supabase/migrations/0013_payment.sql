@@ -1,5 +1,5 @@
--- Fase 3 — betalings-datamodel. Byggespec §4/§5.9/§6, ADR 0028 (datamodel + versionering +
--- charge-ved-afholdelse) + ADR 0029 (Alunta-tilgang). Naming: ADR 0006 (ental, snake_case).
+-- Fase 3 — betalings-datamodel. Byggespec §4/§5.9/§6, ADR 0030 (datamodel + versionering +
+-- charge-ved-afholdelse) + ADR 0031 (Alunta-tilgang). Naming: ADR 0006 (ental, snake_case).
 -- RLS: ADR 0007 (policies i migrationen, <tabel>_<operation>_<rolle>, idempotent).
 --
 -- Betalingsmodellen (§4): kort registreres ved booking, træk sker PR. AFHOLDT MØDE — intet
@@ -28,7 +28,7 @@ create table membership (
   updated_at timestamptz not null default now()
 );
 
--- Prisregler som APPEND-ONLY versioner (nyt mønster i repoet — ADR 0028). Formlen (mekanik,
+-- Prisregler som APPEND-ONLY versioner (nyt mønster i repoet — ADR 0030). Formlen (mekanik,
 -- ikke tal): meeting_fee = round((base + antal_partnere × per_partner) × faktor_for_frekvens).
 -- TODO(ejer): startpris/meeting-fee + frekvensfaktorer (§12 pkt. 2) — admin indtaster værdierne.
 -- TODO(ejer): moms — beløb er rå øre uden momslogik (§12 pkt. 14).
@@ -48,7 +48,7 @@ create table pricing_rule (
 -- Højst ÉN aktiv version ad gangen — constrainten ER mekanismen (som webhook-idempotens).
 create unique index pricing_rule_one_active on pricing_rule (is_active) where is_active;
 
--- Opkrævningsgrundlag pr. afholdt møde. Spec-hul lukket her (ADR 0028): §6 har ingen
+-- Opkrævningsgrundlag pr. afholdt møde. Spec-hul lukket her (ADR 0030): §6 har ingen
 -- charge-entitet, men §3 kræver at kunden "ser fakturaer", og fejlede træk skal kunne
 -- håndteres/gentages. meeting_id UNIQUE = idempotens-lag 2 (lag 1 er afholdelses-flippets
 -- én-vejs-guard). pricing_rule_id er audit: hvilken version blev anvendt.

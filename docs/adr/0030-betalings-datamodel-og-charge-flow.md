@@ -1,4 +1,4 @@
-# 0028 — Betalings-datamodel: versionerede prisregler + charge pr. afholdt møde
+# 0030 — Betalings-datamodel: versionerede prisregler + charge pr. afholdt møde
 
 - **Status:** Accepteret
 - **Dato:** 2026-08-04

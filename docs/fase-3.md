@@ -85,7 +85,7 @@
 - Skift af frekvens (4 ↔ 8 ↔ 12 uger) og boardstørrelse (2 ↔ 3 partnere).
 - Boardstørrelsen skal respektere fase 1's invariant: 2-3 partnere, mindst 1 intern
   (`src/server/matching/algorithm.ts`).
-- **Ingen proratering** (rettet 2026-08-04, ADR 0028): med træk-pr-afholdelse findes
+- **Ingen proratering** (rettet 2026-08-04, ADR 0030): med træk-pr-afholdelse findes
   ingen forudbetaling at proratere — §5.9 siger selv *"meeting-fee justeres tilsvarende
   ved næste afholdelse"*. Ny pris/frekvens/boardstørrelse slår igennem ved næste
   afholdte møde, fordi beløbet beregnes ved afholdelses-flippet. Det tidligere
@@ -93,7 +93,7 @@
 - ⚠ Regnskabssystem (e-conomic vs. Dinero) er uafklaret → byg ikke
   bogføringsintegration endnu; porten i `src/lib/accounting/` holdes på stub.
 
-> **Status (2026-08-04, ADR 0028 + 0029):** leveret i ÉN PR (merge-økonomi). Migration 0013:
+> **Status (2026-08-04, ADR 0030 + 0031):** leveret i ÉN PR (merge-økonomi). Migration 0013:
 > `membership` (én pr. board, frekvens fra quiz-svar), `pricing_rule` (append-only versioner,
 > højst én aktiv via partial unique index, authed-læsbar aktiv version), `payment_charge`
 > (grundlag pr. afholdt møde, `meeting_id unique`, versionsreference som audit) og
@@ -104,7 +104,7 @@
 > board-op/nedgradering på `/board` (add/remove med invariant). `/api/webhooks/alunta` bygget
 > med ADR 0027-mønstret.
 >
-> **Opdatering (2026-08-04, ADR 0030):** dataflow-afsøgningen ER kørt mod Aluntas
+> **Opdatering (2026-08-04, ADR 0032):** dataflow-afsøgningen ER kørt mod Aluntas
 > OpenAPI-spec, og `AluntaPaymentProvider` er skrevet mod den verificerede form:
 > usage-abonnement med øre-parameter (`meeting_fee_oere` à 1 øre — vores `pricing_rule`
 > forbliver den autoritative prisberegner), checkout-session til kortregistrering,
