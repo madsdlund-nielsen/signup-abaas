@@ -32,9 +32,6 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 
 | ID | Punkt | Hvor | Hvorfor det haster | Ejer |
 |---|---|---|---|---|
-| **B-01** | **GDPR-leverandørregistret peger på afløste databehandlere.** Registret lister stadig Stripe (betaling ind) og "Anthropic Claude / EU-LLM". ADR 0023 valgte **Alunta**, ADR 0024 valgte **Ordbogen** til både LLM og transskription. | `docs/gdpr/leverandoer-register.md:15,18` | `CLAUDE.md` gør registret til **autoritet for hvilke DPA'er der mangler**. Listen over manglende DPA'er er derfor p.t. forkert — og DPA-status er et SKAL-krav før produktionsbrug. | Mads |
-| **B-03** | **`.env.example` navngiver afløste leverandører.** `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `MOBILEPAY_MERCHANT_ID`; "LLM (Anthropic Claude API eller EU-hostet)"; "Transskription (dansk/EU-udbyder uafklaret)". | `.env.example` | Det er filen alle kopierer til `.env.local`. ⚠ `MOBILEPAY_MERCHANT_ID` må ikke bare omdøbes: MobilePay **gennem Alunta** er stadig uverificeret (`CLAUDE.md`, afventer Mads). | Mads |
-| **B-04** | **`accounts-to-create.md` er forældet.** Afsnit B siger stadig "Stripe + MobilePay … Alunta-alternativ åbent" og "Anthropic Claude API (el. EU-LLM)". | `docs/accounts-to-create.md` | Det er den praktiske tjekliste for hvilke konti ejerne skal oprette — den sender dem til de forkerte leverandører. | Mads |
 
 ## 2. Drift der kræver en beslutning
 
@@ -50,7 +47,6 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 
 | ID | Punkt | Hvor | Fase | Ejer |
 |---|---|---|---|---|
-| **B-08** | **Payments-adapteren er stadig Stripe-formet:** læser `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET`/`MOBILEPAY_MERCHANT_ID` og kaster `NotConfiguredError("stripe", …)`. ADR 0023 valgte Alunta. | `src/lib/payments/index.ts`, `port.ts` | 3 | Mads |
 | **B-09** | **LLM- og transskriptions-adapterne er generiske** (`LLM_API_KEY`, `TRANSCRIPTION_API_KEY`). ADR 0024 udpeger Ordbogen (ordbogen.ai + chat.dk/Odin). DPA er stadig forudsætning — se stub-registret. | `src/lib/llm/index.ts`, `src/lib/transcription/index.ts` | 4 | Mads |
 
 ## 4. Guardrails & sikkerhedshygiejne
@@ -78,7 +74,11 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 
 | ID | Punkt | Lukket | Hvor det endte |
 |---|---|---|---|
+| B-01 | GDPR-registret navngav Stripe + Anthropic | 2026-08-26 | Rettet i fase 3-PR'en (#25): Alunta, Ordbogen ×2, ny **kort-gateway**-række (uvalgt), MobilePay omskrevet jf. ADR 0032 |
 | B-02 | Fase 2 leveret, men ikke lukket | 2026-08-26 | Betinget lukket — `docs/fase-2-rapport.md`, DoD i `docs/fase-2.md`, liveverifikations-checkliste i `docs/spikes/multi-host.md` |
+| B-03 | `.env.example` navngav afløste leverandører | 2026-08-26 | Lukket af #25 (`ALUNTA_*`; ingen `STRIPE_*` tilbage) |
+| B-04 | `accounts-to-create.md` forældet | 2026-08-26 | Lukket af #25 (Alunta-række med plan-/webhook-opsætning) |
 | B-06 | `supabase/policies/` refereret tre steder uden at findes | 2026-08-26 | Rettet i `ci.yml`, `docs/projektstruktur.md`, `auto-tests`-skillen |
+| B-08 | Payments-adapteren var Stripe-formet | 2026-08-26 | Lukket af #25: `AluntaPaymentProvider` mod verificeret OpenAPI-spec (ADR 0032) |
 | B-15 | Fase 2 aldrig kodegennemgået | 2026-08-26 | Gennemgået ved lukning: tre fejl fundet og rettet — `docs/fase-2-rapport.md` §4 + ADR 0029 |
 | B-18 | Vitest 2.1.9 havde en `critical` Dependabot-alarm | 2026-08-26 | Opgraderet til 3.2.7 + projekter flyttet til `test.projects` — ADR 0033 |

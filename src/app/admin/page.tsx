@@ -18,6 +18,9 @@ export default function AdminHome() {
         <li>
           <Link href="/admin/partners">Partner-katalog</Link>
         </li>
+        <li>
+          <Link href="/admin/priser">Prisregler</Link>
+        </li>
       </ul>
     </main>
   );

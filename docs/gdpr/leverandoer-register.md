@@ -12,11 +12,12 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
 | **Supabase** | DB + auth — sandhedskilde | Navn, e-mail, roller, al forretningsdata | EU — eu-north-1 (Stockholm) | ✅ EU (eu-north-1, ADR 0013) | 🔴 afventer underskrift (Supabase DPA findes) | — |
 | **Cal.com** | Booking (multi-host) | Navne, e-mails, mødetider | 🔴 afventer multi-host-spike | 🔴 afventer (punkt 5) | 🔴 afventer | `booking` |
 | **Cal Video** | Multi-party video + optagelse | Billede/lyd af møder | 🔴 afventer plan/spike | 🔴 afventer (punkt 6) | 🔴 afventer | `video` |
-| **Stripe** | Betaling ind | Navn, e-mail, betalingsmetadata (ikke fulde kortdata — tokeniseret) | Global (EU-databehandling muligt) | 🔴 afventer dataflow (Mads) | 🔴 afventer (Stripe DPA findes) | `payments` |
-| **MobilePay** | Betaling ind (DK) | Navn, telefon, betalingsmetadata | DK/EU | afventer konto | 🔴 afventer | `payments` |
+| **Alunta** | Betaling ind — abonnement/fakturering (ADR 0023) | Navn, e-mail, medlemskabs- og faktureringsmetadata (ikke kortdata — de bor hos gatewayen) | DK (dansk udbyder) | 🟡 dansk udbyder; hosting ikke formelt verificeret | 🔴 afventer underskrift | `payments` |
+| **Kort-gateway** — OnPay / Stripe / QuickPay | Kortregistrering + træk bag Aluntas checkout | Kortdata, navn, betalingsmetadata | 🔴 afhænger af valget (Stripe = global; OnPay/QuickPay = DK) | 🔴 **leverandør ikke valgt** (ADR 0032) | 🔴 afventer valg | `payments` |
+| **MobilePay** | Betaling ind (DK) — **kun via kort-gatewayen** | Navn, telefon, betalingsmetadata | DK/EU | 🔴 afhænger af gateway-valget: MobilePay er **ikke** en Alunta-gateway (ADR 0032) | 🔴 afventer | `payments` |
 | **e-conomic / Dinero** | Bogføring ud | Faktura-/kundedata, CVR | DK/EU | afventer leverandørvalg | 🔴 afventer (leverandør uafklaret) | `accounting` |
-| **Anthropic Claude / EU-LLM** | AI-mødeopfølgning | Mødeindhold/transskript (kan indeholde PII) | 🔴 afventer (Claude vs. EU-hostet) | 🔴 afventer EU-residens/DPA (Mads) | 🔴 afventer | `aiFollowup` |
-| **Transskription** | Lyd → tekst | Mødeoptagelse/-tekst | 🔴 afventer udbydervalg | 🔴 afventer (dansk/EU søges) | 🔴 afventer | `transcription` |
+| **Ordbogen** (chat.dk / Odin-LLM) | AI-mødeopfølgning (ADR 0024) | Mødeindhold/transskript (kan indeholde PII) | DK — dansk datacenter | ✅ DK (ADR 0024) | 🔴 afventer underskrift (blokerer produktionsbrug) | `aiFollowup` |
+| **Ordbogen** (ordbogen.ai) | Lyd → tekst (ADR 0024) | Mødeoptagelse/-tekst | DK — dansk datacenter | ✅ DK (ADR 0024) | 🔴 afventer underskrift (samme aftale som Odin-LLM) | `transcription` |
 | **Resend** | Transaktionsmails | E-mailadresser, mailindhold | EU (Dublin) | ✅ EU (Dublin) | 🔴 afventer underskrift (Resend DPA findes) | `email` |
 | **inMobile** | SMS | Telefonnumre, beskedindhold | DK | ✅ DK | 🔴 afventer underskrift | `sms` |
 | **PostHog** | Analytics + fejlovervågning | Pseudonyme events, evt. IP/enhed | EU (eu.posthog.com) | ✅ EU | 🔴 afventer underskrift (PostHog DPA findes) | `analytics` |

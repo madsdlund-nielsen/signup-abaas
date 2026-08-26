@@ -13,13 +13,16 @@
 
 ## Leverancekriterier (Definition of Done for fase 3)
 
-- [ ] Betalingsadapteren udfyldt i `src/lib/payments/` — **ingen direkte SDK-kald
-      uden for adapteren**. Interfacet forbliver leverandørneutralt.
+- [ ] Betalingsmekanikken bygget mod porten i `src/lib/payments/` — **ingen direkte
+      SDK-kald uden for adapteren**. Interfacet forbliver leverandørneutralt.
+      ⚠ Selve Alunta-adapteren er dataflow-afsøgningens leverance (`TODO(mads)`,
+      §12 pkt. 10) — API'et er uafsøgt, og en gættet adapter ville bryde stub-politikken.
 - [ ] Prisregler ligger i **admin-UI og database**, ikke i kode. Ingen beløb er
       hardcodet nogen steder.
 - [ ] Prisberegner: viser ejeren en pris ud fra boardstørrelse (2-3 partnere) og
       frekvens (4 / 8 / 12 uger).
-- [ ] Checkout via Alunta, inkl. MobilePay som betalingsmetode.
+- [ ] Checkout-mekanik via porten (kortregistrering + charge-grundlag); MobilePay
+      afventer Alunta-verifikation (`TODO(mads)`).
 - [ ] **Varierende betalingsfrekvenser** implementeret: kort registreres ved
       booking, træk sker ved afholdelse.
 - [ ] Webhook → `membership` i Supabase. Signaturverificeret og **idempotent**.
@@ -82,9 +85,42 @@
 - Skift af frekvens (4 ↔ 8 ↔ 12 uger) og boardstørrelse (2 ↔ 3 partnere).
 - Boardstørrelsen skal respektere fase 1's invariant: 2-3 partnere, mindst 1 intern
   (`src/server/matching/algorithm.ts`).
-- Definér proratering som **konfigurerbar regel**, ikke hardcodet logik.
+- **Ingen proratering** (rettet 2026-08-04, ADR 0030): med træk-pr-afholdelse findes
+  ingen forudbetaling at proratere — §5.9 siger selv *"meeting-fee justeres tilsvarende
+  ved næste afholdelse"*. Ny pris/frekvens/boardstørrelse slår igennem ved næste
+  afholdte møde, fordi beløbet beregnes ved afholdelses-flippet. Det tidligere
+  prorateringskrav her var abonnements-tænkning der ikke matcher betalingsmodellen.
 - ⚠ Regnskabssystem (e-conomic vs. Dinero) er uafklaret → byg ikke
   bogføringsintegration endnu; porten i `src/lib/accounting/` holdes på stub.
+
+> **Status (2026-08-04, ADR 0030 + 0031):** leveret i ÉN PR (merge-økonomi). Migration 0013:
+> `membership` (én pr. board, frekvens fra quiz-svar), `pricing_rule` (append-only versioner,
+> højst én aktiv via partial unique index, authed-læsbar aktiv version), `payment_charge`
+> (grundlag pr. afholdt møde, `meeting_id unique`, versionsreference som audit) og
+> `payment_webhook_event`. Charge-grundlag oprettes af afholdelses-flippet (kun flipperen —
+> `.select`-fix i registerMeetingStatus); provider-træk er afkoblet (admin-processering);
+> webhooken er autoritativ for gennemført/fejlet. `/admin/priser` (preview-inden-gem med delt
+> `PriceBreakdown`), `/betaling` (pris, medlemskab, kort, frekvens-skift, opkrævninger),
+> board-op/nedgradering på `/board` (add/remove med invariant). `/api/webhooks/alunta` bygget
+> med ADR 0027-mønstret.
+>
+> **Opdatering (2026-08-04, ADR 0032):** dataflow-afsøgningen ER kørt mod Aluntas
+> OpenAPI-spec, og `AluntaPaymentProvider` er skrevet mod den verificerede form:
+> usage-abonnement med øre-parameter (`meeting_fee_oere` à 1 øre — vores `pricing_rule`
+> forbliver den autoritative prisberegner), checkout-session til kortregistrering,
+> `Signature`-webhook (HMAC-SHA256 hex) med afledt event-id, charge-livscyklus
+> afventer → rapporteret → gennemført/fejlet (migration 0014).
+> **Fund:** MobilePay er IKKE en Alunta-gateway (afgøres af gateway-valget
+> OnPay/Stripe/QuickPay), og trækket opkræves som periodefaktura — ikke pr. møde
+> (§4-nuance, ejerne skal orienteres).
+>
+> **DoD krydses IKKE af endnu:** rest er Alunta-UI-opsætning (plan + parameter +
+> webhook-secret + interval), gateway-valg, og live-verifikation i test_mode.
+> Ingen prisregel er aktiv før admin/ejer sætter tal.
+>
+> **Flag:** startpris/frekvensfaktorer (ejer — struktur uden værdier), moms (ejer — rå øre),
+> fejlet træk vs. honorar (ejer — kun registrering), prisregel-pinning for eksisterende aftaler
+> (ejer — spec-tro default: ny pris ved næste afholdelse). Samlet i `docs/stub-register.md`.
 
 ## Uafklarede punkter berørt i fase 3 (flag, beslut ikke)
 

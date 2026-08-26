@@ -38,7 +38,7 @@ export type { EmailSender, EmailMessage } from "./email";
 export type { LlmProvider, MeetingSummary, MeetingSummaryRequest } from "./llm";
 export type {
   PaymentProvider,
-  ChargeRequest,
+  UsageChargeRequest,
   CardRegistration,
   CheckoutSession,
   PaymentFrequencyWeeks,

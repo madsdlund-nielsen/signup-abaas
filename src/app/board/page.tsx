@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 
 import { getCurrentUser } from "@/server/auth";
 import { getMyBoard, type BoardMember } from "@/server/boards";
-import { approveBoard, swapBoardPartner } from "@/server/boards/actions";
+import { addBoardPartner, approveBoard, removeBoardPartner, swapBoardPartner } from "@/server/boards/actions";
 import { isEnabled } from "@/server/flags";
 import {
   computeSwapDelta,
@@ -159,25 +159,36 @@ export default async function BoardPage({
             showLead={showLead}
           >
             {board ? (
-              <form className="row-form" action={swapBoardPartner}>
-                <input type="hidden" name="board_id" value={board.id} />
-                <input type="hidden" name="outgoing" value={id} />
-                <Select name="incoming" label="Udskift med" defaultValue="">
-                  <option value="" disabled>
-                    Vælg partner
-                  </option>
-                  {pool
-                    .filter((candidate) => !shownIds.has(candidate.id))
-                    .map((candidate) => (
-                      <option key={candidate.id} value={candidate.id}>
-                        {candidate.name}
-                      </option>
-                    ))}
-                </Select>
-                <button className="btn-secondary" type="submit">
-                  Udskift
-                </button>
-              </form>
+              <div className="stack">
+                <form className="row-form" action={swapBoardPartner}>
+                  <input type="hidden" name="board_id" value={board.id} />
+                  <input type="hidden" name="outgoing" value={id} />
+                  <Select name="incoming" label="Udskift med" defaultValue="">
+                    <option value="" disabled>
+                      Vælg partner
+                    </option>
+                    {pool
+                      .filter((candidate) => !shownIds.has(candidate.id))
+                      .map((candidate) => (
+                        <option key={candidate.id} value={candidate.id}>
+                          {candidate.name}
+                        </option>
+                      ))}
+                  </Select>
+                  <button className="btn-secondary" type="submit">
+                    Udskift
+                  </button>
+                </form>
+                {board.members.length > 2 ? (
+                  <form action={removeBoardPartner}>
+                    <input type="hidden" name="board_id" value={board.id} />
+                    <input type="hidden" name="partner" value={id} />
+                    <button className="btn-secondary" type="submit">
+                      Fjern fra boardet
+                    </button>
+                  </form>
+                ) : null}
+              </div>
             ) : null}
           </PartnerCard>
         ))}
@@ -203,9 +214,36 @@ export default async function BoardPage({
         </p>
       ) : null}
 
+      {board && board.members.length < MAX_BOARD_SIZE && pool.some((c) => !shownIds.has(c.id)) ? (
+        <form className="row-form measure" action={addBoardPartner}>
+          <input type="hidden" name="board_id" value={board.id} />
+          <Select name="partner" label="Udvid boardet med en partner" defaultValue="">
+            <option value="" disabled>
+              Vælg partner
+            </option>
+            {pool
+              .filter((candidate) => !shownIds.has(candidate.id))
+              .map((candidate) => (
+                <option key={candidate.id} value={candidate.id}>
+                  {candidate.name}
+                </option>
+              ))}
+          </Select>
+          <button className="btn-secondary" type="submit">
+            Tilføj
+          </button>
+        </form>
+      ) : null}
+
       <p className="body">
-        Du kan frit udskifte board-medlemmer — der er højst {MAX_BOARD_SIZE} partnere på et board.{" "}
-        <Link href="/dashboard">Til dashboard</Link>
+        Du kan frit udskifte board-medlemmer — der er højst {MAX_BOARD_SIZE} partnere på et board.
+        Ændringer i boardstørrelse og frekvens slår igennem i prisen fra næste afholdte møde.{" "}
+        <span className="row-form">
+          <Link className="btn-secondary" href="/betaling">
+            Betaling
+          </Link>
+          <Link href="/dashboard">Til dashboard</Link>
+        </span>
       </p>
     </main>
   );

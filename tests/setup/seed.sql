@@ -83,3 +83,9 @@ insert into meeting_partner (meeting_id, partner_profile_id) values
 
 insert into meeting_note (id, meeting_id, partner_profile_id, body) values
   ('00000000-0000-0000-0000-0000000f0a01', '00000000-0000-0000-0000-0000000f0002', '00000000-0000-0000-0000-0000000e0001', 'Note fra Partner Én');
+
+-- Betalings-seed (0013): ejer-A's membership på boardet, frekvens 4 (strukturel enum-værdi,
+-- ikke et forretningstal). INGEN pricing_rule-seed — tal indtastes af admin i prod, og
+-- RLS-tests indsætter egne rækker i transaktioner der rulles tilbage (stub-politik).
+insert into membership (id, board_id, frequency_weeks) values
+  ('00000000-0000-0000-0000-0000000ba001', '00000000-0000-0000-0000-0000000b0a4d', 4);
