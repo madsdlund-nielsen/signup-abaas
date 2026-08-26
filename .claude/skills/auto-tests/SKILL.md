@@ -21,7 +21,7 @@ git status --short
 | `src/components/**` | unit | render via token-klasser, **ingen inline-styles** |
 | `src/server/flags`, `src/server/consent`, rene funktioner | unit | adfærd + edge cases |
 | `src/lib/<vendor>/**` (adapter) | integration | factory returnerer stub uden nøgle; fire-and-forget resolver; backend kaster `NotConfiguredError` |
-| `supabase/migrations/**`, `supabase/policies/**` | db | RLS — positive **og obligatoriske negative** cases |
+| `supabase/migrations/**` (RLS-policies ligger i migrationerne, ADR 0007) | db | RLS — positive **og obligatoriske negative** cases |
 
 ## 3. Læs et eksisterende eksempel før du skriver
 - Komponent: `tests/unit/components.test.tsx`, `tests/unit/PrimaryButton.test.tsx`

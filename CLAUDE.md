@@ -230,3 +230,7 @@ En fase startes ikke før den foregående er grøn.
    udløser en Netlify-produktions-redeploy med **fast kreditomkostning uanset
    PR-størrelse.** Saml derfor en hel fase (backend + UI) i ÉN PR = én merge;
    undgå mange små merges. Draft-PR'er kan samle flere commits før merge.
+6. **Teknisk gæld og drift hører i `docs/backlog.md`** — ikke her, og ikke i
+   `docs/stub-register.md`. Backloggen er til punkter hvor beslutningen allerede er
+   truffet, men koden eller dokumentationen ikke er fulgt med. Luk et punkt ved at
+   slette rækken i samme PR som fixet.

@@ -11,25 +11,30 @@
 
 ## Leverancekriterier (Definition of Done for fase 2)
 
-- [ ] Cal.com integreret via adapteren i `src/lib/booking/` (Platform managed users +
+> **Status: BETINGET LUKKET 2026-08-26.** 8 af 11 punkter er verificeret og krydset af.
+> De tre resterende er alle blokeret af samme årsag — ingen Cal.com-konto — og er
+> samlet i liveverifikations-checklisten i `docs/spikes/multi-host.md`, som er en
+> **gate før produktion, ikke før fase 3**. Begrundelse: `docs/fase-2-rapport.md` §5.
+
+- [x] Cal.com integreret via adapteren i `src/lib/booking/` (Platform managed users +
       Atoms) — **ingen direkte SDK-kald uden for adapteren**.
-- [ ] Multi-host booking virker: 2-3 partnere + ejer på samme møde.
+- [ ] ⚠ **Afventer liveverifikation.** Multi-host booking virker: 2-3 partnere + ejer på samme møde.
       ⚠ Bygges mod porten med stub aktiv; **liveverifikation (multi-host-spiken) udestår
       til Cal.com-nøglerne lander** (gate fjernet af Mads 2026-08-04, se 2.2).
-- [ ] Webhooks fra Cal.com → `meeting` i Supabase (oprettet, flyttet, aflyst,
+- [ ] ⚠ **Afventer liveverifikation.** Webhooks fra Cal.com → `meeting` i Supabase (oprettet, flyttet, aflyst,
       afholdt). Idempotent og signaturverificeret.
-- [ ] Møde varer 60 min + **15 min betalt forberedelse** afspejlet i
+- [x] Møde varer 60 min + **15 min betalt forberedelse** afspejlet i
       datamodellen (honorargrundlag = 75 min).
-- [ ] Cal Video som mødelokale, link tilgængeligt for alle deltagere i appen.
-- [ ] Mødestatus i app er **to felter** (ADR 0026, jf. byggespec §5.6): mødets
+- [ ] ⚠ **Afventer liveverifikation.** Cal Video som mødelokale, link tilgængeligt for alle deltagere i appen.
+- [x] Mødestatus i app er **to felter** (ADR 0026, jf. byggespec §5.6): mødets
       livscyklus (planlagt → afholdt / aflyst) + partnerens registrering pr. møde
       (afholdt / forsinket afbud / udeblivelse — honorargrundlaget).
-- [ ] Booking, flytning og aflysning kan udføres i appen — ikke kun i Cal.com.
-- [ ] Møde-noter (efter møde) kan oprettes og læses jf. rolleadgang via RLS.
-- [ ] Lead-partner ser og kan initiere **næste møde** for sit board.
-- [ ] **Partner-login + self-service-profil** (2.8): partner kan logge ind, se sit
+- [x] Booking, flytning og aflysning kan udføres i appen — ikke kun i Cal.com.
+- [x] Møde-noter (efter møde) kan oprettes og læses jf. rolleadgang via RLS.
+- [x] Lead-partner ser og kan initiere **næste møde** for sit board.
+- [x] **Partner-login + self-service-profil** (2.8): partner kan logge ind, se sit
       board og redigere egen profil — men **ikke** egne kompetence-tags.
-- [ ] Fuld test suite grøn, inkl. webhook-integrationstests og RLS-policy-tests
+- [x] Fuld test suite grøn, inkl. webhook-integrationstests og RLS-policy-tests
       på `meeting` og noter (positive **og** negative, jf. `tests/CLAUDE.md`).
 
 ## Arbejdspakker
@@ -119,6 +124,12 @@
 > `src/server/partners` (invitation, portal-læsning, self-service uden tags),
 > `CalComBookingProvider` (første ægte adapter) og webhook-endpointet (første route
 > handler). UI: `/moeder`, `/partner`, invitation på `/admin/partners/[id]`.
+>
+> **Opdatering 2026-08-26 — fasen er betinget lukket.** Se `docs/fase-2-rapport.md`.
+> Kodegennemgangen ved lukning fandt og rettede tre fejl (tabte webhook-events,
+> ukontrolleret fejl ved påhægtning af bookingreference, og værter der kunne udelades i
+> stilhed) — se rapportens §4 og ADR 0029. Afsnittet nedenfor beskriver tilstanden ved
+> leveringen 2026-08-04 og er bevaret som historik:
 >
 > **DoD krydses IKKE af endnu:** alt Cal.com-vendt er bygget og testet mod porten med
 > stub aktiv — **liveverifikationen** (multi-host, EU-residens, join-URL-mapping,
