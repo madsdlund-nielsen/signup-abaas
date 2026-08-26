@@ -14,7 +14,9 @@ afsnittet "Uafklarede punkter").
 En platform der sammensætter et lille rådgivende advisory board (2-3 partnere)
 for en virksomhedsejer, faciliterer betalte møder (60 min + 15 min betalt
 forberedelse = 75 min honorar), håndterer booking, video, betaling, honorar og
-AI-mødeopfølgning. **Launch: 1. oktober 2026. Ejer-test: udgangen af august.**
+AI-mødeopfølgning. **Launch: januar 2027** (udskudt fra 1. oktober 2026 — Mads,
+2026-08-26). **Næste milepæl: testbar MVP afleveres mandag 2026-08-31** — en MVP til
+ejer-test, ikke et færdigt produkt.
 
 Board er kerneproduktet. Alt andet er støttefunktioner.
 
@@ -122,12 +124,13 @@ webhook-signaturverifikation, idempotens eller samtykke.
 - ~~Alunta/Supabase dataflow~~ → **afsøgt mod OpenAPI-spec'en (ADR 0032)**: usage-abonnement
   med øre-parameter; adapter + webhooks bygget. Rest: opsætning i Alunta-UI (plan +
   parameter + webhook-secret + faktureringsinterval) og live-verifikation i test_mode
-- MobilePay gennem Alunta — **API-verificeret: MobilePay er IKKE en Alunta-gateway**
-  (kort: OnPay/Stripe/QuickPay; "MobilePay" kun som manuel betalingsmetode-label).
-  Evt. MobilePay går via den valgte gateways eget checkout — gateway-valget afgør det
-- Gateway-valg hos Alunta: OnPay vs. Stripe vs. QuickPay (gebyrer + MobilePay-mulighed)
 
 **Lukket siden sidst:**
+- ~~Gateway-valg hos Alunta~~ → **QuickPay** (Mads, 2026-08-26; ADR 0034)
+- ~~MobilePay gennem Alunta~~ → MobilePay er ikke en Alunta-gateway (ADR 0032), men
+  **QuickPay tilbyder MobilePay Online**, så den går via gatewayens checkout (ADR 0034).
+  ⚠ Skal stadig verificeres live mod en rigtig QuickPay-konto
+- ~~Betalingsmodel: pr. møde vs. abonnement~~ → **fast abonnement hver 4. uge** (ADR 0034)
 - ~~Alunta vs. Stripe Billing~~ → **Alunta** (ADR 0023)
 - ~~Henosia vs. Netlify~~ → **Netlify** (irsk/EU, ADR 0012)
 - ~~LLM EU-dataresidens~~ → **Ordbogen/Odin-LLM, dansk datacenter** (ADR 0024; DPA udestår)
@@ -180,10 +183,16 @@ acceptkriterium på linje med sikkerhed — ikke noget der pyntes til sidst.
 
 ---
 
-## Betalingsmodel (sprogbrug)
+## Betalingsmodel
 
-Brug **"varierende betalingsfrekvenser"** konsekvent. Kort registreres ved
-booking, træk sker ved afholdelse. Frekvensvalg: 4 / 8 / 12 uger.
+**Fast abonnement pr. kunde, der forfalder hver 4. uge** (ikke månedligt, ikke årligt).
+Abonnementets STØRRELSE afhænger af antal rådgivere på boardet og mødefrekvensen
+(4 / 8 / 12 uger). Beslutning: Mads, 2026-08-26 — se **ADR 0034**.
+
+⚠ **Dette erstatter den tidligere model** ("kort registreres ved booking, træk sker ved
+afholdelse"), som fase 3 er bygget efter. Koden opkræver i dag pr. afholdt møde og skal
+rettes — se `docs/backlog.md` B-19. Brug ikke ordet "varierende betalingsfrekvenser"
+om selve opkrævningen længere; frekvensen er fast (4 uger), det er PRISEN der varierer.
 
 ---
 

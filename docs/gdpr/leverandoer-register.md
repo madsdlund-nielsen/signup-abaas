@@ -13,8 +13,8 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
 | **Cal.com** | Booking (multi-host) | Navne, e-mails, mødetider | 🔴 afventer multi-host-spike | 🔴 afventer (punkt 5) | 🔴 afventer | `booking` |
 | **Cal Video** | Multi-party video + optagelse | Billede/lyd af møder | 🔴 afventer plan/spike | 🔴 afventer (punkt 6) | 🔴 afventer | `video` |
 | **Alunta** | Betaling ind — abonnement/fakturering (ADR 0023) | Navn, e-mail, medlemskabs- og faktureringsmetadata (ikke kortdata — de bor hos gatewayen) | DK (dansk udbyder) | 🟡 dansk udbyder; hosting ikke formelt verificeret | 🔴 afventer underskrift | `payments` |
-| **Kort-gateway** — OnPay / Stripe / QuickPay | Kortregistrering + træk bag Aluntas checkout | Kortdata, navn, betalingsmetadata | 🔴 afhænger af valget (Stripe = global; OnPay/QuickPay = DK) | 🔴 **leverandør ikke valgt** (ADR 0032) | 🔴 afventer valg | `payments` |
-| **MobilePay** | Betaling ind (DK) — **kun via kort-gatewayen** | Navn, telefon, betalingsmetadata | DK/EU | 🔴 afhænger af gateway-valget: MobilePay er **ikke** en Alunta-gateway (ADR 0032) | 🔴 afventer | `payments` |
+| **QuickPay** (kort-gateway) | Kortregistrering + træk bag Aluntas checkout (ADR 0034) | Kortdata, navn, betalingsmetadata | DK | 🟡 dansk udbyder; hosting ikke formelt verificeret | 🔴 afventer underskrift | `payments` |
+| **MobilePay** | Betaling ind (DK) — via **QuickPays** checkout (MobilePay Online) | Navn, telefon, betalingsmetadata | DK/EU | 🟡 går via QuickPay (ADR 0034); ikke en Alunta-gateway (ADR 0032) | 🔴 afventer | `payments` |
 | **e-conomic / Dinero** | Bogføring ud | Faktura-/kundedata, CVR | DK/EU | afventer leverandørvalg | 🔴 afventer (leverandør uafklaret) | `accounting` |
 | **Ordbogen** (chat.dk / Odin-LLM) | AI-mødeopfølgning (ADR 0024) | Mødeindhold/transskript (kan indeholde PII) | DK — dansk datacenter | ✅ DK (ADR 0024) | 🔴 afventer underskrift (blokerer produktionsbrug) | `aiFollowup` |
 | **Ordbogen** (ordbogen.ai) | Lyd → tekst (ADR 0024) | Mødeoptagelse/-tekst | DK — dansk datacenter | ✅ DK (ADR 0024) | 🔴 afventer underskrift (samme aftale som Odin-LLM) | `transcription` |

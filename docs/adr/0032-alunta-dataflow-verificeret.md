@@ -1,6 +1,10 @@
 # 0032 — Alunta-dataflow verificeret: usage-abonnement med øre-parameter
 
-- **Status:** Accepteret
+- **Status:** Accepteret — **usage-modellen erstattet af ADR 0034**
+
+> **Læs ADR 0034 sammen med denne.** De verificerede API-fakta (webhook-form, signatur,
+> checkout-flow) står ved magt. Men Alunta-planen skal være et **abonnement med
+> 4-ugers interval**, ikke en usage-plan med `meeting_fee_oere`. Gateway = QuickPay.
 - **Dato:** 2026-08-04
 - **Fase:** 3
 - **Berører uafklaret punkt:** ja — lukker "Alunta/Supabase dataflow" (§12 pkt. 10, Mads); efterlader gateway-valg, MobilePay-verifikation og priser åbne

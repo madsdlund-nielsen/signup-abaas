@@ -25,11 +25,10 @@ signup-abaas/
 │       └── 0000-template.md     # skabelon
 ├── src/                         # applikationskode (rejses i fase 0)
 │   ├── app/                     # Next.js App Router — sider/ruter
-│   ├── features/                # feature-baseret domænekode
 │   ├── components/              # delte UI-komponenter (bruger tokens)
 │   ├── styles/                  # design-tokens.css loades her
 │   ├── lib/                     # adaptere: cal.com, stripe, llm, video
-│   └── server/                  # flags, auth, domænelogik
+│   └── server/                  # domænemapper: auth, quiz, boards, meetings … (ADR 0035)
 ├── supabase/
 │   └── migrations/              # generate → review → staging → prod
 │                                # (RLS-policies ligger I migrationerne — ADR 0007)
@@ -41,35 +40,44 @@ signup-abaas/
 └── .env.example
 ```
 
-## Princip: feature-baseret, ikke lag-baseret
+## Princip: domæne under `server/` (ADR 0035)
 
-`src/features/` grupperer kode efter **domæne**, ikke efter teknisk lag. Hver
-feature ejer sine egne komponenter, hooks, server-actions og typer.
+Domænekode grupperes efter **domæne**, ikke efter teknisk lag — men den bor i
+`src/server/<domæne>/`, ikke i `src/features/`. ADR 0002 foreskrev oprindeligt
+`src/features/`; den mappe blev aldrig taget i brug og er fjernet (ADR 0035).
 
 ```
-src/features/
-├── onboarding/      # quiz, conversational flow
-├── board/           # matching, anbefaling, lead-partner
-├── booking/         # cal.com, møder, status, noter
-├── betaling/        # prisberegner, checkout, frekvenser
-├── honorar/         # opgørelse, udbetaling
-└── rating/          # forberedelse, feedback
+src/server/
+├── auth/            # session, roller, provisionering
+├── quiz/            # spørgsmål, options, ejer-svar
+├── tags/            # kompetence-tags (admin-styret)
+├── partners/        # katalog, invitation, portal, self-service
+├── boards/          # board-sammensætning, lead-partner
+├── matching/        # board-matching-algoritmen
+├── meetings/        # booking, status, noter
+├── memberships/     # medlemskab + betalingsfrekvens
+├── pricing/         # versionerede prisregler
+└── charges/         # opkrævningsgrundlag
 ```
 
-Hvorfor: features bygges og testes isoleret, og en fremtidig vedligeholdelses-
-udvikler kan finde alt om fx booking ét sted. Lag-baseret (alle `services/`
-samlet, alle `controllers/` samlet) spreder én feature ud over hele træet og
-gør clean handover sværere — et af kerne­målene for greenfield-rewriten.
+Konventionen i hvert domæne:
 
-## Lag-grænser (vigtigt)
+| Fil | Ansvar |
+|---|---|
+| `index.ts` | Læsning via den authed klient — **RLS afgør synlighed** |
+| `actions.ts` | Mutationer via service-role bag rolle- **og** eksplicit ejerskabstjek |
+| øvrige | Ren, DB-fri logik der kan unit-testes (`algorithm.ts`, `webhook.ts` …) |
 
-- `src/features/**` må IKKE importere tredjeparts-SDK'er direkte. Al kontakt med
-  Cal.com, Stripe, video og LLM går gennem en adapter i `src/lib/`. Det er det
-  der gør leverandører udskiftelige (jf. arkitekturprincip 2 i `CLAUDE.md`).
-- `src/server/` ejer flags, auth-hjælpere og domænelogik der deles på tværs af
-  features.
-- `src/components/` er rent præsentation og refererer KUN design-tokens — aldrig
-  hardcodede farver/fonts/radius.
+## Lag-grænser (håndhævet af lint, ADR 0028)
+
+- **Tredjeparts-SDK'er må kun importeres i `src/lib/`.** Al kontakt med Cal.com,
+  Alunta, video og LLM går gennem en adapter-port — det gør leverandører udskiftelige
+  (arkitekturprincip 2 i `CLAUDE.md`).
+- **`src/components/` må ikke importere server-only moduler** — hverken
+  `supabase-server` (som bypasser RLS), `@/lib` eller `next/headers`. `import type`
+  og server-actions er fortsat i orden.
+- Begge regler er `no-restricted-imports` i `eslint.config.mjs` — ikke hensigt.
+- `src/components/` refererer KUN design-tokens, aldrig hardcodede farver/fonts/radius.
 
 ## Design-tokens: én sandhedskilde
 
@@ -87,7 +95,6 @@ til `src/styles/`, som appen loader. Redigér altid kilden i `docs/` og hold
 
 ## ADR-kandidater i denne struktur (skriv ADR ved valg)
 
-- Feature- vs. lag-baseret opdeling (denne fil anbefaler feature-baseret).
 - Navngivning og grænse mellem `lib/` (adaptere) og `server/` (domæne).
 - Komponentbibliotek-tilgang: egne komponenter vs. headless oven på tokens.
 - Test-mappens opdeling (unit/integration/db/e2e) og runner-valg.

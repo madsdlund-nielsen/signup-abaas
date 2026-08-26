@@ -1,6 +1,10 @@
 # 0030 — Betalings-datamodel: versionerede prisregler + charge pr. afholdt møde
 
-- **Status:** Accepteret
+- **Status:** Accepteret — **opkrævnings-triggeren erstattet af ADR 0034**
+
+> **Læs ADR 0034 sammen med denne.** Prisreglen og dens versionering står ved magt.
+> Men opkrævningen sker ikke længere pr. afholdt møde: modellen er et fast abonnement
+> der forfalder hver 4. uge (Mads, 2026-08-26). Rework spores som `docs/backlog.md` B-19.
 - **Dato:** 2026-08-04
 - **Fase:** 3
 - **Berører uafklaret punkt:** ja — priser/moms/fejlet-træk-konsekvens flagges; besluttes ikke her

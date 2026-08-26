@@ -7,6 +7,14 @@ import { getMyMembership, getMyQuizFrequency } from "@/server/memberships";
 import { getActivePricingRule, listPricingRules } from "@/server/pricing";
 import { POST } from "@/app/api/webhooks/alunta/route";
 
+// Supabase mockes KUN for at kunne fremtvinge en fejlende mutation i webhook-handleren.
+// De øvrige tests når aldrig så langt (de afvises på secret/signatur/form først).
+const mocked = vi.hoisted(() => ({ service: null as unknown }));
+vi.mock("@/server/auth/supabase-server", () => ({
+  createServiceSupabase: () => mocked.service,
+  createServerSupabase: async () => mocked.service,
+}));
+
 describe("payments-registry (ADR 0032): adapter ved flag+nøgler, ellers stub", () => {
   it("uden konfiguration: stub der kaster NotConfiguredError med vendor 'alunta'", async () => {
     const stub = createPaymentProvider({});
@@ -41,18 +49,18 @@ describe("betalings-data-access uden Supabase-konfiguration (kontofri CI/dev)", 
   });
 });
 
+function post(body: string, signature?: string): Promise<Response> {
+  return POST(
+    new Request("http://localhost/api/webhooks/alunta", {
+      method: "POST",
+      body,
+      headers: signature ? { Signature: signature } : {},
+    }),
+  );
+}
+
 describe("alunta-webhook-endpointet — Signature-header, verifikation før alt (ADR 0027/0032)", () => {
   afterEach(() => vi.unstubAllEnvs());
-
-  function post(body: string, signature?: string): Promise<Response> {
-    return POST(
-      new Request("http://localhost/api/webhooks/alunta", {
-        method: "POST",
-        body,
-        headers: signature ? { Signature: signature } : {},
-      }),
-    );
-  }
 
   it("NEGATIV: uden ALUNTA_WEBHOOK_SECRET behandles intet (503, aldrig fail-open)", async () => {
     vi.stubEnv("ALUNTA_WEBHOOK_SECRET", "");
@@ -78,5 +86,82 @@ describe("alunta-webhook-endpointet — Signature-header, verifikation før alt 
     const response = await post(body, createHmac("sha256", "s3cret").update(body).digest("hex"));
     expect(response.status).toBe(200);
     expect(await response.text()).toMatch(/Ignoreret/);
+  });
+});
+
+
+describe("betalings-webhook: idempotens skal betyde 'præcis én gang' (ADR 0029)", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  /** Minimal Supabase-dobbelt med kaldsspor. `updateError` fremtvinger en fejlet mutation. */
+  function fakeService(updateError: string | null) {
+    const calls: string[] = [];
+    const result = updateError ? { data: null, error: { message: updateError } } : { data: [{ id: "m1" }], error: null };
+    return {
+      calls,
+      service: {
+        from(table: string) {
+          return {
+            insert: async () => {
+              calls.push(`insert:${table}`);
+              return { error: null };
+            },
+            update: () => ({
+              eq: async () => {
+                calls.push(`update:${table}`);
+                return result;
+              },
+            }),
+            delete: () => ({
+              eq: () => ({
+                eq: async () => {
+                  calls.push(`delete:${table}`);
+                  return { error: null };
+                },
+              }),
+            }),
+          };
+        },
+      },
+    };
+  }
+
+  function signedCancel() {
+    const body = JSON.stringify({
+      event: "subscription.cancelled",
+      team_id: 1,
+      timestamp: "2026-08-26T10:00:00Z",
+      data: { customer: { uuid: "cus-1" } },
+    });
+    return { body, signature: createHmac("sha256", "s3cret").update(body).digest("hex") };
+  }
+
+  function configure() {
+    vi.stubEnv("ALUNTA_WEBHOOK_SECRET", "s3cret");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://localhost:54321");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service");
+  }
+
+  it("fejlet mutation ruller idempotensrækken tilbage, så Aluntas genlevering kan anvende eventet", async () => {
+    configure();
+    const { service, calls } = fakeService("db nede");
+    mocked.service = service;
+
+    const { body, signature } = signedCancel();
+    expect((await post(body, signature)).status).toBe(500);
+    // Uden rollbacken ville genleveringen ramme 23505 og kvittere 200 uden at anvende noget —
+    // en tabt subscription.cancelled ville lade os fakturere en opsagt aftale videre.
+    expect(calls).toEqual(["insert:payment_webhook_event", "update:membership", "delete:payment_webhook_event"]);
+  });
+
+  it("vellykket mutation lader idempotensrækken stå (ingen rollback)", async () => {
+    configure();
+    const { service, calls } = fakeService(null);
+    mocked.service = service;
+
+    const { body, signature } = signedCancel();
+    expect((await post(body, signature)).status).toBe(200);
+    expect(calls).toEqual(["insert:payment_webhook_event", "update:membership"]);
   });
 });
