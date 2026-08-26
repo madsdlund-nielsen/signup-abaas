@@ -60,6 +60,17 @@ export async function POST(request: Request): Promise<Response> {
 
   const mutation = mapAluntaEvent(payload);
   const fail = async (step: string, message: string): Promise<Response> => {
+    // Rul idempotensrækken TILBAGE før 500'eren (ADR 0029). Uden det ville Aluntas
+    // genlevering ramme unique-constrainten, kvittere 200 "allerede behandlet" — og
+    // eventet ville være tabt for altid uden nogensinde at være anvendt. Konkret:
+    // en tabt invoice.paid efterlader en kunde der HAR betalt som ubetalt, og en tabt
+    // subscription.cancelled lader os blive ved med at fakturere en opsagt aftale.
+    // Idempotens skal betyde "præcis én gang", ikke "højst én gang".
+    await service
+      .from("payment_webhook_event")
+      .delete()
+      .eq("provider", "alunta")
+      .eq("provider_event_id", buildEventId(payload));
     await analytics.captureException(new Error(message), {
       source: "alunta-webhook",
       step,

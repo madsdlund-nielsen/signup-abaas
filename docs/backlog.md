@@ -37,7 +37,6 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 
 | ID | Punkt | Hvor | Handling | Ejer |
 |---|---|---|---|---|
-| **B-05** | **`src/features/` er tom.** ADR 0002 låste en feature-baseret struktur (`features/{onboarding,board,booking,…}`), men al domænekode er endt i `src/server/<domæne>/`. Strukturen er altså skiftet ved drift, ikke ved beslutning. | `src/features/` (kun `README.md`), `docs/adr/0002-*.md`, `docs/projektstruktur.md` | Vælg: (a) ny ADR der **erstatter** 0002 og beskriver den faktiske `server/`-baserede struktur, eller (b) migrér koden. Lad ikke driften stå. `src/features/README.md` beskriver desuden en struktur der ikke findes — og nævner Stripe. | Mads |
 | **B-07** | **Tie-break-punktet har ingen ejer.** Byggespec §5.2 flager det og henviser til §12 — men punktet findes ikke i §12's tabel (numrene 3, 20 og 23 mangler). Det står heller ikke i `CLAUDE.md`'s liste over uafklarede punkter. | `src/server/matching/algorithm.ts:47`, `docs/fase-1-rapport.md` §3 | Tilføj punktet til `CLAUDE.md`'s ejer-liste (eller få §12 rettet), så det ikke falder mellem to stole. Koden holder en neutral, deterministisk pladsholder — registreret i stub-registret. | Ejer |
 
 ## 3. Leverandør-drift i kode (venter på sin fase)
@@ -49,12 +48,13 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 |---|---|---|---|---|
 | **B-09** | **LLM- og transskriptions-adapterne er generiske** (`LLM_API_KEY`, `TRANSCRIPTION_API_KEY`). ADR 0024 udpeger Ordbogen (ordbogen.ai + chat.dk/Odin). DPA er stadig forudsætning — se stub-registret. | `src/lib/llm/index.ts`, `src/lib/transcription/index.ts` | 4 | Mads |
 
+| **B-19** | **Betalingsmodellen er ændret, men koden er ikke.** ADR 0034 fastslår et **fast abonnement der forfalder hver 4. uge**; fase 3 opkræver pr. **afholdt møde** (usage). Prisformlen overlever — kun triggeren er forkert. | `supabase/migrations/0013_payment.sql` (`payment_charge.meeting_id unique`), `src/server/charges/create.ts`, `src/server/meetings/actions.ts` (afholdelses-flippet), `src/lib/payments/alunta.ts` (`reportUsageCharge`), `src/app/betaling/page.tsx` | **Skal ske før betaling går live.** Ikke hastende for MVP: `FLAG_PAYMENTS` er slået fra, ingen prisregel findes, og der er ingen Alunta-nøgler — modulet kan ikke opkræve nogen. Alunta-planen skal oprettes som abonnement med 4-ugers interval, ikke usage-plan. | Mads |
+
 ## 4. Guardrails & sikkerhedshygiejne
 
 | ID | Punkt | Hvor | Note | Ejer |
 |---|---|---|---|---|
-| **B-10** | **`.gitignore` dækker ikke `.env.production` / `.env.staging`.** Kun `.env` og `.env*.local` er dækket. | `.gitignore` | GitHub push protection fanger kendte nøgleformater — ikke en `DATABASE_URL` med password i. Én linje at rette. | Mads |
-| **B-11** | **To gratis secret-scanning-indstillinger er slået fra:** `secret_scanning_non_provider_patterns` og `secret_scanning_validity_checks` (basis-scanning + push protection **er** slået til). | GitHub repo-indstillinger | Non-provider patterns fanger bl.a. generiske connection strings og private nøgler — netop det push protection ellers misser. | Mads |
+| **B-11** | **To secret-scanning-indstillinger kan ikke slås til via API.** `secret_scanning_non_provider_patterns` og `secret_scanning_validity_checks` står som `disabled`; en `PATCH` på repo-endpointet accepteres uden fejl, men flagene skifter ikke. Sandsynligvis GitHub Advanced Security-funktioner, ikke tilgængelige på denne plan. | GitHub repo-indstillinger | Prøv via UI'et (Settings → Code security). Lykkes det ikke, er punktet ikke løsbart uden GHAS — luk det da som "ikke tilgængelig" frem for at lade det stå åbent. Basis-scanning + push protection **er** slået til. | Mads |
 | **B-12** | **Dokumentationen af de lokale gates skal efterses, nu hvor hookene er aktiveret** (ADR 0028 tilføjede `.claude/settings.json`). `.claude/hooks/README.md` beskriver stadig aktivering som noget der mangler at ske, og `pre-pr-check`-skillen beskriver husky-gaten som kørende uden at nævne at den wires af `npm install`. | `.claude/hooks/README.md`, `.claude/skills/pre-pr-check/SKILL.md` | Ret begge tekster så de beskriver den faktiske opsætning. | Mads |
 | **B-16** | **Dækningsmarginen er tynd.** Tærsklen er 70 % og den målte dækning er 70,7 % (ADR 0028) — næste utestede komponent kan tippe CI rød. `PartnerCard.tsx` (68 linjer) og `OptionsSection.tsx` (181 linjer) står begge på 0 %. | `vitest.config.ts`, `src/components/PartnerCard.tsx`, `src/components/OptionsSection.tsx` | Skriv tests for de to komponenter og hæv derefter tærsklen — hellere end at sænke den ved næste rødt. `OptionsSection` er drag-omordning og kræver mere end en render-test. | Mads |
 | **B-17** | **Merge-økonomi-reglen kan løsnes, når build-skippet er verificeret.** `netlify.toml` springer nu builds over for diffs der kun rører docs/tests/CI-config (ADR 0028), men reglen "saml en hel fase i ÉN PR" står uændret i `CLAUDE.md`. | `netlify.toml` (`TODO(mads)`), `CLAUDE.md` § Arbejdsform pkt. 5 | Bekræft på den første docs-only merge at Netlify rapporterer "Build skipped" og ikke trækker kredit. Derefter: beslut om reglen kan blive til "én PR pr. arbejdspakke", så review og `git bisect` bliver brugbare igen. **Ikke Claude Codes beslutning** — det er en stående ordre fra Mads. | Mads |
@@ -80,7 +80,9 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 | B-02 | Fase 2 leveret, men ikke lukket | 2026-08-26 | Betinget lukket — `docs/fase-2-rapport.md`, DoD i `docs/fase-2.md`, liveverifikations-checkliste i `docs/spikes/multi-host.md` |
 | B-03 | `.env.example` navngav afløste leverandører | 2026-08-26 | Lukket af #25 (`ALUNTA_*`; ingen `STRIPE_*` tilbage) |
 | B-04 | `accounts-to-create.md` forældet | 2026-08-26 | Lukket af #25 (Alunta-række med plan-/webhook-opsætning) |
+| B-05 | `src/features/` var tom, mens ADR 0002 foreskrev den | 2026-08-26 | ADR 0035 dokumenterer den faktiske `src/server/<domæne>/`-struktur; mappen er slettet |
 | B-06 | `supabase/policies/` refereret tre steder uden at findes | 2026-08-26 | Rettet i `ci.yml`, `docs/projektstruktur.md`, `auto-tests`-skillen |
 | B-08 | Payments-adapteren var Stripe-formet | 2026-08-26 | Lukket af #25: `AluntaPaymentProvider` mod verificeret OpenAPI-spec (ADR 0032) |
+| B-10 | `.gitignore` dækkede ikke `.env.production`/`.env.staging` | 2026-08-26 | Nu `.env` + `.env.*` med `!.env.example` |
 | B-15 | Fase 2 aldrig kodegennemgået | 2026-08-26 | Gennemgået ved lukning: tre fejl fundet og rettet — `docs/fase-2-rapport.md` §4 + ADR 0029 |
 | B-18 | Vitest 2.1.9 havde en `critical` Dependabot-alarm | 2026-08-26 | Opgraderet til 3.2.7 + projekter flyttet til `test.projects` — ADR 0033 |

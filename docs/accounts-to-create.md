@@ -35,7 +35,8 @@
 | **Anthropic Claude API** (el. EU-LLM) | `LLM_API_KEY` | `FLAG_AIFOLLOWUP` | EU-residens/DPA (Mads) |
 | **Cal.com** (booking) | `CALCOM_API_KEY` | `FLAG_BOOKING` | multi-host-spike + plan |
 | **Cal Video** | `CALVIDEO_API_KEY` | `FLAG_VIDEO` | plan / EU-residens |
-| **Alunta** (betaling ind, ADR 0023/0032) | `ALUNTA_API_KEY`, `ALUNTA_PLAN_ID`, `ALUNTA_WEBHOOK_SECRET` | `FLAG_PAYMENTS` | Opsætning i Alunta-UI: usage-plan + parameter `meeting_fee_oere` à 1 øre + webhook. Gateway-valg (OnPay/Stripe/QuickPay) afgør MobilePay. Priser (ejer) |
+| **Alunta** (betaling ind, ADR 0023/0032/0034) | `ALUNTA_API_KEY`, `ALUNTA_PLAN_ID`, `ALUNTA_WEBHOOK_SECRET` | `FLAG_PAYMENTS` | ⚠ Opsætning i Alunta-UI: **abonnement med 4-ugers interval** (ADR 0034 — IKKE usage-plan; den model er afløst) + webhook. Priser (ejer) |
+| **QuickPay** (kort-gateway, ADR 0034) | (konfigureres i Alunta-UI'et, ikke som env-var) | `FLAG_PAYMENTS` | ✅ Valgt (Mads). Dansk. Aktivér **MobilePay Online** på kontoen — det er vejen til MobilePay (ADR 0032). Underskriv DPA |
 | **e-conomic ELLER Dinero** | `ACCOUNTING_API_KEY` | `FLAG_ACCOUNTING` | leverandørvalg (ejer) |
 | **Transskription** (DK/EU) | `TRANSCRIPTION_API_KEY` | `FLAG_TRANSCRIPTION` | udbydervalg |
 

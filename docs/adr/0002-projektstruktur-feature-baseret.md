@@ -1,6 +1,10 @@
 # 0002 — Projektstruktur: feature-baseret + lib/server-grænse + komponenttilgang
 
-- **Status:** Accepteret
+- **Status:** Accepteret — **mappe-opdelingen erstattet af ADR 0035**
+
+> Lag-grænsen (SDK'er kun i `src/lib/**`) og komponenttilgangen står ved magt og er nu
+> håndhævet af lint (ADR 0028). Men domænekoden bor i `src/server/<domæne>/`, ikke i
+> `src/features/` — se ADR 0035.
 - **Dato:** 2026-06-30
 - **Fase:** 0
 - **Berører uafklaret punkt:** nej (Spand A — mappe-/projektstruktur + komponentbibliotek-tilgang)
