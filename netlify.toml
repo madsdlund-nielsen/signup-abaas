@@ -15,6 +15,20 @@
 
 [build]
   command = "npm run build"
+  # Merge-økonomi (CLAUDE.md, stående ordre): hver merge til main udløser en
+  # produktions-redeploy med fast kreditomkostning uanset PR-størrelse. Derfor er hele
+  # faser hidtil samlet i ÉN PR — hvilket gør review og `git bisect` upraktisk.
+  #
+  # `ignore` angriber omkostningen direkte i stedet: en diff der KUN rører dokumentation,
+  # tests, CI-config eller agent-config kan ikke ændre den deployede side, så den build
+  # springes over og koster ingenting. Semantik: exit 0 = spring build over, exit != 0 = byg.
+  # `git diff --quiet` returnerer 0 netop når der ingen ændringer er uden for de udeladte
+  # stier. Er $CACHED_COMMIT_REF ikke sat (første build), fejler kommandoen og der bygges —
+  # den sikre default er altid at bygge.
+  #
+  # TODO(mads): verificér på den første docs-only merge at Netlify faktisk rapporterer
+  # "Build skipped" og ikke trækker kredit. Først derefter kan merge-økonomi-reglen løsnes.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)docs' ':(exclude)tests' ':(exclude).github' ':(exclude).claude' ':(exclude)*.md'"
 
 [build.environment]
   # Matcher .nvmrc og package.json engines.

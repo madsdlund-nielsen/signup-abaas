@@ -10,7 +10,9 @@ export default defineConfig({
       include: ["src/components/**", "src/server/flags/**", "src/server/auth/**"],
       // supabase-client.ts er SDK-/request-glue (next/headers + @supabase/*); den dækkes
       // af integration/manuel verifikation, ikke unit-tests, så den holdes ude af tærsklen.
-      exclude: ["src/server/auth/supabase-client.ts"],
+      // actions.ts er server-actions oven på Supabase — samme kategori som
+      // supabase-client.ts, og dækkes af integration/manuel verifikation.
+      exclude: ["src/server/auth/supabase-client.ts", "src/server/auth/actions.ts"],
       reporter: ["text", "html"],
       thresholds: { lines: 70, functions: 70, statements: 70, branches: 60 },
     },

@@ -6,6 +6,15 @@ import { listMyMeetings } from "@/server/meetings";
 import { getMyPartnerProfile } from "@/server/partners/portal";
 import { POST } from "@/app/api/webhooks/calcom/route";
 
+// Supabase-klienten mockes KUN for at kunne fremtvinge en fejlende mutation i
+// webhook-handleren. Alt andet i filen rører den ikke (de øvrige tests når aldrig
+// så langt, fordi de afvises på signatur/form først).
+const mocked = vi.hoisted(() => ({ service: null as unknown }));
+vi.mock("@/server/auth/supabase-server", () => ({
+  createServiceSupabase: () => mocked.service,
+  createServerSupabase: async () => mocked.service,
+}));
+
 describe("booking-port uden konfiguration (backend-stub — kaster, foregiver aldrig)", () => {
   const stub = createBookingProvider({});
 
@@ -45,18 +54,18 @@ describe("meetings-/portal-data-access uden Supabase-konfiguration (kontofri CI/
   });
 });
 
+function post(body: string, signature?: string): Promise<Response> {
+  return POST(
+    new Request("http://localhost/api/webhooks/calcom", {
+      method: "POST",
+      body,
+      headers: signature ? { "x-cal-signature-256": signature } : {},
+    }),
+  );
+}
+
 describe("webhook-endpointet (ADR 0027) — verifikation før alt andet", () => {
   afterEach(() => vi.unstubAllEnvs());
-
-  function post(body: string, signature?: string): Promise<Response> {
-    return POST(
-      new Request("http://localhost/api/webhooks/calcom", {
-        method: "POST",
-        body,
-        headers: signature ? { "x-cal-signature-256": signature } : {},
-      }),
-    );
-  }
 
   it("NEGATIV: uden CALCOM_WEBHOOK_SECRET behandles intet (503, aldrig fail-open)", async () => {
     vi.stubEnv("CALCOM_WEBHOOK_SECRET", "");
@@ -84,5 +93,84 @@ describe("webhook-endpointet (ADR 0027) — verifikation før alt andet", () => 
     const response = await post(body, signature);
     expect(response.status).toBe(200);
     expect(await response.text()).toMatch(/Ignoreret/);
+  });
+});
+
+describe("webhook-idempotens må betyde 'præcis én gang', ikke 'højst én gang'", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  /** Minimal Supabase-dobbelt: nok kæde til route-handlerens tre kald, og et kaldsspor. */
+  function fakeService(updateError: string | null) {
+    const calls: string[] = [];
+    const service = {
+      from(table: string) {
+        return {
+          insert: async () => {
+            calls.push(`insert:${table}`);
+            return { error: null };
+          },
+          update: () => ({
+            eq: () => ({
+              select: async () => {
+                calls.push(`update:${table}`);
+                return updateError
+                  ? { data: null, error: { message: updateError, code: "XX000" } }
+                  : { data: [{ id: "m1" }], error: null };
+              },
+            }),
+          }),
+          delete: () => ({
+            eq: () => ({
+              eq: async () => {
+                calls.push(`delete:${table}`);
+                return { error: null };
+              },
+            }),
+          }),
+        };
+      },
+    };
+    return { service, calls };
+  }
+
+  function signedCancel() {
+    const body = JSON.stringify({
+      triggerEvent: "BOOKING_CANCELLED",
+      createdAt: "2026-08-26T10:00:00Z",
+      payload: { uid: "cal-uid-1" },
+    });
+    return { body, signature: createHmac("sha256", "s3cret").update(body).digest("hex") };
+  }
+
+  function configure() {
+    vi.stubEnv("CALCOM_WEBHOOK_SECRET", "s3cret");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://localhost:54321");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service");
+  }
+
+  it("fejler mutationen, rulles idempotensrækken tilbage så Cal.coms genlevering kan anvende eventet", async () => {
+    configure();
+    const { service, calls } = fakeService("db nede");
+    mocked.service = service;
+
+    const { body, signature } = signedCancel();
+    const response = await post(body, signature);
+
+    expect(response.status).toBe(500);
+    // Uden rollbacken ville genleveringen ramme 23505 og kvittere 200 uden at anvende noget.
+    expect(calls).toEqual(["insert:meeting_webhook_event", "update:meeting", "delete:meeting_webhook_event"]);
+  });
+
+  it("lykkes mutationen, står idempotensrækken (ingen rollback)", async () => {
+    configure();
+    const { service, calls } = fakeService(null);
+    mocked.service = service;
+
+    const { body, signature } = signedCancel();
+    const response = await post(body, signature);
+
+    expect(response.status).toBe(200);
+    expect(calls).toEqual(["insert:meeting_webhook_event", "update:meeting"]);
   });
 });

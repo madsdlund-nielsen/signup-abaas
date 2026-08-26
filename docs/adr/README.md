@@ -58,6 +58,8 @@ det gjort sådan?", så skriv en ADR.
 | 0025 | Partner-login: identitetskobling + admin-initieret invitation | Accepteret | 2 |
 | 0026 | Møde-datamodel: livscyklus og partner-registrering er to felter | Accepteret | 2 |
 | 0027 | Webhook-ingest: signatur før alt, idempotens via event-tabel | Accepteret | 2 |
+| 0028 | Guardrails: lag-grænser som lint-regel og gates der faktisk kører | Accepteret | 2 |
+| 0029 | Webhook-idempotens skal betyde "præcis én gang" (præciserer 0027) | Accepteret | 2 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så

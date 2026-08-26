@@ -74,6 +74,15 @@ export async function POST(request: Request): Promise<Response> {
     .eq("provider_booking_uid", mutation.matchUid)
     .select("id");
   if (updateError) {
+    // Rul idempotensrækken TILBAGE før 500'eren. Uden det ville Cal.coms genlevering
+    // ramme unique-constrainten, kvittere 200 "allerede behandlet" — og eventet ville
+    // være tabt for altid, uden nogensinde at være anvendt. Idempotens må ikke betyde
+    // "højst én gang"; den skal betyde "præcis én gang".
+    await service
+      .from("meeting_webhook_event")
+      .delete()
+      .eq("provider", "calcom")
+      .eq("provider_event_id", buildEventId(event));
     await analytics.captureException(new Error(updateError.message), {
       source: "calcom-webhook",
       step: "meeting-update",

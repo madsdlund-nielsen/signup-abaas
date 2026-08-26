@@ -132,6 +132,7 @@ export async function moveQuestion(formData: FormData): Promise<void> {
 
   const a = rows[idx];
   const b = rows[swapIdx];
+  if (!a || !b) return; // uden for rækkevidde — allerede dækket af kant-guarden ovenfor
   await service.from("quiz_question").update({ sort_order: b.sort_order }).eq("id", a.id);
   await service.from("quiz_question").update({ sort_order: a.sort_order }).eq("id", b.id);
   revalidatePath("/admin/quiz");
@@ -229,6 +230,7 @@ export async function moveOption(formData: FormData): Promise<void> {
 
   const a = rows[idx];
   const b = rows[swapIdx];
+  if (!a || !b) return; // uden for rækkevidde — allerede dækket af kant-guarden ovenfor
   await service.from("quiz_option").update({ sort_order: b.sort_order }).eq("id", a.id);
   await service.from("quiz_option").update({ sort_order: a.sort_order }).eq("id", b.id);
   revalidatePath(`/admin/quiz/${questionId}`);

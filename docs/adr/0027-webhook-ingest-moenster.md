@@ -1,9 +1,14 @@
 # 0027 — Webhook-ingest: signatur før alt, idempotens via event-tabel
 
-- **Status:** Accepteret
+- **Status:** Accepteret — **præciseret af ADR 0029**
 - **Dato:** 2026-08-04
 - **Fase:** 2
 - **Berører uafklaret punkt:** nej (teknisk mønster; genbruges af Alunta-webhooks i fase 3)
+
+> **Læs ADR 0029 sammen med denne.** Mønstret her (række før mutation, unique-constraint
+> som mekanisme) står ved magt, men implementeringen havde et hul: fejlede mutationen,
+> blev eventet tabt for altid ved genlevering. 0029 tilføjer rollback af idempotensrækken,
+> så idempotens betyder "præcis én gang" og ikke "højst én gang".
 
 ## Kontekst
 

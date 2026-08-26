@@ -70,7 +70,7 @@ describe("OnboardingFlow — conversational ejer-flow", () => {
   it("fritekst tæller som svar og sendes med", async () => {
     const action = vi.fn().mockResolvedValue(undefined);
     const { getByRole, getByPlaceholderText, findByText } = render(
-      <OnboardingFlow questions={[QUESTIONS[0]]} initialAnswers={[]} action={action} />,
+      <OnboardingFlow questions={QUESTIONS.slice(0, 1)} initialAnswers={[]} action={action} />,
     );
     const gem = getByRole("button", { name: "Gem svar" }) as HTMLButtonElement;
     expect(gem.disabled).toBe(true);

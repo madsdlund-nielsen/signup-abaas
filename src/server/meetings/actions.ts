@@ -61,12 +61,25 @@ async function readBoardBookingInfo(
     .eq("board_id", boardId);
   if (membersError) throw new Error(`Kunne ikke læse boardets partnere: ${membersError.message}`);
 
-  const partnerUserIds = ((members ?? []) as Array<{
+  const profiles = ((members ?? []) as Array<{
     partner_profile: { app_user_id: string | null } | Array<{ app_user_id: string | null }> | null;
-  }>)
-    .map((row) => (Array.isArray(row.partner_profile) ? row.partner_profile[0] : row.partner_profile))
+  }>).map((row) => (Array.isArray(row.partner_profile) ? row.partner_profile[0] : row.partner_profile));
+
+  const partnerUserIds = profiles
     .map((profile) => profile?.app_user_id)
     .filter((id): id is string => Boolean(id));
+
+  // Fejl højlydt frem for at booke et board-møde med FÆRRE værter end boardet har partnere.
+  // En partner uden auth-kobling (ADR 0025) kan ikke være vært hos Cal.com, og en stille
+  // udeladelse ville give et møde der ser komplet ud i appen, men mangler en rådgiver —
+  // præcis den slags "plausibelt, men forkert" som docs/stub-politik.md forbyder.
+  const unlinked = profiles.length - partnerUserIds.length;
+  if (unlinked > 0) {
+    throw new Error(
+      `${unlinked} af boardets partnere har endnu ikke et login og kan ikke bookes som vært. ` +
+        `Invitér dem først (admin → partner-katalog).`,
+    );
+  }
 
   return { ownerUserId: (board as { owner_id: string }).owner_id, partnerUserIds };
 }
@@ -107,14 +120,15 @@ async function createMeetingForBoard(
     throw new Error(`Kunne ikke tilknytte deltagere: ${participantsError.message}`);
   }
 
+  const booking = createBookingProvider();
   try {
-    const scheduled = await createBookingProvider().createMultiHostMeeting({
+    const scheduled = await booking.createMultiHostMeeting({
       ownerUserId: info.ownerUserId,
       partnerUserIds: info.partnerUserIds,
       startsAt,
       durationMinutes: 60,
     });
-    await service
+    const { error: attachError } = await service
       .from("meeting")
       .update({
         provider_booking_uid: scheduled.uid,
@@ -123,6 +137,17 @@ async function createMeetingForBoard(
         updated_at: new Date().toISOString(),
       })
       .eq("id", meetingId);
+    // Fejler DENNE skrivning, findes bookingen hos Cal.com uden at Supabase kender dens
+    // uid: alle webhooks for den ville ryge i "ukendt uid → ignoreret", og mødet ville
+    // divergere fra sandhedskilden i det stille. Kompensér hos provideren i stedet.
+    if (attachError) {
+      await booking
+        .cancelMeeting(scheduled.uid, "Bookingreferencen kunne ikke gemmes i ABaaS")
+        .catch(() => {
+          /* provider-oprydning er best-effort; den rigtige fejl er attachError nedenfor */
+        });
+      throw new Error(`Kunne ikke gemme bookingreferencen: ${attachError.message}`);
+    }
   } catch (e) {
     // Kompensér: intet halvt booket møde. Fejlen (typisk NotConfiguredError før nøgler) vises.
     await service.from("meeting").delete().eq("id", meetingId);

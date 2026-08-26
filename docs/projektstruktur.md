@@ -31,8 +31,8 @@ signup-abaas/
 │   ├── lib/                     # adaptere: cal.com, stripe, llm, video
 │   └── server/                  # flags, auth, domænelogik
 ├── supabase/
-│   ├── migrations/              # generate → review → staging → prod
-│   └── policies/                # RLS-policies pr. rolle (versioneret)
+│   └── migrations/              # generate → review → staging → prod
+│                                # (RLS-policies ligger I migrationerne — ADR 0007)
 ├── tests/                       # unit / integration / db / e2e
 ├── .github/
 │   └── workflows/ci.yml         # lint · type · test · branch protection
@@ -81,8 +81,9 @@ til `src/styles/`, som appen loader. Redigér altid kilden i `docs/` og hold
 
 - `migrations/` — én migration pr. ændring, navngivet med tidsstempel. Følg
   generate → review SQL → staging → prod. Aldrig push-mod-prod.
-- `policies/` — RLS-policies som versionerede filer, så autorisations­reglerne
-  er reviewbare i PR og dækket af DB-tests.
+- **Ingen `policies/`-mappe.** ADR 0007 lagde RLS-policies i selve migrationerne, fordi
+  Supabases deploy ellers ikke ville anvende dem. De er stadig reviewbare i PR og dækket
+  af DB-tests — bare i samme fil som tabellen de beskytter.
 
 ## ADR-kandidater i denne struktur (skriv ADR ved valg)
 
