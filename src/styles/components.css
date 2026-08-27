@@ -463,3 +463,340 @@
   color: var(--color-slate);
   font-size: var(--fs-label);
 }
+
+/* =============================================================
+   Site-chrome — header og fod (designmanual v1.2, side 14)
+   ============================================================= */
+
+/* Header-bar: charcoal, løsen i invers, venstrestillet. */
+.siteheader {
+  background: var(--color-charcoal);
+  border-bottom: 1px solid var(--divider-light);
+}
+.siteheader__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.siteheader__brand {
+  display: flex;
+  align-items: center;
+  /* Friarealet er x-højden, 4,3 % af løsens bredde. Ved 300 px = 12,9 px. */
+  padding: var(--space-2) 0;
+}
+
+/* Mærkeskiftet er en skalagrænse, ikke en layoutpræference: løsen må ikke sættes
+   under 300 px, så under den bredde vises kortformen i stedet. */
+.siteheader__lockup {
+  display: none;
+  width: 300px;
+  height: auto;
+}
+.siteheader__mark {
+  display: block;
+  width: 40px;
+  height: 40px;
+}
+@media (min-width: 720px) {
+  .siteheader__lockup { display: block; }
+  .siteheader__mark { display: none; }
+}
+
+.siteheader__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+}
+.siteheader__nav a {
+  color: var(--text-on-dark-soft);
+  text-decoration: none;
+}
+.siteheader__nav a:hover {
+  color: var(--color-white);
+}
+/* CTA'en i headeren beholder guldet — det er ét element, jf. guldbudgettet. */
+.siteheader__nav .btn-primary:hover {
+  color: var(--color-white);
+}
+
+/* Kompakt CTA til header-baren. Samme form, mindre luft — aldrig anden radius. */
+.btn-primary--compact {
+  padding: var(--space-2) var(--space-4);
+  text-decoration: none;
+  display: inline-block;
+}
+
+/* Fod: charcoal, kortform 05 som afsender. */
+.sitefooter {
+  background: var(--color-charcoal);
+  color: var(--text-on-dark-soft);
+}
+.sitefooter__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  /* Centreret mod mærket: kortform 05 er lodret centreret i sit 512-felt, så kolonner
+     sat i toppen ville flugte med feltets kant frem for med motivet. */
+  align-items: center;
+  justify-content: space-between;
+}
+/* 320 px er kortform 05's nedre grænse — den skaleres ikke derunder. Feltet må ikke
+   beskæres (manual v1.2, side 05), så luften omkring motivet er mærkets, ikke vores. */
+.sitefooter__mark {
+  width: 320px;
+  height: auto;
+}
+.sitefooter__cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+.sitefooter__cols .stack > * + * {
+  margin-top: var(--space-2);
+}
+.sitefooter__cols a {
+  /* Blok, ikke inline: .stack's rytme er margin-top, og den har ingen virkning på et
+     inline-element — links ville løbe sammen på én linje. */
+  display: block;
+  color: var(--text-on-dark-soft);
+  text-decoration: none;
+}
+.sitefooter__cols a:hover {
+  color: var(--color-white);
+}
+.sitefooter__base {
+  border-top: 1px solid var(--divider-light);
+}
+.sitefooter__colophon {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-4);
+  font-size: var(--fs-label);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+}
+
+/* Eyebrow på mørk flade: dæmpet hvid frem for guld. To guld-eyebrows i en fod ville
+   bruge guldbudgettet (ca. 5 % af fladen) på sidens mindst betydningsfulde element. */
+.eyebrow--on-dark {
+  color: var(--text-on-dark-soft);
+}
+
+/* =============================================================
+   Forside-mønstre — sektionsrytme og redaktionelle lister
+   ============================================================= */
+
+/* Charcoal-bånd: manualens hero- og fotobaggrundsflade. */
+.band--charcoal {
+  background: var(--color-charcoal);
+  color: var(--text-on-dark-soft);
+}
+
+/* Målelinje til overskrifter. Bredere end .measure (720 px), fordi en tynd 61 px-
+   overskrift skal have lov at bryde over to-tre linjer — ikke fem. */
+.measure-wide {
+  max-width: 960px;
+}
+
+.lead--on-dark {
+  color: var(--text-on-dark-soft);
+}
+
+/* Nummereret proces. Tallene er redaktionelle, ikke dekorative: tynde og store,
+   samme vægt som overskrifterne. Ingen cirkler, ingen badges — radius er 0. */
+.steps {
+  list-style: none;
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+}
+.steps__item {
+  border-top: 1px solid var(--color-grey-bg);
+  padding-top: var(--space-4);
+}
+.steps__item > * + * {
+  margin-top: var(--space-3);
+}
+.steps__num {
+  margin: 0;
+  font-size: var(--fs-h2);
+  line-height: 1;
+  font-weight: var(--fw-light);
+  color: var(--color-gold);
+}
+
+.feature-grid {
+  margin-top: var(--space-6);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+}
+
+/* Sekundær handling ved siden af en guld-CTA. Ingen fyld: to guldknapper side om side
+   ville fordoble accenten og gøre valget utydeligt. */
+.btn-ghost {
+  display: inline-block;
+  background: transparent;
+  color: var(--color-white);
+  border: 1px solid var(--divider-light);
+  border-radius: var(--radius);
+  padding: var(--btn-padding);
+  font: var(--fw-bold) var(--fs-button)/1 var(--font-base);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn-ghost:hover {
+  border-color: var(--color-white);
+}
+
+/* En guld-CTA er et link på forsiden, ikke en <button>. */
+a.btn-primary {
+  display: inline-block;
+  text-decoration: none;
+}
+
+@media (max-width: 900px) {
+  .steps,
+  .feature-grid,
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================================================
+   App-flader — sidehoved, indholdsflade og paneler (ADR 0039)
+   ============================================================= */
+
+/* Sidehoved: kompakt navy-bånd. Lodret luft er mindre end forsidens --space-section:
+   et sidehoved er orientering, ikke en sektion, og 90 px ville skubbe indholdet under
+   folden på hver eneste side. */
+.pagehead {
+  background: var(--color-navy);
+  color: var(--text-on-dark-soft);
+}
+.pagehead__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+.pagehead__inner > * + * {
+  margin-top: var(--space-3);
+}
+/* .lead bærer sin egen bundmargin til forsidebrug; i sidehovedet styrer båndet luften. */
+.pagehead__inner .lead {
+  margin-bottom: 0;
+}
+.pagehead__actions {
+  margin-top: var(--space-4);
+}
+/* Brødkrummens links skal kunne ses på navy uden at bruge guldbudgettet. */
+.pagehead .eyebrow a {
+  color: var(--color-gold);
+}
+
+/* Indholdsflade under sidehovedet. */
+.pagebody {
+  background: var(--color-white);
+}
+.pagebody__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-section);
+}
+
+/* Bokset panel — manualens ENESTE legitime brug af --shadow-panel. Aldrig på knapper,
+   aldrig på kort, aldrig på mærkerne. */
+.panel {
+  padding: var(--space-5);
+  background: var(--color-white);
+  border: 1px solid var(--color-grey-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
+}
+.panel > * + * {
+  margin-top: var(--space-4);
+}
+/* Panel på en grå eller mørk flade: kanten bærer adskillelsen, skyggen gør intet der. */
+.panel--flat {
+  box-shadow: none;
+}
+
+/* Panelgitter til hub-sider (fx dashboard). Auto-fit frem for faste kolonner, så et
+   dashboard med to handlinger ikke efterlader et tomt tredje felt. */
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+/* Sektionsoverskrift inde i en indholdsflade. Tynd regel over, så gruppering aflæses
+   uden bokse. */
+.section-rule {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-grey-bg);
+}
+
+/* Tom tilstand: ærlig og rolig, ikke en fejl. */
+.empty {
+  padding: var(--space-5);
+  background: var(--color-grey-bg);
+  color: var(--color-text-muted);
+}
+
+/* Nøgletal/faktalinje — fx "60 min · 15 min forberedelse · 3 partnere". */
+.factline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--fs-label);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.factline--on-dark {
+  color: var(--text-on-dark-soft);
+}
+
+/* Tabellen skal kunne rulle vandret på små skærme uden at sprænge siden. */
+.table-wrap {
+  overflow-x: auto;
+}
+
+/* --- Fokuserede opgaver: auth, adgangsport, onboarding -----------------------
+   Ét formål pr. side. Her ville et sidehoved-bånd være støj: der er intet at
+   navigere væk fra, og manualens ro er vigtigere end konsekvent kromstruktur.
+   I stedet en rolig charcoal-flade med panelet centreret i den. */
+.focus-page {
+  min-height: 60vh;
+  background: var(--color-charcoal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--space-4);
+}
+.focus-page__inner {
+  width: 100%;
+  max-width: 420px;
+}
+/* Mærket over panelet — kortform 01 Light i 96 px, dens nedre grænse. */
+.focus-page__mark {
+  display: block;
+  margin: 0 auto var(--space-5);
+  width: 96px;
+  height: 96px;
+}
