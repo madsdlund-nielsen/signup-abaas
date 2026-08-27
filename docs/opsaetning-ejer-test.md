@@ -18,7 +18,13 @@ cp .env.example .env.local
 
 1. Opret projektet i region **eu-north-1 (Stockholm)** (ADR 0013). Underskriv Supabase-DPA.
 2. Hent de fire værdier til `.env.local`:
-   - `DATABASE_URL` (connection string, Session/Direct)
+   - `DATABASE_URL` — vælg **Session pooler** i Connect-dialogen, ikke Direct connection.
+     Direct (`db.<ref>.supabase.co`) har kun en AAAA-record og er dermed IPv6-only, medmindre
+     man køber IPv4-tillægget. Fra en almindelig dansk forbindelse fejler den med `ENOTFOUND`,
+     hvilket ligner en forkert nøgle men ikke er det. Session pooleren
+     (`aws-0-eu-north-1.pooler.supabase.com:5432`, bruger `postgres.<ref>`) er IPv4 og opfører
+     sig som en rigtig session — nødvendigt for både seed og migrationer. Transaction pooleren
+     (6543) duer ikke: ingen prepared statements.
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY` — **server-only**, aldrig `NEXT_PUBLIC_`
@@ -76,7 +82,11 @@ Gentag trin 1 uden trin 2 for at teste ejer-flowet som en almindelig kunde.
 
 ## 5. Netlify
 
-- Sæt alle runtime-secrets i **Netlify → Environment variables** (ADR 0008), ikke i repoet.
+- Sæt runtime-secrets i **Netlify → Environment variables** (ADR 0008), ikke i repoet. Appen
+  behøver kun tre: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` og
+  `SUPABASE_SERVICE_ROLE_KEY`. **`DATABASE_URL` hører ikke til her** — `pg` er en
+  devDependency, `src/` importerer den ikke, og appen taler udelukkende med Supabase over
+  HTTPS. Variablen bruges kun lokalt af seed-scriptet og db-testene.
 - 🔴 **Functions region = EU (Frankfurt, `fra`)** — SKAL sættes i UI'et før rigtige persondata.
   Pr.-funktion-region i `netlify.toml` gælder ikke for Next.js-funktioner. Kræver ≥ Pro.
 
