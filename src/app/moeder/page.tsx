@@ -75,7 +75,9 @@ export default async function MeetingsPage() {
           <tbody>
             {meetings.map((meeting) => (
               <tr key={meeting.id} className="table__row">
-                <td className="table__cell">{formatStart(meeting.startsAt)}</td>
+                <td className="table__cell">
+                  <Link href={`/moeder/${meeting.id}`}>{formatStart(meeting.startsAt)}</Link>
+                </td>
                 <td className="table__cell">{STATUS_LABEL[meeting.status]}</td>
                 <td className="table__cell">
                   {meeting.participants.map((p) => p.name).join(", ") || "—"}

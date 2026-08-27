@@ -72,6 +72,31 @@ function rowToMeeting(row: MeetingRow): Meeting {
   };
 }
 
+/**
+ * Ét møde, hvis den nuværende bruger må se det. Ingen eksplicit adgangskontrol her: RLS
+ * (meeting_select_owner/partner/admin, 0012) returnerer 0 rækker for alle andre, så et
+ * ukendt og et uautoriseret møde ser ens ud udefra — bevidst.
+ */
+export async function getMeeting(
+  meetingId: string,
+  env: Record<string, string | undefined> = process.env,
+): Promise<Meeting | null> {
+  const config = readSupabaseAuthConfig(env);
+  if (!isSupabaseAuthConfigured(config)) return null;
+
+  const supabase = await createServerSupabase(config);
+  const { data, error } = await supabase
+    .from("meeting")
+    .select(MEETING_COLUMNS)
+    .eq("id", meetingId)
+    .maybeSingle();
+  if (error) {
+    console.error(`[meetings] getMeeting fejlede: ${error.message}`);
+    return null;
+  }
+  return data ? rowToMeeting(data as unknown as MeetingRow) : null;
+}
+
 /** Alle møder den nuværende bruger må se (RLS scoper: ejer via board, partner via kobling). */
 export async function listMyMeetings(
   env: Record<string, string | undefined> = process.env,

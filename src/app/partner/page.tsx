@@ -126,9 +126,15 @@ export default async function PartnerPortalPage() {
               const mine = meeting.participants.find((p) => p.partnerProfileId === profile.id);
               return (
                 <article key={meeting.id} className="stack measure">
-                  <h3 className="heading-3 heading--on-light">{formatStart(meeting.startsAt)}</h3>
+                  <h3 className="heading-3 heading--on-light">
+                    <Link href={`/moeder/${meeting.id}`}>{formatStart(meeting.startsAt)}</Link>
+                  </h3>
                   <p className="body">
                     Status: {STATUS_LABEL[meeting.status]}
+                    {" · "}
+                    <Link href={`/moeder/${meeting.id}`}>
+                      {meeting.status === "afholdt" ? "Forberedelse og vurdering" : "Forberedelse"}
+                    </Link>
                     {meeting.videoJoinUrl ? (
                       <>
                         {" · "}

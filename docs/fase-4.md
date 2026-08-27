@@ -14,10 +14,11 @@
 
 ## Leverancekriterier (Definition of Done for fase 4)
 
-- [ ] Forberedelsesmodul: ejer kan forberede dagsorden/spørgsmål inden mødet.
-- [ ] De **15 minutters betalte forberedelse** for partnere er understøttet med
-      et sted at forberede sig (kobling til honorargrundlag fra fase 2).
-- [ ] Rating efter møde: deltagere kan vurdere mødet; resultat gemt i Supabase.
+- [x] Forberedelsesmodul: ejer kan forberede dagsorden/spørgsmål inden mødet. **(2026-08-27, ADR 0038)**
+- [x] De **15 minutters betalte forberedelse** for partnere er understøttet med
+      et sted at forberede sig (kobling til honorargrundlag fra fase 2). **(2026-08-27)**
+- [x] Rating efter møde: deltagere kan vurdere mødet; resultat gemt i Supabase.
+      **(2026-08-27 — men signerede engangslinks mangler, se B-21)**
 - [ ] Transskription via **Ordbogen (ordbogen.ai)** bag `FLAG_TRANSCRIPTION` — flaget
       tændes når DPA og samtykkeflow er på plads.
 - [ ] Auto-resumé af møde via **Ordbogen (Odin-LLM)** bag `FLAG_AIFOLLOWUP`.
@@ -29,6 +30,23 @@
       ratinganmodning, fejlet betaling (fra fase 3).
 - [ ] Fuld test suite grøn, inkl. RLS på ratings, resuméer og forberedelsesnoter
       (positive **og** negative cases).
+
+## Status (2026-08-27)
+
+**4.1 og 4.2 er bygget** — de eneste dele af fasen der ikke kræver en leverandørkonto.
+Migration `0015_preparation_and_rating.sql`, `src/server/preparation/`, `src/server/ratings/`,
+forberedelsesrummet på `/moeder/[id]` og admin-visningen på `/admin/vurderinger`. Datamodel og
+de tre synlighedsregimer er begrundet i **ADR 0038**.
+
+Udestår i 4.2: **signerede engangslinks** (B-21) — bevidst udskudt til 4.5, som er den der
+udsender dem.
+
+**4.3–4.6 er ikke startet** og bør ikke startes for at producere stubs (fase 3-rapporten §8):
+Ordbogen-DPA er uunderskrevet, samtykke til optagelse er ejer-uafklaret, og der findes hverken
+Resend- eller inMobile-konto.
+
+⚠ Db-testene for 0015 er **ikke kørt lokalt** — Docker mangler på maskinen (B-13). CI er eneste
+gate for denne migrations RLS.
 
 ## Arbejdspakker
 
