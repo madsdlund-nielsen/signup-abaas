@@ -48,7 +48,9 @@ body {
 }
 
 .lead {
-  margin: 0 0 var(--space-5);
+  /* Luft over: en tynd 61 px-overskrift har brug for at ånde, før brødteksten sætter ind.
+     Manualens udtryk hviler på whitespace, ikke på skillelinjer. */
+  margin: var(--space-4) 0 var(--space-5);
   max-width: 720px;
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
