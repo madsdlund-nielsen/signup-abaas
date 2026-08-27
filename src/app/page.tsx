@@ -26,8 +26,8 @@ export default function Home() {
           Et rådgivende board, sammensat til din virksomhed.
         </h1>
         <p className="lead lead--on-dark">
-          To til tre erfarne partnere, matchet på de udfordringer du faktisk står med. I mødes
-          fast — og de møder forberedt op.
+          To til tre erfarne partnere, matchet på de udfordringer du faktisk står med. I mødes fast
+          — og de møder forberedt op.
         </p>
         <div className="row-form">
           <Link className="btn-primary" href="/signup">
@@ -49,24 +49,24 @@ export default function Home() {
             <p className="steps__num">01</p>
             <h3 className="heading-3 heading--on-light">Fortæl hvor det gør ondt</h3>
             <p className="body">
-              En kort samtale-guidet quiz oversætter dine udfordringer til kompetencer — ikke
-              til brancheklichéer.
+              En kort samtale-guidet quiz oversætter dine udfordringer til kompetencer — ikke til
+              brancheklichéer.
             </p>
           </li>
           <li className="steps__item">
             <p className="steps__num">02</p>
             <h3 className="heading-3 heading--on-light">Få dit board foreslået</h3>
             <p className="body">
-              Vi sammensætter 2-3 partnere så dine vigtigste kompetencebehov er dækket, og du
-              ser hvorfor hver enkelt er valgt.
+              Vi sammensætter 2-3 partnere så dine vigtigste kompetencebehov er dækket, og du ser
+              hvorfor hver enkelt er valgt.
             </p>
           </li>
           <li className="steps__item">
             <p className="steps__num">03</p>
             <h3 className="heading-3 heading--on-light">Mødes fast</h3>
             <p className="body">
-              60 minutters møde hver fjerde, ottende eller tolvte uge. Dine partnere har 15
-              betalte minutter til at forberede sig hver gang.
+              60 minutters møde hver fjerde, ottende eller tolvte uge. Dine partnere har 15 betalte
+              minutter til at forberede sig hver gang.
             </p>
           </li>
         </ol>
@@ -81,22 +81,22 @@ export default function Home() {
           <div className="stack">
             <h3 className="heading-3 heading--on-light">Forberedte rådgivere</h3>
             <p className="body">
-              Forberedelsen er betalt og indbygget. Du bruger ikke de første tyve minutter på
-              at bringe nogen op i omdrejninger.
+              Forberedelsen er betalt og indbygget. Du bruger ikke de første tyve minutter på at
+              bringe nogen op i omdrejninger.
             </p>
           </div>
           <div className="stack">
             <h3 className="heading-3 heading--on-light">Ét board, ikke en vikarpulje</h3>
             <p className="body">
-              De samme partnere følger virksomheden over tid. En lead-partner holder tråden
-              mellem møderne.
+              De samme partnere følger virksomheden over tid. En lead-partner holder tråden mellem
+              møderne.
             </p>
           </div>
           <div className="stack">
             <h3 className="heading-3 heading--on-light">Fast abonnement</h3>
             <p className="body">
-              Ingen timeafregning og ingen overraskelser. Prisen følger boardets størrelse og
-              hvor ofte I mødes.
+              Ingen timeafregning og ingen overraskelser. Prisen følger boardets størrelse og hvor
+              ofte I mødes.
             </p>
           </div>
         </div>

@@ -677,3 +677,126 @@ a.btn-primary {
     grid-template-columns: 1fr;
   }
 }
+
+/* =============================================================
+   App-flader — sidehoved, indholdsflade og paneler (ADR 0039)
+   ============================================================= */
+
+/* Sidehoved: kompakt navy-bånd. Lodret luft er mindre end forsidens --space-section:
+   et sidehoved er orientering, ikke en sektion, og 90 px ville skubbe indholdet under
+   folden på hver eneste side. */
+.pagehead {
+  background: var(--color-navy);
+  color: var(--text-on-dark-soft);
+}
+.pagehead__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+.pagehead__inner > * + * {
+  margin-top: var(--space-3);
+}
+/* .lead bærer sin egen bundmargin til forsidebrug; i sidehovedet styrer båndet luften. */
+.pagehead__inner .lead {
+  margin-bottom: 0;
+}
+.pagehead__actions {
+  margin-top: var(--space-4);
+}
+/* Brødkrummens links skal kunne ses på navy uden at bruge guldbudgettet. */
+.pagehead .eyebrow a {
+  color: var(--color-gold);
+}
+
+/* Indholdsflade under sidehovedet. */
+.pagebody {
+  background: var(--color-white);
+}
+.pagebody__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-section);
+}
+
+/* Bokset panel — manualens ENESTE legitime brug af --shadow-panel. Aldrig på knapper,
+   aldrig på kort, aldrig på mærkerne. */
+.panel {
+  padding: var(--space-5);
+  background: var(--color-white);
+  border: 1px solid var(--color-grey-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
+}
+.panel > * + * {
+  margin-top: var(--space-4);
+}
+/* Panel på en grå eller mørk flade: kanten bærer adskillelsen, skyggen gør intet der. */
+.panel--flat {
+  box-shadow: none;
+}
+
+/* Panelgitter til hub-sider (fx dashboard). Auto-fit frem for faste kolonner, så et
+   dashboard med to handlinger ikke efterlader et tomt tredje felt. */
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+/* Sektionsoverskrift inde i en indholdsflade. Tynd regel over, så gruppering aflæses
+   uden bokse. */
+.section-rule {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-grey-bg);
+}
+
+/* Tom tilstand: ærlig og rolig, ikke en fejl. */
+.empty {
+  padding: var(--space-5);
+  background: var(--color-grey-bg);
+  color: var(--color-text-muted);
+}
+
+/* Nøgletal/faktalinje — fx "60 min · 15 min forberedelse · 3 partnere". */
+.factline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--fs-label);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.factline--on-dark {
+  color: var(--text-on-dark-soft);
+}
+
+/* Tabellen skal kunne rulle vandret på små skærme uden at sprænge siden. */
+.table-wrap {
+  overflow-x: auto;
+}
+
+/* --- Fokuserede opgaver: auth, adgangsport, onboarding -----------------------
+   Ét formål pr. side. Her ville et sidehoved-bånd være støj: der er intet at
+   navigere væk fra, og manualens ro er vigtigere end konsekvent kromstruktur.
+   I stedet en rolig charcoal-flade med panelet centreret i den. */
+.focus-page {
+  min-height: 60vh;
+  background: var(--color-charcoal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--space-4);
+}
+.focus-page__inner {
+  width: 100%;
+  max-width: 420px;
+}
+/* Mærket over panelet — kortform 01 Light i 96 px, dens nedre grænse. */
+.focus-page__mark {
+  display: block;
+  margin: 0 auto var(--space-5);
+  width: 96px;
+  height: 96px;
+}

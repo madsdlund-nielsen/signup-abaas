@@ -89,5 +89,47 @@ begrundelse er efterprøvelig. Bundtet er en arbejdsproces, ikke en specifikatio
     paletten uden brandbegrundelse.
   - 🟡 Det lille snit fylder 69 % af kvadratet; ved 32 px lander stregen på 0,88 px. Ved 78 %
     rammer den 1,00 px. Kræver en ny tegning, ikke en CSS-ændring.
-  - 🟡 De signerede ruter (`/dashboard`, `/moeder`, `/admin`, `/board`) er endnu ikke bygget om
-    på sektionsrytmen. De virker og bruger tokens, men er stadig enkeltkolonne.
+  - ~~De signerede ruter er endnu ikke bygget om~~ → **lukket samme dag**, se opdateringen
+    nedenfor.
+
+## Opdatering (2026-08-27) — designsproget ført igennem de signerede sider
+
+De 19 signerede sider stod på `<main className="container stack">`: én hvid kolonne med
+eyebrow, overskrift og indhold. Funktionelt, men uden komposition.
+
+**At pakke dem i forsidens `SectionBand` ville have været forkert.** Båndrytmen med 90 px luft
+er et redaktionelt greb; en app-flade skal orientere hurtigt, ikke læses som en brochure. I
+stedet er der indført tre mønstre, alle på eksisterende tokens:
+
+| Mønster | Hvad | Hvorfor |
+|---|---|---|
+| `PageHeader` + `PageBody` | Kompakt **navy** sidehoved med brødkrumme, tynd overskrift og underrubrik; indhold på hvidt under | Manualens kontrast bærer også app-fladen, men med `--space-6` i stedet for `--space-section` — et sidehoved er orientering, ikke en sektion, og 90 px ville skubbe indholdet under folden på hver side |
+| `.panel` | Bokset hvidt panel med `--shadow-panel` | Manualens **eneste** legitime brug af skygge. Grupperer uden at støje |
+| `.focus-page` | Charcoal flade, mærket i 96 px over et centreret panel | Login, signup, adgangsport. Ét formål pr. side — et sidehoved ville være støj, for der er intet at navigere væk fra |
+
+Sidehovedet er **navy og ikke charcoal**, fordi site-headeren ovenfor er charcoal; to
+charcoal-flader i træk ville smelte sammen.
+
+**Onboarding fik samme sidehoved som resten.** Overvejelsen var at holde quiz-flowet helt rent,
+men konsekvens vejede tungere: en ejer der springer mellem dashboard og quiz skal ikke møde to
+forskellige verdener.
+
+### Ordlyden på /betaling er rettet
+
+Siden beskrev stadig den **afløste** betalingsmodel — "kortet registreres ved booking,
+betalingen trækkes når mødet er afholdt, med varierende betalingsfrekvenser". CLAUDE.md
+forbyder udtrykkeligt den ordlyd efter ADR 0034. Teksten beskriver nu et fast abonnement der
+forfalder hver fjerde uge, hvor det er **prisen** der varierer med boardstørrelse og frekvens.
+
+⚠ Koden er stadig ikke rettet — det er **B-19**, og den forbliver åben. Ordlyden beskriver
+altså den besluttede model, mens implementeringen følger den gamle. Det er forsvarligt fordi
+`FLAG_PAYMENTS` er slukket, ingen prisregel findes, og der er ingen Alunta-nøgler: modulet kan
+ikke opkræve nogen. Men rækkefølgen skal ikke glemmes — B-19 før betaling går live.
+
+### Formatering
+
+`npx prettier` blev kørt uden at Prettier er en projektafhængighed, og reformaterede med
+standard 80 tegn 17 filer der ikke var en del af arbejdet. Det blev rullet tilbage.
+Repoets faktiske konvention er **`--print-width 100`**, hvilket er verificeret ved at den er en
+no-op på urørte filer. 🟡 Prettier bør enten optages som devDependency med en config, eller
+ikke bruges — den nuværende tilstand indbyder til netop den slags utilsigtede diffs.

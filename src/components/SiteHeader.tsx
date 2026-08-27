@@ -24,7 +24,11 @@ export async function SiteHeader() {
   return (
     <header className="siteheader">
       <div className="siteheader__inner">
-        <Link className="siteheader__brand" href="/" aria-label="Advisory Board Unlimited — forside">
+        <Link
+          className="siteheader__brand"
+          href="/"
+          aria-label="Advisory Board Unlimited — forside"
+        >
           <Image
             className="siteheader__lockup"
             src="/brand/advisory-board-unlimited-lockup-22.svg"
