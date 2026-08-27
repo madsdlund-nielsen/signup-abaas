@@ -21,6 +21,9 @@ export default function AdminHome() {
         <li>
           <Link href="/admin/priser">Prisregler</Link>
         </li>
+        <li>
+          <Link href="/admin/vurderinger">Vurderinger</Link>
+        </li>
       </ul>
     </main>
   );

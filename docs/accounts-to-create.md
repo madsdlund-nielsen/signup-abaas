@@ -21,7 +21,7 @@
 | Konto | Env-variabler | Flag | Status / note |
 |---|---|---|---|
 | **Supabase** (DB + auth) | `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | — | ✅ Besluttet: region **eu-north-1** (ADR 0013). Underskriv Supabase-DPA. Service-role = server-only. |
-| **Netlify** (hosting) | (sættes i Netlify env vars) | — | ✅ Besluttet (ADR 0012). 🔴 Sæt Functions region = EU (Ireland) i UI'et (kræver ≥ Pro). Underskriv Netlify-DPA. |
+| **Netlify** (hosting) | (sættes i Netlify env vars) | — | ✅ Besluttet (ADR 0012). 🔴 Sæt Functions region = EU (Frankfurt, `fra`) i UI'et (kræver ≥ Pro; teamet er p.t. på free). Underskriv Netlify-DPA. |
 | **Resend** (e-mail, EU/Dublin) | `RESEND_API_KEY`, `RESEND_FROM_ADDRESS` | `FLAG_EMAIL` | EU ✅. Underskriv DPA. |
 | **inMobile** (SMS, DK) | `INMOBILE_API_KEY`, `INMOBILE_SENDER` | `FLAG_SMS` | EU/DK ✅. Underskriv DPA. |
 | **PostHog** (analytics, EU) | `POSTHOG_KEY` (`POSTHOG_HOST` er forudfyldt) | `FLAG_ANALYTICS` | Dedikeret ABaaS-projekt på eu.posthog.com. Underskriv DPA. |

@@ -67,6 +67,8 @@ det gjort sådan?", så skriv en ADR.
 | 0034 | Betalingsmodel: fast abonnement hver 4. uge, gateway = QuickPay | Accepteret | 3 |
 | 0035 | Projektstruktur: domænemapper under `src/server/` (erstatter 0002's opdeling) | Accepteret | 3 |
 | 0036 | Transitive sikkerhedsopdateringer via `overrides` frem for major-opgraderinger | Accepteret | 3 |
+| 0037 | Supabase- og Netlify-MCP: læseadgang ja, skriveadgang nej | Accepteret | 3 |
+| 0038 | Forberedelse og rating: datamodel og synlighedsregimer | Accepteret | 4 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så

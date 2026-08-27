@@ -89,3 +89,23 @@ insert into meeting_note (id, meeting_id, partner_profile_id, body) values
 -- RLS-tests indsætter egne rækker i transaktioner der rulles tilbage (stub-politik).
 insert into membership (id, board_id, frequency_weeks) values
   ('00000000-0000-0000-0000-0000000ba001', '00000000-0000-0000-0000-0000000b0a4d', 4);
+
+-- Forberedelses- og rating-seed (0015, fase 4.1/4.2).
+-- Dagsorden på begge møder: DELT synlighed, så både ejer-A og partner-B skal se alle tre.
+insert into meeting_agenda_item (id, meeting_id, kind, body, sort_order) values
+  ('00000000-0000-0000-0000-0000000a1a01', '00000000-0000-0000-0000-0000000f0001', 'dagsorden',   'Gennemgang af kvartalet', 1),
+  ('00000000-0000-0000-0000-0000000a1a02', '00000000-0000-0000-0000-0000000f0001', 'spoergsmaal', 'Hvor skal vi prioritere?', 1),
+  ('00000000-0000-0000-0000-0000000a1a03', '00000000-0000-0000-0000-0000000f0002', 'dagsorden',   'Opfølgning på sidste møde', 1);
+
+-- Forberedelsesnote af Partner Én (koblet til partner-B): PRIVAT. Ejer-A må IKKE se den —
+-- det er den centrale negative case for 4.1's synlighedsvalg.
+insert into meeting_prep_note (id, meeting_id, partner_profile_id, body) values
+  ('00000000-0000-0000-0000-0000000b1b01', '00000000-0000-0000-0000-0000000f0001', '00000000-0000-0000-0000-0000000e0001', 'Min egen forberedelse');
+
+-- Vurderinger på det AFHOLDTE møde f0002. Ejer-A vurderer både mødet som helhed (subject
+-- null) og Partner Én; Partner Én vurderer mødet. Partner-B må kun se sin egen — altså IKKE
+-- ejer-A's vurdering AF Partner Én. Det er 4.2's "ikke en offentlig score" i praksis.
+insert into meeting_rating (id, meeting_id, rater_user_id, rater_partner_profile_id, subject_partner_profile_id, score, comment) values
+  ('00000000-0000-0000-0000-0000000c1c01', '00000000-0000-0000-0000-0000000f0002', '00000000-0000-0000-0000-00000000000a', null, null, 5, 'Godt møde'),
+  ('00000000-0000-0000-0000-0000000c1c02', '00000000-0000-0000-0000-0000000f0002', '00000000-0000-0000-0000-00000000000a', null, '00000000-0000-0000-0000-0000000e0001', 4, null),
+  ('00000000-0000-0000-0000-0000000c1c03', '00000000-0000-0000-0000-0000000f0002', null, '00000000-0000-0000-0000-0000000e0001', null, 4, null);

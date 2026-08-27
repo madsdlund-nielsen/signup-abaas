@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20"
+    "node": ">=20.12"
   },
   "scripts": {
     "dev": "next dev",
@@ -22,8 +22,8 @@
     "db:link": "npx --yes supabase link",
     "db:push": "npx --yes supabase db push",
     "db:diff": "npx --yes supabase db diff",
-    "db:seed:demo": "node scripts/seed-demo.mjs",
-    "db:seed:demo:clean": "node scripts/seed-demo.mjs clean",
+    "db:seed:demo": "node --env-file-if-exists=.env.local scripts/seed-demo.mjs",
+    "db:seed:demo:clean": "node --env-file-if-exists=.env.local scripts/seed-demo.mjs clean",
     "prepare": "husky"
   },
   "overrides": {
