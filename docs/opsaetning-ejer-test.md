@@ -77,7 +77,7 @@ Gentag trin 1 uden trin 2 for at teste ejer-flowet som en almindelig kunde.
 ## 5. Netlify
 
 - Sæt alle runtime-secrets i **Netlify → Environment variables** (ADR 0008), ikke i repoet.
-- 🔴 **Functions region = EU (Ireland, `dub`)** — SKAL sættes i UI'et før rigtige persondata.
+- 🔴 **Functions region = EU (Frankfurt, `fra`)** — SKAL sættes i UI'et før rigtige persondata.
   Pr.-funktion-region i `netlify.toml` gælder ikke for Next.js-funktioner. Kræver ≥ Pro.
 
 ## 6. Valgfrit til mandag

@@ -21,13 +21,13 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
 | **Resend** | Transaktionsmails | E-mailadresser, mailindhold | EU (Dublin) | ✅ EU (Dublin) | 🔴 afventer underskrift (Resend DPA findes) | `email` |
 | **inMobile** | SMS | Telefonnumre, beskedindhold | DK | ✅ DK | 🔴 afventer underskrift | `sms` |
 | **PostHog** | Analytics + fejlovervågning | Pseudonyme events, evt. IP/enhed | EU (eu.posthog.com) | ✅ EU | 🔴 afventer underskrift (PostHog DPA findes) | `analytics` |
-| **Netlify** (hosting) | SSR, logs, cron | Request-/session-metadata, logs | EU — Ireland (`dub`) | 🟡 kræver UI-region-valg + Pro-plan (ADR 0012) | 🔴 afventer underskrift (Netlify DPA findes) | — |
+| **Netlify** (hosting) | SSR, logs, cron | Request-/session-metadata, logs | EU — Frankfurt (`fra`) | 🟡 kræver UI-region-valg + Pro-plan (ADR 0012) | 🔴 afventer underskrift (Netlify DPA findes) | — |
 | **GitHub Actions** | CI/CD | Kildekode (ingen prod-PII), CI-metadata | Global | n/a (ingen prod-persondata) | dækket af GitHub-vilkår | — |
 
 ## Noter
 
 - **EU-residens fra fase 0:** EU-hostede leverandører (Supabase eu-north-1, Resend, inMobile,
-  PostHog) er bekræftet. Netlify (hosting) er valgt (ADR 0012) med EU-region (Ireland) — men
+  PostHog) er bekræftet. Netlify (hosting) er valgt (ADR 0012) med EU-region (Frankfurt) — men
   regionen skal aktivt sættes i Netlify-UI'et (🟡). De resterende 🔴-markerede afhænger af et
   leverandørvalg (regnskab, transskription, LLM), Cal.com-spiken eller account-oprettelse —
   alle uden for Claude Codes beslutningsret.

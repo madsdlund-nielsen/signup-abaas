@@ -42,3 +42,21 @@ GitHub-secrets). Dette lukker den udskudte host-secret-store i ADR 0008.
   - 🔴 TODO(mads): Functions region = EU (Ireland) i Netlify-UI + bekræft.
   - Netlify-DPA underskrives før produktion (ejer/jura) — se `docs/gdpr/leverandoer-register.md`.
   - CI'ens deploy-job forbliver udeladt; deploy sker via Netlifys Git-integration (ADR 0009).
+
+## Opdatering (2026-08-27) — funktions-regionen er Frankfurt, ikke Dublin
+
+Mads har valgt **EU (Frankfurt, `fra`)** frem for EU (Ireland, `dub`) som Netlify Functions-region.
+Beslutningen om hosting (Netlify) er uændret; kun region-parameteren skifter. Ovenstående afsnit
+om `dub` er dermed erstattet af `fra`.
+
+Begrundelse: begge regioner ligger i EU og opfylder residens-kravet i `docs/gdpr/leverandoer-
+register.md` lige godt, så valget er ikke et GDPR-spørgsmål men et latens- og nærhedsspørgsmål.
+Frankfurt er geografisk og netværksmæssigt tættere på danske brugere end Dublin. Bemærk at
+"irsk/EU" andre steder i dokumentationen henviser til **Netlify som selskab** (irsk selskab), ikke
+til funktions-regionen — de to skal ikke forveksles, og selskabsforholdet ændres ikke her.
+
+🔴 **Blokeret på plan.** Netlify-projektet `sua-abaas` (team `6a5fc684f04e1c87750122e1`) står på
+plan `nf_team_dev` — free-tieren. Region-valg kræver mindst Pro, så selectoren er ikke tilgængelig
+endnu, og funktionerne kører fortsat i US East (Ohio, `cmh`) som default. TODO(mads) fra
+beslutningen ovenfor er derfor **ikke lukket**: den kræver en planopgradering før den kan
+udføres, og skal ske **før der lægges rigtige persondata ind**.

@@ -58,7 +58,7 @@
   PostHog og **Ordbogen** (dækker både transskription og LLM — ADR 0024).
 - Test sletteflow ende-til-ende på tværs af Supabase og eksterne systemer.
 - Verificér samtykke (inkl. optagelse, hvis aktiveret).
-- Bekræft at Netlify Functions-region er sat til EU (Ireland) — åbent siden fase 0
+- Bekræft at Netlify Functions-region er sat til EU (Frankfurt, `fra`) — åbent siden fase 0
   (`netlify.toml`).
 
 ### 6.4 Flag- og stub-gennemgang
