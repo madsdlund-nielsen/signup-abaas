@@ -70,6 +70,7 @@ det gjort sådan?", så skriv en ADR.
 | 0037 | Supabase- og Netlify-MCP: læseadgang ja, skriveadgang nej | Accepteret | 3 |
 | 0038 | Forberedelse og rating: datamodel og synlighedsregimer | Accepteret | 4 |
 | 0039 | Mærkesystemet i UI'et + site-chrome (header, fod, forside) | Accepteret | — |
+| 0040 | Vitest 5: AST-aware dækning og reviderede tærskler | Accepteret | 4 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så

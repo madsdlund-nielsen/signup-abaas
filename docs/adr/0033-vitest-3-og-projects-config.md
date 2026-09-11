@@ -1,6 +1,6 @@
 # 0033 — Vitest 3: sikkerhedsopgradering og projekter i `test.projects`
 
-- **Status:** Accepteret
+- **Status:** Accepteret — **opdateret af ADR 0040** (Vitest 5; AST-aware dækning og reviderede tærskler)
 - **Dato:** 2026-08-26
 - **Fase:** 3 (tværgående)
 - **Opdaterer:** ADR 0003 (test-runner og teststruktur)

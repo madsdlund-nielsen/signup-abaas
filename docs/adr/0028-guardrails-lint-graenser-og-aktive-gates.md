@@ -1,6 +1,6 @@
 # 0028 — Guardrails: lag-grænser som lint-regel og gates der faktisk kører
 
-- **Status:** Accepteret
+- **Status:** Accepteret — **opdateret af ADR 0040** (dækningstærsklerne revideret til 75/75/70/70)
 - **Dato:** 2026-08-26
 - **Fase:** 2 (tværgående)
 - **Berører uafklaret punkt:** nej (Spand A — teststruktur, projektstruktur-håndhævelse, secrets-/CI-struktur)
