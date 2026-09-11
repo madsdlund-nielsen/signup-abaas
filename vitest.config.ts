@@ -54,7 +54,14 @@ export default defineConfig({
       // af integration/manuel verifikation, ikke unit-tests, så den holdes ude af tærsklen.
       // actions.ts er server-actions oven på Supabase — samme kategori som
       // supabase-client.ts, og dækkes af integration/manuel verifikation.
-      exclude: ["src/server/auth/supabase-client.ts", "src/server/auth/actions.ts"],
+      // supabase-server.ts er tredje fil i samme kategori: den konstruerer request-scopede
+      // klienter og har ingen egen logik. Den stod allerede på 0 % linjer; først med
+      // AST-aware remapping (Vitest 5) talte dens funktioner med i tærsklen.
+      exclude: [
+        "src/server/auth/supabase-client.ts",
+        "src/server/auth/supabase-server.ts",
+        "src/server/auth/actions.ts",
+      ],
       reporter: ["text", "html"],
       thresholds: { lines: 70, functions: 70, statements: 70, branches: 60 },
     },
