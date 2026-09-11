@@ -47,6 +47,10 @@ export default defineConfig({
 
     // Coverage scopes til den enhedstestede flade, så `npm run test:coverage` er en
     // meningsfuld, ikke-flaky tærskel. Tærsklen håndhæves i CI (ADR 0028).
+    // Tærskeltallene er revideret i ADR 0040: Vitest 5 gør AST-aware remapping til
+    // standard i v8-provideren, så tælleenheden skiftede og de gamle 70/70/70/60 målte
+    // ikke længere det samme. Functions bliver på 70 indtil OptionsSection.tsx er testet
+    // (backlog B-16).
     coverage: {
       provider: "v8",
       include: ["src/components/**", "src/server/flags/**", "src/server/auth/**"],
@@ -63,7 +67,7 @@ export default defineConfig({
         "src/server/auth/actions.ts",
       ],
       reporter: ["text", "html"],
-      thresholds: { lines: 70, functions: 70, statements: 70, branches: 60 },
+      thresholds: { lines: 75, functions: 70, statements: 75, branches: 70 },
     },
   },
 });
