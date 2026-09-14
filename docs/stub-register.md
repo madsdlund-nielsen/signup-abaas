@@ -5,7 +5,7 @@
 > Fase 6 (§6.4) gennemgår registret: hver post skal være løst eller have eksplicit
 > ejer-accept før launch.
 >
-> Sidst gennemgået: 2026-08-03 (oprettet).
+> Sidst gennemgået: 2026-09-14 (demo-implementeringer tilføjet, ADR 0041).
 
 ## Backend-stubs — kaster `NotConfiguredError`
 
@@ -20,6 +20,22 @@ udføre ægte kald, og lader være med at foregive andet.
 | `src/lib/accounting/` | `FLAG_ACCOUNTING` | Leverandørvalg: e-conomic vs. Dinero | Ejer |
 | `src/lib/llm/` (Ordbogen Odin) | `FLAG_AIFOLLOWUP` | Ordbogen-DPA (ADR 0024) | Mads |
 | `src/lib/transcription/` (ordbogen.ai) | `FLAG_TRANSCRIPTION` | Ordbogen-DPA **og** samtykke til optagelse (ADR 0024) | Mads + ejer |
+
+## Demo-implementeringer (ADR 0041) — ikke huller
+
+Aktive når `FLAG_DEMO` er sat **og** modulets rigtige config mangler. Rigtige nøgler vinder
+altid. Alt de returnerer er åbenlyst falsk. **`FLAG_DEMO` skal være slået fra ved launch**
+(fase 6 §6.4).
+
+| Modul | `demo.ts` | Hvad demoen gør |
+|---|---|---|
+| `src/lib/booking/` | ✅ | Bekræfter tidspunktet uændret; "Deltag" → `/moeder/rum/[uid]`. Tjekker ingen kalendere |
+| `src/lib/video/` | ✅ | Møderum → `/moeder/rum/[meetingId]` |
+| `src/lib/payments/` | ✅ | Kortregistrering → `/betaling/demo-kort/[membershipId]` (bekræftes af `confirmDemoCard`); forbrug kvitteres med `DEMO-CHARGE-…` |
+| `src/lib/accounting/` | ✅ | Kvitterer med `DEMO-INVOICE-…` |
+| `src/lib/llm/` | ✅ | Fast `[DEMO]`-opsummering med tre handlingspunkter |
+| `src/lib/transcription/` | ✅ | Fast `[DEMO]`-transskript, `da-DK` |
+| `email`, `sms`, `analytics` | — | Fire-and-forget-stubs logger og resolver allerede |
 
 ## Fire-and-forget-stubs — logger og resolver
 

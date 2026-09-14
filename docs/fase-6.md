@@ -69,6 +69,8 @@
   enten være løst eller have eksplicit ejer-accept på at gå i launch som stub.
 - Bekræft at adgangsporten (ADR 0020) er i den ønskede tilstand ved launch —
   aktiveret under ejer-test, og bevidst tændt eller slukket derefter.
+- **`FLAG_DEMO` skal være slået fra** (ADR 0041). Bekræft at ingen adapter rapporterer
+  `name = "demo"` mod produktions-env, og at `DemoBadge` ikke vises i headeren.
 
 ### 6.5 Dokumentation
 - ADR-indeks komplet; ingen beslutning uden ADR.

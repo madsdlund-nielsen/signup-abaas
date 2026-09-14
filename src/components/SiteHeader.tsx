@@ -2,6 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { getCurrentUser } from "@/server/auth";
+import { isDemoMode } from "@/server/flags";
+
+import { DemoBadge } from "./DemoBadge";
 
 /**
  * Header-bar — én af designmanualens fire kanoniske former (v1.2, side 14):
@@ -48,6 +51,8 @@ export async function SiteHeader() {
         </Link>
 
         <nav className="siteheader__nav" aria-label="Primær">
+          {/* Demo-mærket (ADR 0041) står på hver side i demo-tilstand — og er væk ellers. */}
+          {isDemoMode() ? <DemoBadge /> : null}
           {user ? (
             <>
               <Link href="/dashboard">Dashboard</Link>

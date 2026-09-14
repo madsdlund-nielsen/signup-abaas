@@ -137,3 +137,42 @@ export async function registerCard(_prev: AuthFormState, formData: FormData): Pr
   if (checkoutUrl) redirect(checkoutUrl);
   return {};
 }
+
+/**
+ * Demo-checkoutens bekræftelse (ADR 0041). Udfører præcis det tilstandsskift
+ * checkout.completed-webhooken udfører (`card_registered` i api/webhooks/alunta/route.ts),
+ * men uden leverandør: provider_customer_ref får en demo-reference. Det er den eneste vej
+ * uden om webhooken, så den afvises medmindre demo-provideren er den aktive — dvs.
+ * demo-tilstand ER slået til OG Alunta IKKE er konfigureret. Rigtige nøgler lukker den.
+ */
+export async function confirmDemoCard(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  try {
+    if (createPaymentProvider().name !== "demo") {
+      return { error: "Demo-checkout er ikke aktiv — betaling kører mod en rigtig leverandør eller er slået fra." };
+    }
+    const { service, user } = await requireOwnerContext();
+    const membershipId = String(formData.get("membership_id") ?? "");
+    if (!membershipId) return { error: "Medlemskab er påkrævet." };
+
+    if (!(await findOwnedMembership(service, user, membershipId))) {
+      return { error: "Medlemskab ikke fundet." };
+    }
+
+    const { error } = await service
+      .from("membership")
+      .update({
+        // Deterministisk og åbenlyst falsk: samme medlemskab → samme reference, aldrig en uuid.
+        provider_customer_ref: `DEMO-CUSTOMER-${membershipId}`,
+        card_status: "registreret",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", membershipId);
+    if (error) return { error: `Kunne ikke registrere demo-kortet: ${error.message}` };
+
+    revalidatePath("/betaling");
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
+  // redirect kaster NEXT_REDIRECT — skal ske UDEN FOR try/catch, ellers fanges den som fejl.
+  redirect("/betaling");
+}

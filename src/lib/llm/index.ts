@@ -1,5 +1,6 @@
-import { isEnabled } from "@/server/flags";
+import { isDemoMode, isEnabled } from "@/server/flags";
 import { NotConfiguredError } from "../errors";
+import { DemoLlmProvider } from "./demo";
 import type { LlmProvider, MeetingSummary, MeetingSummaryRequest } from "./port";
 
 export type { LlmProvider, MeetingSummary, MeetingSummaryRequest } from "./port";
@@ -30,5 +31,7 @@ export function createLlmProvider(env: Record<string, string | undefined> = proc
   if (isEnabled("aiFollowup", env) && isConfigured(config)) {
     // return new ClaudeLlmProvider(config);
   }
+  // Demo (ADR 0041): kun når rigtig config mangler — rigtige nøgler vinder altid.
+  if (isDemoMode(env) && !isConfigured(config)) return new DemoLlmProvider();
   return new StubLlmProvider();
 }

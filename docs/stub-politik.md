@@ -51,6 +51,30 @@ console.info(`[email:stub] ville sende til ${message.to}: "${message.subject}"`)
 Den må aldrig sluge en fejl fra en *konfigureret* adapter — kun stå i stedet for et
 kald der aldrig blev forsøgt.
 
+## Demo-implementeringer — ikke stubs (ADR 0041)
+
+Siden 2026-09-14 har hver backend-port en tredje implementering ved siden af rigtig og
+stub: `src/lib/<modul>/demo.ts`. Den er det modsatte af en stub på ét punkt — den
+**virker** — og identisk på det afgørende: den foregiver intet.
+
+Factoryen vælger demo kun når `FLAG_DEMO` er sat **og** den rigtige config mangler.
+Rigtige nøgler vinder altid. Demo kan derfor aldrig skygge for en ægte integration.
+
+Data-reglen: alt demo returnerer er *åbenlyst* falsk — referencer med `DEMO-`, tekster
+med `[DEMO]`, aldrig et tal der ligner en pris eller en sats. Forbuddet ovenfor gælder
+*plausible* placeholders; en værdi ingen kan forveksle med en beslutning er ikke en
+placeholder. Ingen demo-værdi lever i kode som default; de lever i `demo.ts` og i
+demo-seed'et.
+
+De fem grænser gælder uændret: demo erstatter leverandørkald, aldrig autorisation, RLS,
+webhook-signaturverifikation, idempotens eller samtykke. Demo-checkouten
+(`confirmDemoCard`) er det eneste sted en demo skriver forretningstilstand — den udfører
+præcis webhookens tilstandsskift, bag ejerskabstjek, og afvises medmindre demo-provideren
+er den aktive.
+
+Demo registreres ikke i stub-registret som et hul — den er ikke et. Registret noterer i
+stedet hvilke moduler der har en demo, så fase 6 kan bekræfte at `FLAG_DEMO` er slået fra.
+
 ## Beslutnings-pladsholdere — en tredje kategori
 
 Nogle huller kan ikke fejle højlydt, fordi funktionen skal returnere noget for at

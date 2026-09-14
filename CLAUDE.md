@@ -82,16 +82,20 @@ Board er kerneproduktet. Alt andet er støttefunktioner.
 
 ## Uafklarede punkter — Claude Code MÅ IKKE beslutte disse
 
-Når en opgave rører et af nedenstående punkter: **stop, marker med
-`// TODO(ejer): <punkt>` eller `// TODO(mads): <punkt>`, byg bag et feature-flag
-hvis muligt, og flag det i din opsummering.** Opfind ikke et svar.
+Når en opgave rører et af nedenstående punkter: **byg den simpleste klikbare version
+bag et feature-flag, marker med `// TODO(ejer): <punkt>` eller `// TODO(mads): <punkt>`,
+og flag det i din opsummering.** Er punktet et *designvalg*, så vis to varianter og lad
+ejeren pege — en klikbar version er hurtigere end et spørgsmål (ADR 0042). Opfind aldrig
+et svar der binder forretning, pris, jura eller leverandør; det er stadig ikke dit valg.
 
-**Uafklarede punkter blokerer ikke byggeriet — vi bygger med stubs.** Følg
+**Uafklarede punkter blokerer ikke byggeriet — vi bygger med stubs og demo.** Følg
 `docs/stub-politik.md` og registrér hver stub i `docs/stub-register.md` i samme
 PR. Kernereglen: en stub er et *synligt hul*, ikke et midlertidigt svar. Den
-fejler højlydt i produktion frem for at gætte stille. Skriv aldrig et plausibelt
-forretningstal som placeholder, og stub aldrig autorisation, RLS,
-webhook-signaturverifikation, idempotens eller samtykke.
+fejler højlydt i produktion frem for at gætte stille. Demo-tilstanden (ADR 0041, se
+§ Demo-tilstand) er en dummy der *virker* og er *åbenlyst falsk* — den vælges kun hvor
+rigtig config mangler. Skriv aldrig et plausibelt forretningstal som placeholder, og stub
+eller demo aldrig autorisation, RLS, webhook-signaturverifikation, idempotens eller
+samtykke.
 
 **Afventer ejer (Andreas/Mette) — forretning:**
 - Honorarsats pr. partner pr. møde (binder meeting-fee opad)
@@ -196,12 +200,39 @@ om selve opkrævningen længere; frekvensen er fast (4 uger), det er PRISEN der 
 
 ---
 
-## Byggefaser (overordnet)
+## Demo-tilstand (ADR 0041)
 
-Hver fase har sin egen fil: `docs/fase-0.md` … `docs/fase-6.md`, plus
-`docs/fase-0-eksekvering.md` med trinsekvens og beslutnings-gates. **Læs den
-relevante fase-fil før arbejdet — oversigten nedenfor er kun til orientering.**
-En fase startes ikke før den foregående er grøn.
+`FLAG_DEMO=true` giver hver backend-port en **tredje implementering** ved siden af rigtig og
+stub: en dummy der *virker*, så rejsen kan klikkes igennem før nøglerne lander. Permanent
+produktionskode — bruges også til salgsdemoer og designarbejde efter launch.
+
+- **Sikkerhedsreglen:** demo vælges kun når rigtig config *mangler*. Rigtige nøgler vinder
+  altid; demo kan aldrig skygge for en ægte integration.
+- **Data-reglen:** alt demo returnerer er åbenlyst falsk — `DEMO-`-referencer, `[DEMO]`-tekster.
+  Ingen demo-værdi lever i kode som default. Aldrig plausible tal.
+- **Grænser:** demo erstatter leverandørkald, aldrig autorisation, RLS, webhook-signatur,
+  idempotens eller samtykke.
+- **Synligt:** `DemoBadge` i headeren på hver side. **Slås fra før launch** (`docs/fase-6.md` §6.4).
+
+Ny port → ny `demo.ts` i samme PR, og én linje i factoryen *efter* den rigtige provider.
+
+---
+
+## Byggefaser (opslagsværk) og skiver (arbejdsenhed)
+
+**Siden 2026-09-14 (ADR 0042) arbejder vi i vertikale skiver, ikke i fase-gates.** En skive
+er en rejse man kan klikke igennem på sua-abaas.netlify.com — ikke et lag. Det der udestår
+bygges **skærm-først**: skærmen med demo-data → Mads klikker og designer → logikken kobles →
+den rigtige adapter droppes ind. Skærmen er produktionskode fra første commit; kun
+datakilden skifter. Rækkefølgen bestemmer Mads ved at klikke.
+
+**Skærm-først-kandidater (hver sin lille PR):** AI-opsummering på `/moeder/[id]` ·
+notifikationsoversigt · partner-honorar · partner-tilgængelighed · rolle-dashboards ·
+admin-drift.
+
+Fase-dokumenterne `docs/fase-0.md` … `docs/fase-6.md` og `docs/fase-0-eksekvering.md` er
+**opslagsværk** for scope, krav og de uafklarede punkter pr. område — de slettes ikke, og
+de gater ikke længere. Status pr. fase:
 
 - **Fase 0 — Fundament (kritisk): ✅ LUKKET.** repo/CI, Next.js+Supabase-skelet, RBAC/RLS,
   feature-flags, env/secrets, PostHog, multi-host-spike, hosting-spike,
@@ -229,19 +260,21 @@ En fase startes ikke før den foregående er grøn.
 
 ## Arbejdsform med Claude Code
 
-1. Læs altid CLAUDE.md først, dernæst den relevante `docs/fase-N.md`.
-2. Arbejd én fase ad gangen. Afslut ikke en fase uden grøn fuld test suite.
-3. Når du rører et uafklaret punkt: marker, flag, fortsæt ikke med et gæt.
-4. **ADR-on-decision er obligatorisk, ikke valgfrit.** Hver gang du træffer et
+1. Læs altid CLAUDE.md først; slå op i den relevante `docs/fase-N.md` for scope og krav.
+2. Arbejd i skiver: én klikbar rejse eller én skærm ad gangen, hver PR grøn og synlig på
+   sua-abaas.netlify.com. Fuld test suite er stadig gaten for hver merge.
+3. Når du rører et uafklaret punkt: byg den simpleste klikbare version bag flag, marker,
+   flag — og opfind ikke et svar der binder forretning, pris, jura eller leverandør.
+4. **ADR-on-ship er obligatorisk, ikke valgfrit.** Hver gang du træffer et
    arkitektur-, stack-, leverandør-, datamodel- eller domænegrænse-valg — eller
-   afslutter en spike — skriver du en kort ADR i `docs/adr/` i samme PR som
-   beslutningen, før du går videre. Følg `docs/adr/README.md`. En fase er ikke
-   færdig hvis dens beslutninger ikke er dokumenteret. Dokumentationen opstår
-   synkront med koden, ikke bagud i fase 6.
-5. **Merge-økonomi (stående ordre, Mads 2026-07-22):** hver merge til `main`
-   udløser en Netlify-produktions-redeploy med **fast kreditomkostning uanset
-   PR-størrelse.** Saml derfor en hel fase (backend + UI) i ÉN PR = én merge;
-   undgå mange små merges. Draft-PR'er kan samle flere commits før merge.
+   afslutter en spike — skriver du en kort ADR i `docs/adr/` **i den PR der shipper
+   skiven, når designet har overlevet klik** (ADR 0042). Følg `docs/adr/README.md`.
+   Design kommer efter byg, så dokumentationen af designet kommer også efter — men
+   stadig i samme PR, aldrig bagud i fase 6.
+5. **Små PR'er, ship ofte (Mads, 2026-09-14 — erstatter merge-økonomien fra
+   2026-07-22).** Hver PR er én skive eller én skærm og skal kunne ses på
+   sua-abaas.netlify.com. Draft-PR'er er fine til at samle commits; hele faser i én PR
+   er det ikke. Netlify-omkostningen måles, ikke antages (ADR 0042).
 6. **Teknisk gæld og drift hører i `docs/backlog.md`** — ikke her, og ikke i
    `docs/stub-register.md`. Backloggen er til punkter hvor beslutningen allerede er
    truffet, men koden eller dokumentationen ikke er fulgt med. Luk et punkt ved at

@@ -41,9 +41,10 @@ de tre synlighedsregimer er begrundet i **ADR 0038**.
 Udestår i 4.2: **signerede engangslinks** (B-21) — bevidst udskudt til 4.5, som er den der
 udsender dem.
 
-**4.3–4.6 er ikke startet** og bør ikke startes for at producere stubs (fase 3-rapporten §8):
-Ordbogen-DPA er uunderskrevet, samtykke til optagelse er ejer-uafklaret, og der findes hverken
-Resend- eller inMobile-konto.
+**4.3–4.6 er ikke startet.** Siden 2026-09-14 (ADR 0042) bygges de **skærm-først** mod
+demo-adapterne (ADR 0041): skærmen først, så Mads kan klikke og designe; leverandøren droppes
+ind når Ordbogen-DPA, samtykke til optagelse og Resend-/inMobile-konti lander. Den tidligere
+anbefaling om ikke at starte før konti findes (fase 3-rapporten §8) er trukket tilbage.
 
 ⚠ Db-testene for 0015 er **ikke kørt lokalt** — Docker mangler på maskinen (B-13). CI er eneste
 gate for denne migrations RLS.

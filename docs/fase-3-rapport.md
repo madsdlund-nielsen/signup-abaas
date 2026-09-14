@@ -103,3 +103,7 @@ i januar 2027 er der rigelig plads — men fasen bør ikke startes for at produc
 Nærmeste værdi ligger i at få stakken til at køre end-to-end mod rigtige nøgler
 (`docs/opsaetning-ejer-test.md`) og køre Cal.com-liveverifikationen
 (`docs/spikes/multi-host.md`).
+
+> **Trukket tilbage 2026-09-14 (ADR 0042).** Anbefalingen om ikke at starte fase 4 før konti
+> findes, var det gamle loop: skærmen ventede på leverandøren. Nu bygges skærmene mod
+> demo-adapterne (ADR 0041), og leverandøren droppes ind bagefter.

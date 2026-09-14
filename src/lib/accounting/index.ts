@@ -1,5 +1,6 @@
-import { isEnabled } from "@/server/flags";
+import { isDemoMode, isEnabled } from "@/server/flags";
 import { NotConfiguredError } from "../errors";
+import { DemoAccountingExporter } from "./demo";
 import type { AccountingExport, AccountingExporter } from "./port";
 
 export type { AccountingExport, AccountingExporter, InvoiceLine } from "./port";
@@ -30,5 +31,7 @@ export function createAccountingExporter(env: Record<string, string | undefined>
   if (isEnabled("accounting", env) && isConfigured(config)) {
     // return new EconomicAccountingExporter(config); // eller DineroAccountingExporter
   }
+  // Demo (ADR 0041): kun når rigtig config mangler — rigtige nøgler vinder altid.
+  if (isDemoMode(env) && !isConfigured(config)) return new DemoAccountingExporter();
   return new StubAccountingExporter();
 }

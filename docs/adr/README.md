@@ -71,6 +71,8 @@ det gjort sådan?", så skriv en ADR.
 | 0038 | Forberedelse og rating: datamodel og synlighedsregimer | Accepteret | 4 |
 | 0039 | Mærkesystemet i UI'et + site-chrome (header, fod, forside) | Accepteret | — |
 | 0040 | Vitest 5: AST-aware dækning og reviderede tærskler | Accepteret | 4 |
+| 0041 | Demo-tilstand: tredje adapter-implementering ved siden af rigtig og stub (udvider 0004) | Accepteret | — |
+| 0042 | Inverteret udviklingsloop: byg → klik → design → ship (erstatter merge-økonomi + ADR-on-decision) | Accepteret | — |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så

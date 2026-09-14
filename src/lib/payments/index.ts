@@ -1,6 +1,7 @@
-import { isEnabled } from "@/server/flags";
+import { isDemoMode, isEnabled } from "@/server/flags";
 import { NotConfiguredError } from "../errors";
 import { AluntaPaymentProvider } from "./alunta";
+import { DemoPaymentProvider } from "./demo";
 import type { CardRegistration, CheckoutSession, PaymentProvider, UsageChargeRequest } from "./port";
 
 export type {
@@ -56,5 +57,7 @@ export function createPaymentProvider(env: Record<string, string | undefined> = 
       appUrl: config.appUrl,
     });
   }
+  // Demo (ADR 0041): kun når rigtig config mangler — rigtige nøgler vinder altid.
+  if (isDemoMode(env) && !isConfigured(config)) return new DemoPaymentProvider();
   return new StubPaymentProvider();
 }
