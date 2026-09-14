@@ -1,5 +1,6 @@
-import { isEnabled } from "@/server/flags";
+import { isDemoMode, isEnabled } from "@/server/flags";
 import { NotConfiguredError } from "../errors";
+import { DemoTranscriptionProvider } from "./demo";
 import type { Transcript, TranscriptionProvider, TranscriptionRequest } from "./port";
 
 export type { Transcript, TranscriptionProvider, TranscriptionRequest } from "./port";
@@ -32,5 +33,7 @@ export function createTranscriptionProvider(
   if (isEnabled("transcription", env) && isConfigured(config)) {
     // return new SomeEuTranscriptionProvider(config);
   }
+  // Demo (ADR 0041): kun når rigtig config mangler — rigtige nøgler vinder altid.
+  if (isDemoMode(env) && !isConfigured(config)) return new DemoTranscriptionProvider();
   return new StubTranscriptionProvider();
 }

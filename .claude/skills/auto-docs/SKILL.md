@@ -1,6 +1,6 @@
 ---
 name: auto-docs
-description: Holder ABaaS' governance-/teknisk dokumentation synkron med koden — ADR-on-decision, fase-rapportens flag-punkter, GDPR-leverandør-register + sletteflow, spike-docs og design-tokens (docs↔src). Brug ved arkitektur-/stack-/leverandør-/datamodelvalg, afsluttede spikes, nye sub-processorer, schema- eller token-ændringer, eller når brugeren siger "opdater docs", "skriv ADR", "synk dokumentation". ABaaS har ét-sproget governance-docs (ingen marketing/DA-EN).
+description: Holder ABaaS' governance-/teknisk dokumentation synkron med koden — ADR-on-ship, fase-rapportens flag-punkter, GDPR-leverandør-register + sletteflow, spike-docs og design-tokens (docs↔src). Brug ved arkitektur-/stack-/leverandør-/datamodelvalg, afsluttede spikes, nye sub-processorer, schema- eller token-ændringer, eller når brugeren siger "opdater docs", "skriv ADR", "synk dokumentation". ABaaS har ét-sproget governance-docs (ingen marketing/DA-EN).
 allowed-tools: Read, Edit, Write, Bash(git diff:*), Bash(git status:*), Grep, Glob
 ---
 
@@ -15,9 +15,9 @@ git diff --name-only
 git status --short
 ```
 
-## 2. ADR-on-decision (OBLIGATORISK)
+## 2. ADR-on-ship (OBLIGATORISK)
 Hvis ændringen er et **arkitektur-, stack-, leverandør-, datamodel- eller domænegrænse-valg**
-(Spand A i CLAUDE.md) — eller afslutter en spike — så skriv en kort ADR **i samme PR**:
+(Spand A i CLAUDE.md) — eller afslutter en spike — så skriv en kort ADR **i den PR der shipper skiven**, når designet har overlevet klik (ADR 0042) — aldrig bagud:
 1. Kopiér `docs/adr/0000-template.md` → `NNNN-kort-titel.md` (næste ledige nummer).
 2. Udfyld: kontekst, overvejede muligheder, beslutning, konsekvenser. Sæt status `Accepteret`.
 3. Tilføj linjen i indekset i `docs/adr/README.md`.

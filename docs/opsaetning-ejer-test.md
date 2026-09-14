@@ -89,6 +89,9 @@ Gentag trin 1 uden trin 2 for at teste ejer-flowet som en almindelig kunde.
   HTTPS. Variablen bruges kun lokalt af seed-scriptet og db-testene.
 - 🔴 **Functions region = EU (Frankfurt, `fra`)** — SKAL sættes i UI'et før rigtige persondata.
   Pr.-funktion-region i `netlify.toml` gælder ikke for Next.js-funktioner. Kræver ≥ Pro.
+- **`FLAG_DEMO=true`** (ADR 0041) indtil rigtige nøgler lander: booking, betaling, video og
+  AI kører mod demo-implementeringer, og ejerne kan klikke hele rejsen igennem. Rigtige
+  nøgler vinder altid over demo, modul for modul. Slås fra før launch.
 
 ## 6. Valgfrit til mandag
 
@@ -105,10 +108,12 @@ Med trin 1–4 på plads virker: signup og login · den samtalende onboarding-qu
 board-matching og board-anbefaling med partnerprofiler · admin-fladen (quiz, tags,
 partnerkatalog, invitationer) · partner-login og self-service-profil.
 
-Kræver nøgler: booking og video (Cal.com) · betaling (Alunta/QuickPay) · mails og SMS.
+Med `FLAG_DEMO=true` (ADR 0041) virker også booking, video (demo-møderum), betaling
+(demo-checkout) og forberedelse/rating efter et afholdt møde — uden nøgler. Rigtige nøgler
+tager over, modul for modul, når de lander. Mails og SMS logges stadig kun.
 
-**Ikke bygget endnu:** forberedelse, rating, AI-mødeopfølgning, transskription og
-notifikationer (fase 4), honorar og dashboards (fase 5).
+**Ikke bygget endnu:** AI-opsummeringsskærm, transskription og notifikationer (fase
+4.3–4.6), honorar og dashboards (fase 5) — bygges skærm-først (ADR 0042).
 
 ## Adgangsporten
 

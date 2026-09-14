@@ -1,5 +1,6 @@
-import { isEnabled } from "@/server/flags";
+import { isDemoMode, isEnabled } from "@/server/flags";
 import { NotConfiguredError } from "../errors";
+import { DemoVideoProvider } from "./demo";
 import type { VideoProvider, VideoRoom, VideoRoomRequest } from "./port";
 
 export type { VideoProvider, VideoRoom, VideoRoomRequest } from "./port";
@@ -30,5 +31,7 @@ export function createVideoProvider(env: Record<string, string | undefined> = pr
   if (isEnabled("video", env) && isConfigured(config)) {
     // return new CalVideoProvider(config);
   }
+  // Demo (ADR 0041): kun når rigtig config mangler — rigtige nøgler vinder altid.
+  if (isDemoMode(env) && !isConfigured(config)) return new DemoVideoProvider();
   return new StubVideoProvider();
 }

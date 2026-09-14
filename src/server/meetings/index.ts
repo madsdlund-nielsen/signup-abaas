@@ -115,3 +115,29 @@ export async function listMyMeetings(
   }
   return ((data ?? []) as unknown as MeetingRow[]).map(rowToMeeting);
 }
+
+/**
+ * Ét møde via leverandørens booking-reference — samme RLS-scopede læsning som `getMeeting`.
+ * Bruges af demo-møderummet (ADR 0041): booking-adapteren kender ikke mødets id, så dens
+ * "Deltag"-link bærer booking-uid'et i stedet.
+ */
+export async function getMeetingByBookingUid(
+  uid: string,
+  env: Record<string, string | undefined> = process.env,
+): Promise<Meeting | null> {
+  const config = readSupabaseAuthConfig(env);
+  if (!isSupabaseAuthConfigured(config)) return null;
+
+  const supabase = await createServerSupabase(config);
+  const { data, error } = await supabase
+    .from("meeting")
+    .select(MEETING_COLUMNS)
+    .eq("provider_booking_uid", uid)
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.error(`[meetings] getMeetingByBookingUid fejlede: ${error.message}`);
+    return null;
+  }
+  return data ? rowToMeeting(data as unknown as MeetingRow) : null;
+}

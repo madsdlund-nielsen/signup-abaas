@@ -56,3 +56,16 @@ export function isEnabled(flag: FeatureFlag, env: Record<string, string | undefi
   const raw = env[envKey(flag)];
   return raw != null && TRUTHY.has(raw.trim().toLowerCase());
 }
+
+/**
+ * Demo-tilstand (ADR 0041): den tredje adapter-implementering ved siden af rigtig og stub.
+ *
+ * Bevidst IKKE et `FeatureFlag`: den tænder ikke et modul, den vælger en implementering
+ * for de moduler hvis rigtige config mangler. Hver factory spørger den rigtige adapter
+ * først — demo kan aldrig skygge for en konfigureret integration. Slås fra før launch
+ * (docs/fase-6.md §6.4).
+ */
+export function isDemoMode(env: Record<string, string | undefined> = process.env): boolean {
+  const raw = env.FLAG_DEMO;
+  return raw != null && TRUTHY.has(raw.trim().toLowerCase());
+}

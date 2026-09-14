@@ -1,6 +1,7 @@
-import { isEnabled } from "@/server/flags";
+import { isDemoMode, isEnabled } from "@/server/flags";
 import { NotConfiguredError } from "../errors";
 import { CalComBookingProvider } from "./calcom";
+import { DemoBookingProvider } from "./demo";
 import type { BookingProvider, MultiHostMeetingRequest, ScheduledMeeting } from "./port";
 
 export type { BookingProvider, MultiHostMeetingRequest, ScheduledMeeting } from "./port";
@@ -50,5 +51,7 @@ export function createBookingProvider(env: Record<string, string | undefined> = 
       apiUrl: config.apiUrl,
     });
   }
+  // Demo (ADR 0041): kun når rigtig config mangler — rigtige nøgler vinder altid.
+  if (isDemoMode(env) && !isConfigured(config)) return new DemoBookingProvider();
   return new StubBookingProvider();
 }

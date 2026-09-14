@@ -527,6 +527,16 @@
   color: var(--color-white);
 }
 
+/* Demo-mærket (ADR 0041): samme versal-UI som nav'en, tynd ramme, intet fyld. Dæmpet
+   hvid og ikke guld — det sidder på alle sider og må ikke bruge guldbudgettet. */
+.siteheader__demo {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--text-on-dark-soft);
+  color: var(--text-on-dark-soft);
+  font-weight: var(--fw-bold);
+  line-height: 1;
+}
+
 /* Kompakt CTA til header-baren. Samme form, mindre luft — aldrig anden radius. */
 .btn-primary--compact {
   padding: var(--space-2) var(--space-4);
