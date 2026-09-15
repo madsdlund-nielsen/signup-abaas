@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { asPostgres } from "./helpers";
 
 /**
- * Migration 0016 + ADR 0046 — hvem må kalde vores SECURITY DEFINER-funktioner.
+ * Migration 0016 + ADR 0047 — hvem må kalde vores SECURITY DEFINER-funktioner.
  *
  * Supabase' linter flagger alle tre som "eksekverbar for anon/authenticated". Kun ÉN af dem
  * skal strammes; de to andre KALDES af RLS-policies og evalueres med kalderens rettigheder,

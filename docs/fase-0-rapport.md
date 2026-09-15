@@ -34,7 +34,7 @@ Verifikation lokalt: `npm run lint`, `npm run check`, `npm run build`, `npm run 
 
 | Spike | Punkt | Hvad mangler | Bliver til |
 |---|---|---|---|
-| **Cal.com multi-host** | 5 + 6 | Verificér 2-3 værter + ejer (Platform managed users + Atoms); EU-residens; native optagelse på valgt plan | ADR + rigtig `BookingProvider`/`VideoProvider` |
+| **Cal.com multi-host** | 5 + 6 | **Delvist lukket (ADR 0046):** plan = Teams, og multi-host = ét collective event type pr. board. Tilbage: EU-residens + native optagelse på Teams, og selve kørslen (kræver konto) | ADR 0046 ✅ + opfølgende ADR når checklisten køres |
 
 **✅ AFKLARET siden første udkast:**
 - **Hosting** (punkt 24 + 26) → **Netlify** (ADR 0012). `netlify.toml` + deploy via Netlifys

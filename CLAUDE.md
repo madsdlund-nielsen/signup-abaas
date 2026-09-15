@@ -28,12 +28,12 @@ Board er kerneproduktet. Alt andet er støttefunktioner.
 |---|---|---|
 | Frontend/SSR | Next.js | App Router |
 | Database/backend | Supabase | **Sandhedskilde for forretningsdata** |
-| Booking | Cal.com (Platform managed users + Atoms) | self-host som exit. Multi-host fra launch |
+| Booking | **Cal.com Teams-plan** ($12/bruger/md) | ✅ besluttet (ADR 0046) — Platform-planen er lukket for nye kunder. Multi-host = ét collective event type pr. board. Sæder = rådgivere + admin; ejere er attendees. self-host som exit |
 | Video | Cal Video (multi-party) | RealtimeKit udgår. Cal.com ansvarlig for optag |
 | Betaling ind | **Alunta** | ✅ besluttet (ADR 0023) — erstatter Stripe Billing |
 | Betaling ud / bogføring | ⚠ e-conomic ELLER Dinero | ikke afgjort — afventer ejer |
 | AI-opfølgning | **Ordbogen (chat.dk / Odin-LLM)** | ✅ besluttet (ADR 0024) — dansk model, dansk datacenter |
-| Transskription | **Ordbogen (ordbogen.ai)** | ✅ besluttet (ADR 0024) — samme danske leverandør som LLM |
+| Transskription | **Ordbogen (ordbogen.ai → odincore.ai)** | ✅ besluttet (ADR 0024) — samme danske leverandør og samme konto som LLM |
 | E-mail | **Resend (EU, Dublin)** | ✅ besluttet — transaktionsmails |
 | SMS | inMobile (dansk) | rating/påmindelser |
 | Analytics & fejl | PostHog (EU) | erstatter Sentry |
@@ -117,19 +117,27 @@ samtykke.
 - Domæne (signupacademy.com) + DNS-adgang til Mads
 
 **Afventer Mads — teknisk afklaring (spike/verificér før byg):**
-- Cal.com EU-residens på valgt niveau
-- Cal.com mødeoptagelse — native på valgt plan?
-- Cal.com multi-host-spike: **aldrig kørt** (kræver konto). `docs/spikes/multi-host.md`
-  er forberedt; ADR skrives når den køres. **Ikke længere byggegate** (Mads, 2026-08-04):
-  fase 2 bygges mod porten med stub aktiv, og spiken køres som verifikation når nøglerne
-  lander. STOP ved plan-/tier-valg består
-- Ordbogen DPA/databehandleraftale — dækker både tale-til-tekst og LLM. Dansk
-  hosting er på plads; den formelle aftale skal foreligge før produktionsbrug
+- Cal.com EU-residens **på Teams** — plan-valget (ADR 0046) svarer ikke på det. `apiUrl` er
+  udskiftelig (`cal.eu`/self-host). Gate før der lægges produktionsdata ind (spike L-7)
+- Cal.com mødeoptagelse — native **på Teams**? (spike L-8)
+- Cal.com multi-host-spike: **delvist lukket uden konto** (ADR 0046). L-2 er besvaret —
+  `hosts` pr. booking findes ikke i API v2, så multi-host bygges som ét collective event
+  type pr. board. **Plan-/tier-STOP'et er hermed også lukket: Teams.** Tilbage står L-1,
+  L-3, L-4 og L-5, som kræver en konto. `docs/spikes/multi-host.md`
 - ~~Alunta/Supabase dataflow~~ → **afsøgt mod OpenAPI-spec'en (ADR 0032)**: usage-abonnement
   med øre-parameter; adapter + webhooks bygget. Rest: opsætning i Alunta-UI (plan +
   parameter + webhook-secret + faktureringsinterval) og live-verifikation i test_mode
 
 **Lukket siden sidst:**
+- ~~Cal.com plan-/tier-valg~~ → **Teams** ($12/bruger/md) (Mads, 2026-09-15; ADR 0046).
+  Platform-planen er deprecated og lukket for nye kunder, så managed users + Atoms er ikke
+  en åben vej. EU-residens og native optagelse er **ikke** lukket af dette
+- ~~Ordbogen DPA/databehandleraftale~~ → **håndteret uden for repoet** (Mads, 2026-09-15;
+  ADR 0024-opdatering). Konto er bestilt. Samtykke til optagelse er stadig ejerens punkt
+- ~~Hvem indløser?~~ → **Nets** (Mads, 2026-09-15; ADR 0034-opdatering). Betalingskæden er
+  **tre parter**: Alunta (abonnement) → QuickPay (gateway) → Nets (indløser). Nets er en
+  **selvstændig aftale og konto** — den følger ikke med QuickPay. QuickPay koster 148 kr/md
+  + 0,25 kr/transaktion; Nets' kortgebyrer afhænger af indløsningsaftalen og er ikke fastlagt
 - ~~Gateway-valg hos Alunta~~ → **QuickPay** (Mads, 2026-08-26; ADR 0034)
 - ~~MobilePay gennem Alunta~~ → MobilePay er ikke en Alunta-gateway (ADR 0032), men
   **QuickPay tilbyder MobilePay Online**, så den går via gatewayens checkout (ADR 0034).
@@ -137,8 +145,9 @@ samtykke.
 - ~~Betalingsmodel: pr. møde vs. abonnement~~ → **fast abonnement hver 4. uge** (ADR 0034)
 - ~~Alunta vs. Stripe Billing~~ → **Alunta** (ADR 0023)
 - ~~Henosia vs. Netlify~~ → **Netlify** (irsk/EU, ADR 0012)
-- ~~LLM EU-dataresidens~~ → **Ordbogen/Odin-LLM, dansk datacenter** (ADR 0024; DPA udestår)
-- ~~Transskription: dansk/EU-udbyder~~ → **Ordbogen (ordbogen.ai)** (ADR 0024)
+- ~~LLM EU-dataresidens~~ → **Ordbogen/Odin-LLM, dansk datacenter** (ADR 0024)
+- ~~Transskription: dansk/EU-udbyder~~ → **Ordbogen** (ADR 0024). Bemærk: `ordbogen.ai`
+  viderestiller nu til **`odincore.ai`** — samme produkt, nyt brand
 - ~~SSR + cron-verifikation~~ → verificeret i fase 0
 - ~~Auth: Supabase Auth vs. eget system~~ → **Supabase Auth** (ADR 0013)
 

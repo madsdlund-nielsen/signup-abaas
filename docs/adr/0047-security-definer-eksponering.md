@@ -1,4 +1,4 @@
-# 0046 — SECURITY DEFINER-funktioner: hvad Supabase' linter må rette, og hvad den ikke må
+# 0047 — SECURITY DEFINER-funktioner: hvad Supabase' linter må rette, og hvad den ikke må
 
 - **Status:** Accepteret
 - **Dato:** 2026-09-15
@@ -64,7 +64,7 @@ og kan ikke spørges om andre. Eksponeringen er derfor reel, men indholdsløs.
 Vi bruger e-mail + selvvalgt adgangskode (`signInWithPassword`/`signUp`), så tjekket er
 relevant. Koden er forberedt: `translateAuthError` oversætter HIBP-afvisningen til dansk,
 så flaget kan vendes uden at sende en engelsk fejl i ansigtet på brugeren. Selve
-vendingen er Mads' (backlog B-23).
+vendingen er Mads' (backlog B-25).
 
 ## Konsekvenser
 
@@ -76,5 +76,5 @@ vendingen er Mads' (backlog B-23).
   `has_role` og `is_partner_on_board`. De er accepterede, ikke oversete; denne ADR er
   svaret næste gang rapporten dukker op.
 - Opfølgning: **B-22** (hvad er `rls_auto_enable`, og hvordan endte den uden for
-  migrationerne), **B-23** (slå leaked password protection til), **B-24** (mulighed C,
+  migrationerne), **B-25** (slå leaked password protection til), **B-26** (mulighed C,
   hvis vi vil have rapporten helt ren).

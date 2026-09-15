@@ -73,3 +73,23 @@ Teknisk følger:
     samtykkeflow, uanset at leverandøren er dansk. **Samtykke må aldrig stubbes**
     (`docs/stub-politik.md`).
   - 🔴 **Note-synlighed (ejer)** gælder også resuméer → restriktiv default indtil afklaret.
+
+## Opdatering (2026-09-15) — DPA'en er ikke længere en åben blokering
+
+Beslutningen om Ordbogen er uændret. To af de tre åbne punkter ovenfor lukkes her:
+
+- ⚠ **DPA (Mads)** → **håndteret uden for repoet** (Mads, 2026-09-15). Aftalen ligger ikke i
+  repoet og spores ikke herfra. `docs/gdpr/leverandoer-register.md` og
+  `docs/stub-register.md` er rettet tilsvarende, så Ordbogen ikke længere står som blokeret
+  på papirarbejde.
+- **Konto er bestilt** (Mads, 2026-09-15). `LLM_API_KEY` og `TRANSCRIPTION_API_KEY` afventer
+  nu blot at nøglerne lander — ikke en beslutning. Dermed lukkes `docs/backlog.md` **B-09**:
+  adapterne må navngive Ordbogen.
+
+**Bemærk navneskiftet:** `ordbogen.ai` viderestiller (301) til **`odincore.ai`**. Produktet er
+det samme; brandet er skiftet siden denne ADR blev skrevet. Dokumentationen bruger fortsat
+"Ordbogen" om leverandøren og nævner OdinCore som platformens nuværende navn.
+
+🔴 **Uændret åbent:** **samtykke til mødeoptagelse (ejer)**. Det er ikke et DPA-spørgsmål og
+lukkes ikke af ovenstående. Transskription må fortsat ikke aktiveres uden samtykkeflow, og
+samtykke stubbes aldrig (`docs/stub-politik.md`).

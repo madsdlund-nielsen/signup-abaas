@@ -1,6 +1,6 @@
 -- Sikkerhedshygiejne — fjern den unødvendige EXECUTE-rettighed på trigger-funktionen fra 0004.
 -- Udløst af Supabase' database-linter (0028/0029: SECURITY DEFINER-funktion eksekverbar for
--- anon/authenticated). Baggrund og de bevidst URØRTE funktioner: ADR 0046.
+-- anon/authenticated). Baggrund og de bevidst URØRTE funktioner: ADR 0047.
 --
 -- Supabase sætter `alter default privileges ... grant all on functions to anon, authenticated`,
 -- så enhver ny public-funktion eksponeres som /rest/v1/rpc/<navn>. For en trigger-funktion er
@@ -10,7 +10,7 @@
 --
 -- has_role (0005) og is_partner_on_board (0011) røres IKKE. De KALDES af RLS-policies og
 -- evalueres med kalderens rettigheder; uden EXECUTE fejler enhver authed læsning med
--- "permission denied for function" i stedet for at filtrere. Se ADR 0046.
+-- "permission denied for function" i stedet for at filtrere. Se ADR 0047.
 
 do $$
 declare

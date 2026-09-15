@@ -71,3 +71,35 @@ konti før produktion — QuickPay-konto findes endnu ikke.
 - Opfølgning: ADR 0030 og 0032 er annoteret. Alunta-planen skal oprettes som et
   **abonnement med 4-ugers interval**, ikke som usage-plan — `docs/accounts-to-create.md`
   er rettet tilsvarende.
+
+## Opdatering (2026-09-15) — betalingskæden er tre parter, og QuickPay-prisen er kendt
+
+Gateway-valget er uændret. Denne ADR beskrev QuickPay som *gateway* uden at gøre op med
+hvem der indløser. Rollefordelingen er nu fastlagt (Mads, 2026-09-15) — og den er **tre
+parter, ikke to**:
+
+| Part | Rolle | Hvad den gør |
+|---|---|---|
+| **Alunta** | Abonnementssystem | Planer, medlemskaber, fakturering, webhooks (ADR 0023/0032) |
+| **QuickPay** | Betalingsgateway | Hosted checkout, korttokenisering, MobilePay Online |
+| **Nets** | **Indløser (acquirer)** | Indløsningsaftalen og kortgebyrerne |
+
+**Nets er en selvstændig aftale og en selvstændig konto** — den følger ikke med QuickPay.
+Den skal på plads før betaling kan gå live, på linje med de to andre.
+
+Pris (ekskl. moms):
+
+| Post | Beløb |
+|---|---|
+| QuickPay (gateway) | 99 kr/md |
+| MobilePay Online-tillæg | 49 kr/md |
+| **QuickPay fast i alt** | **148 kr/md** |
+| QuickPay transaktionsgebyr | 0,25 kr/transaktion |
+| **Nets — kortgebyrer** | **variable; sats + evt. fast abonnement afhænger af aftalen** |
+
+⚠ **Nets' priser er ikke fastlagt her.** De afhænger af den konkrete indløsningsaftale og
+er ikke Claude Codes at gætte (Spand C) — tallet indsættes når aftalen foreligger.
+
+`docs/accounts-to-create.md`, `docs/gdpr/leverandoer-register.md` og
+`docs/gdpr/sletteflow.md` er rettet tilsvarende. Liveverifikationen mod rigtige
+QuickPay- og Nets-konti består uændret.

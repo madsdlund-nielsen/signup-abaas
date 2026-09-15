@@ -44,6 +44,9 @@
   fejlovervågning fanger exceptions (erstatter Sentry).
 
 ### 0.5 SPIKE — Multi-host scheduling (Cal.com API)
+> ⚠ **Overhalet 2026-09-15 (ADR 0046):** Platform-planen er lukket for nye kunder. Planen er
+> **Teams**, og multi-host bygges som ét **collective event type pr. board** — ikke via
+> managed users/Atoms. Nedenstående formulering er bevaret som historik.
 - Verificér at Cal.com kan håndtere møder med flere værter (2-3 partnere +
   ejer) via Platform managed users / Atoms.
 - ⚠ Rør punkt 5/6 (EU-residens, optagelse): **verificér, beslut ikke.** Hvis

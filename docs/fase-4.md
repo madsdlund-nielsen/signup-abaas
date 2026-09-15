@@ -42,9 +42,9 @@ Udestår i 4.2: **signerede engangslinks** (B-21) — bevidst udskudt til 4.5, s
 udsender dem.
 
 **4.3–4.6 bygges skærm-først** siden 2026-09-14 (ADR 0042) mod demo-adapterne (ADR 0041):
-skærmen først, så Mads kan klikke og designe; leverandøren droppes ind når Ordbogen-DPA,
-samtykke til optagelse og Resend-/inMobile-konti lander. Den tidligere anbefaling om ikke at
-starte før konti findes (fase 3-rapporten §8) er trukket tilbage.
+skærmen først, så Mads kan klikke og designe; leverandøren droppes ind når Ordbogen-nøglerne
+(konto bestilt 2026-09-15), samtykke til optagelse og Resend-/inMobile-konti lander. Den
+tidligere anbefaling om ikke at starte før konti findes (fase 3-rapporten §8) er trukket tilbage.
 
 **4.4 er startet 2026-09-15:** opsummeringsskærmen på `/moeder/[id]` (`src/server/summaries/`,
 `MeetingSummary`) viser referat + handlingspunkter for et afholdt møde — kun for ejeren
@@ -102,7 +102,8 @@ gate for denne migrations RLS.
 
 ## Uafklarede punkter berørt i fase 4 (flag, beslut ikke)
 
-- Ordbogen DPA/databehandleraftale — dækker både transskription og LLM (Mads).
+- ~~Ordbogen DPA/databehandleraftale~~ → **håndteret uden for repoet** (Mads, 2026-09-15).
+  Konto er bestilt; 4.3/4.4 venter nu kun på nøgler — og på samtykke nedenfor.
 - Samtykke til mødeoptagelse (ejer) — blokerer 4.3 og 4.4 i produktion.
 - Note-synlighed, inkl. resuméer (ejer).
 - Noter under møde (ejer).
