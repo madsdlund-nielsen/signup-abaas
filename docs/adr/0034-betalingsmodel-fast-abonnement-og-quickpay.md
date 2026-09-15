@@ -71,3 +71,24 @@ konti før produktion — QuickPay-konto findes endnu ikke.
 - Opfølgning: ADR 0030 og 0032 er annoteret. Alunta-planen skal oprettes som et
   **abonnement med 4-ugers interval**, ikke som usage-plan — `docs/accounts-to-create.md`
   er rettet tilsvarende.
+
+## Opdatering (2026-09-15) — QuickPay er også indløser, og prisen er kendt
+
+Gateway-valget er uændret. Denne ADR beskrev QuickPay som *gateway*, hvilket efterlod et
+åbent spørgsmål om en separat indløsningsaftale (acquirer) hos fx Clearhaus eller Nets.
+
+**Det spørgsmål bortfalder: QuickPay udfylder også indløser-rollen, og det er indeholdt i
+prisen** (Mads, 2026-09-15). Betalingskæden er dermed to parter — Alunta → QuickPay — ikke tre.
+
+Pris (ekskl. moms):
+
+| Post | Beløb |
+|---|---|
+| QuickPay inkl. indløsning | 99 kr/md |
+| MobilePay Online-tillæg | 49 kr/md |
+| **Fast i alt** | **148 kr/md** |
+| Transaktionsgebyr | 0,25 kr/transaktion |
+| Kortgebyrer (indløser-delen) | variable |
+
+`docs/accounts-to-create.md` og `docs/gdpr/leverandoer-register.md` er rettet tilsvarende.
+Liveverifikationen mod en rigtig QuickPay-konto består uændret.

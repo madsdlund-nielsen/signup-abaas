@@ -74,6 +74,7 @@ det gjort sådan?", så skriv en ADR.
 | 0041 | Demo-tilstand: tredje adapter-implementering ved siden af rigtig og stub (udvider 0004) | Accepteret | — |
 | 0042 | Inverteret udviklingsloop: byg → klik → design → ship (erstatter merge-økonomi + ADR-on-decision) | Accepteret | — |
 | 0043 | Demo-seed: befolket tilstand hægtet på en eksisterende ejer (guarded 1-kr demo-prisregel) | Accepteret | — |
+| 0044 | Cal.com: Teams-plan og ét collective event type pr. board (erstatter Platform-antagelsen) | Accepteret | 2 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så

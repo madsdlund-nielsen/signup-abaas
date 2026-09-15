@@ -43,7 +43,8 @@ udsender dem.
 
 **4.3–4.6 er ikke startet.** Siden 2026-09-14 (ADR 0042) bygges de **skærm-først** mod
 demo-adapterne (ADR 0041): skærmen først, så Mads kan klikke og designe; leverandøren droppes
-ind når Ordbogen-DPA, samtykke til optagelse og Resend-/inMobile-konti lander. Den tidligere
+ind når Ordbogen-nøglerne (konto bestilt 2026-09-15), samtykke til optagelse og
+Resend-/inMobile-konti lander. Den tidligere
 anbefaling om ikke at starte før konti findes (fase 3-rapporten §8) er trukket tilbage.
 
 ⚠ Db-testene for 0015 er **ikke kørt lokalt** — Docker mangler på maskinen (B-13). CI er eneste
@@ -96,7 +97,8 @@ gate for denne migrations RLS.
 
 ## Uafklarede punkter berørt i fase 4 (flag, beslut ikke)
 
-- Ordbogen DPA/databehandleraftale — dækker både transskription og LLM (Mads).
+- ~~Ordbogen DPA/databehandleraftale~~ → **håndteret uden for repoet** (Mads, 2026-09-15).
+  Konto er bestilt; 4.3/4.4 venter nu kun på nøgler — og på samtykke nedenfor.
 - Samtykke til mødeoptagelse (ejer) — blokerer 4.3 og 4.4 i produktion.
 - Note-synlighed, inkl. resuméer (ejer).
 - Noter under møde (ejer).

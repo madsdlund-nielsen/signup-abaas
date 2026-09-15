@@ -66,3 +66,22 @@ Der fandtes intet invitationsflow: `supabase.auth.admin` var ubrugt i hele kodeb
   booking-flowet; liveverifikationen afklarer managed-user-provisionering hos Cal.com.
 - **Opfølgning:** Cal.com managed users pr. partner (fase 2-liveverifikation);
   partner-tilgængelighed oven på koblingen (fase 5.3).
+
+## Opdatering (2026-09-15) — identitetskæden får et tredje led
+
+Denne ADR's opfølgningspunkt lød "Cal.com managed users pr. partner". Det er overhalet:
+managed users hørte til **Platform-planen, som er lukket for nye kunder** (ADR 0044).
+
+På **Teams**-planen er en partner i stedet et rigtigt **Cal.com-teammedlem** med sit eget
+sæde, og kæden bliver tre led frem for to:
+
+```
+partner_profile  ↔  auth-bruger (app_user_id, denne ADR)  ↔  Cal.com-team-bruger (ny)
+```
+
+Konsekvenser: Cal.com-bruger-id'et skal gemmes på katalogposten, partneren skal inviteres til
+Cal.com-teamet ved siden af app-invitationen i denne ADR, og en partner uden Cal.com-kobling
+kan ikke være host på et boards collective event type. Sporet som `docs/backlog.md` **B-23**.
+
+**Ejere og kunder får aldrig et Cal.com-led** — de booker som attendees
+(`{ navn, e-mail, tidszone }`) og koster derfor heller ingen sæder.

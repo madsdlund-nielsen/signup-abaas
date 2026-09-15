@@ -151,7 +151,8 @@ Arbejdspakke 0.4.
 
 ### Trin 9 — Multi-host scheduling-spike 🟡 SPIKE → ADR + STOP
 Arbejdspakke 0.5. Rører ⚠ punkt 5 + 6.
-23. Verificér at Cal.com (Platform managed users + Atoms) kan håndtere et møde
+23. ⚠ *Overhalet af ADR 0044 — Platform er lukket; planen er Teams og modellen er ét
+    collective event type pr. board.* Verificér at Cal.com kan håndtere et møde
     med flere værter: 2-3 partnere + ejer.
 24. ⚠ Punkt 5 (EU-residens) + 6 (optagelse på valgt plan): **verificér og
     dokumentér — beslut ikke.** Hvis blokeret, flag til Mads.

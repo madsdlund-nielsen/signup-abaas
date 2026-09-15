@@ -5,7 +5,7 @@
 > Fase 6 (§6.4) gennemgår registret: hver post skal være løst eller have eksplicit
 > ejer-accept før launch.
 >
-> Sidst gennemgået: 2026-09-14 (demo-implementeringer tilføjet, ADR 0041).
+> Sidst gennemgået: 2026-09-15 (Cal.com-plan + felt-kontrakt, ADR 0044; Ordbogen-DPA lukket).
 
 ## Backend-stubs — kaster `NotConfiguredError`
 
@@ -14,12 +14,12 @@ udføre ægte kald, og lader være med at foregive andet.
 
 | Modul | Flag | Låses op af | Skylder svar |
 |---|---|---|---|
-| `src/lib/booking/` (Cal.com) | `FLAG_BOOKING` | **Adapteren ER bygget** (fase 2, `calcom.ts`) — stubben er aktiv fordi flag+nøgler mangler. Låses op af: Cal.com-konto + `CALCOM_API_KEY`/`CALCOM_EVENT_TYPE_ID` + liveverifikation (`docs/spikes/multi-host.md`); plan-/tier-valg er STOP-gate | Mads |
-| `src/lib/video/` (Cal Video) | `FLAG_VIDEO` | Cal.com-plan + EU-residens; mødeoptagelse kræver desuden samtykkeflow | Mads + ejer |
-| `src/lib/payments/` (Alunta) | `FLAG_PAYMENTS` | **Adapteren ER skrevet mod verificeret API** (ADR 0032, `alunta.ts`) — stubben er aktiv fordi nøgler mangler. Låses op af: Alunta-UI-opsætning (usage-plan + parameter `meeting_fee_oere` à 1 øre + webhook-secret + interval) → `ALUNTA_API_KEY`/`ALUNTA_PLAN_ID`/`ALUNTA_WEBHOOK_SECRET` + `FLAG_PAYMENTS` → live-verifikation i test_mode. Gateway-valget (OnPay/Stripe/QuickPay) afgør MobilePay | Mads |
+| `src/lib/booking/` (Cal.com) | `FLAG_BOOKING` | **Adapteren er bygget, men mod en forkert felt-kontrakt** — `hosts` pr. booking findes ikke i API v2 (ADR 0044). Låses op af: **(a)** rework til collective event type pr. board (`docs/backlog.md` B-23), **(b)** Cal.com **Teams**-konto + `CALCOM_API_KEY`/`CALCOM_WEBHOOK_SECRET`, **(c)** liveverifikation L-1/L-3…L-9. ~~plan-/tier-STOP~~ → lukket: Teams | Mads |
+| `src/lib/video/` (Cal Video) | `FLAG_VIDEO` | ~~Cal.com-plan~~ (lukket: Teams, ADR 0044) + EU-residens (spike L-7); mødeoptagelse kræver desuden native støtte på Teams (L-8) **og** samtykkeflow | Mads + ejer |
+| `src/lib/payments/` (Alunta) | `FLAG_PAYMENTS` | **Adapteren ER skrevet mod verificeret API** (ADR 0032, `alunta.ts`), men mod den **afløste usage-model** — ADR 0034 kræver fast abonnement pr. 4 uger (`docs/backlog.md` B-19). Låses op af: rework B-19 → Alunta-UI-opsætning (**abonnement med 4-ugers interval** + webhook-secret) → `ALUNTA_API_KEY`/`ALUNTA_PLAN_ID`/`ALUNTA_WEBHOOK_SECRET` + `FLAG_PAYMENTS` → live-verifikation i test_mode. ~~Gateway-valget~~ → lukket: **QuickPay**, som også er indløser (ADR 0034) | Mads |
 | `src/lib/accounting/` | `FLAG_ACCOUNTING` | Leverandørvalg: e-conomic vs. Dinero | Ejer |
-| `src/lib/llm/` (Ordbogen Odin) | `FLAG_AIFOLLOWUP` | Ordbogen-DPA (ADR 0024) | Mads |
-| `src/lib/transcription/` (ordbogen.ai) | `FLAG_TRANSCRIPTION` | Ordbogen-DPA **og** samtykke til optagelse (ADR 0024) | Mads + ejer |
+| `src/lib/llm/` (Ordbogen Odin) | `FLAG_AIFOLLOWUP` | ~~Ordbogen-DPA~~ → håndteret uden for repoet. **Konto bestilt** (2026-09-15); mangler kun `LLM_API_KEY` + flag | Mads |
+| `src/lib/transcription/` (ordbogen.ai) | `FLAG_TRANSCRIPTION` | ~~Ordbogen-DPA~~ → håndteret uden for repoet. Konto bestilt; mangler `TRANSCRIPTION_API_KEY` + flag. 🔴 **Samtykke til optagelse (ejer) består** — må aldrig stubbes | Mads + ejer |
 
 ## Demo-implementeringer (ADR 0041) — ikke huller
 
