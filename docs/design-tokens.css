@@ -1,45 +1,53 @@
 /* =============================================================
    Advisory Board Unlimited — Design Tokens
-   Afledt af signupacademy.com (bekræftet via computed styles).
+   Afledt af signupacademy.com. Re-målt 2026-09-15 direkte i sitets CSS
+   (Divi 5, theme builder — ADR 0044): bredder, typeskala, vægte og luft er
+   sitets faktiske værdier, ikke skøn. Ved konflikt mellem designmanual v1.2
+   og det levende site vinder sitet (Mads, 2026-09-15).
    Dette er det autoritative token-fundament. Hardcod ALDRIG farver,
    fonts, radius eller spacing i komponenter — referér disse variabler.
    ============================================================= */
 
 :root {
   /* --- Farver: brand --- */
-  --color-navy:        #263753; /* primær brand; overskrifter, paneler, midt-sektioner */
-  --color-charcoal:    #1A2528; /* hero/mørk sektion, header-bar */
+  --color-navy:        #263753; /* Divi "heading": overskrifter, top-kontaktbar, sektionsbånd */
+  --color-charcoal:    #1A2528; /* Divi "primary": hero/mørk sektion, header-bar */
   --color-gold:        #B4965D; /* accent: CTA, links, highlight, logo-"up" */
   --color-gold-dark:   #A3854F; /* gold hover */
-  --color-topbar-navy: #222F4A; /* tynd top-kontaktbar */
+  --color-topbar-navy: #263753; /* tynd top-kontaktbar = navy (målt: theme-builder-headerens sektion 0) */
 
   /* --- Farver: neutraler & tekst --- */
   --color-white:       #FFFFFF;
-  --color-text:        #333333; /* brødtekst default */
+  --color-text:        #333333; /* brødtekst default (Divi body-color) */
   --color-text-muted:  #4E4E4E; /* sekundær tekst */
-  --color-grey-bg:     #EEEEEE; /* lyse sektionsbaggrunde */
-  --color-slate:       #6D838A; /* diskrete accenter */
+  --color-grey-bg:     #EEEEEE; /* lyse sektionsbaggrunde (målt) */
+  --color-slate:       #6D838A; /* diskrete accenter, placeholders (målt) */
+  --color-steel:       #697EA5; /* Divi "secondary" — stålblå, sparsom */
   --color-link:        #1E73BE; /* tekstlinks (sjældne) */
 
   /* --- Farver: overlay/translucent --- */
-  --overlay-navy:      rgba(38, 55, 83, 0.85);   /* panel/foto-overlay på navy */
+  --overlay-hero:      rgba(34, 53, 57, 0.77);  /* foto-overlay på hero/kort (målt: gradient 0 % → 61 %) */
+  --overlay-navy:      rgba(38, 55, 83, 0.85);   /* panel-overlay på navy */
   --divider-light:     rgba(255, 255, 255, 0.15);
   --text-on-dark-soft: rgba(255, 255, 255, 0.8);
   --tint-steel:        rgba(105, 126, 165, 0.6);
 
   /* --- Typografi --- */
   --font-base: "Open Sans", Helvetica, Arial, Lucida, sans-serif;
-  --fw-light:   300;  /* store overskrifter — elegancen ligger i tynde streger */
-  --fw-regular: 400;
-  --fw-semibold: 600; /* nav */
-  --fw-bold:    700;  /* knapper, eyebrows, kort-titler */
+  --fw-light:    300;  /* sektionsoverskrifter (h2) — elegancen ligger i tynde streger */
+  --fw-regular:  400;  /* hero (h1), h3, brødtekst */
+  --fw-medium:   500;  /* primær navigation (målt 13 px/500) */
+  --fw-semibold: 600;  /* top-kontaktbar, fod-h3 */
+  --fw-bold:     700;  /* knapper, eyebrows, kort-titler */
 
-  /* Type-skala (desktop) */
-  --fs-h1: 61px;   --lh-h1: 1.3;   /* hero, vægt 400, hvid på mørk */
-  --fs-h2: 45px;   --lh-h2: 1.4;   /* sektionsintro, vægt 300, navy */
-  --fs-h3: 24px;   --lh-h3: 1.5;
-  --fs-body: 16px; --lh-body: 1.7; /* redaktionel, luftig leading */
-  --fs-label: 14px;                /* eyebrow/nav/knap, UPPERCASE */
+  /* Type-skala (målt; Divi's breakpoints 980/767 nederst) */
+  --fs-h1: 61px;              --lh-h1: 1.3;   /* hero, vægt 400, hvid på mørk */
+  --fs-h2: calc(30px + 1vw);  --lh-h2: 1.4;   /* sektionsintro, vægt 300, navy; ≈ 49 px ved 1890 */
+  --fs-h3: 26px;              --lh-h3: 1.4;   /* vægt 400 — IKKE versal (versal h3 findes kun i foden) */
+  --fs-lead: 20px;            --lh-lead: 1.6; /* hero-undertekst, vægt 400, hvid */
+  --fs-body: 16px;            --lh-body: 1.7; /* redaktionel, luftig leading */
+  --fs-label: 14px;                           /* eyebrow/knap/topbar */
+  --fs-nav: 13px;                             /* primær navigation, UPPERCASE, vægt 500 */
   --fs-button: 14px;
 
   /* --- UI / form --- */
@@ -54,20 +62,36 @@
   --space-4: 24px;
   --space-5: 40px;
   --space-6: 64px;
-  --space-section: 90px;           /* lodret luft mellem sektioner (~80-100px) */
+  --space-section: 100px;          /* lodret luft i sektionsbånd (målt) */
+  --space-hero: 155px;             /* hero-båndets lodrette luft (målt) */
 
   /* --- Container --- */
-  --container-max: 1160px;         /* centreret, brede ydre gutters */
+  --container-max: 1300px;         /* indholdsbredde (målt: Divi-row / global bredde) */
+  --container-hero: 1400px;        /* hero-rækken er bredere end resten (målt) */
 
   /* --- Skygger (sparsomt; kun på boksede paneler) --- */
   --shadow-panel: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Divi's egne breakpoints — samme trin som sitet (målt). */
+@media (max-width: 980px) {
+  :root {
+    --fs-h1: 55px;
+  }
+}
+@media (max-width: 767px) {
+  :root {
+    --fs-h1: 34px;
+    --fs-h2: 30px;
+    --space-hero: 85px;
+  }
 }
 
 /* -------------------------------------------------------------
    Kanon-komponentregler (referencimplementering)
    ------------------------------------------------------------- */
 
-/* Primær CTA: rektangulær, guldfyld, hvid versaltekst. Ingen gradient. */
+/* Primær CTA: rektangulær, guldfyld + 1 px guldkant, hvid versaltekst. Ingen gradient. */
 .btn-primary {
   background: var(--color-gold);
   color: var(--color-white);

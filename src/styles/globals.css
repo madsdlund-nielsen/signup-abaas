@@ -1,4 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap");
+/* 500 er med: sitets navigation (13 px/500) og Divi's globale brødtekstvægt bruger den.
+   Uden den syntetiserer browseren — og det er præcis "fonten ser anderledes ud". */
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap");
 
 /* Base — referér KUN design-tokens (se design-tokens.css). Ingen hardcodede
    farver/fonts/radius/spacing her. */
@@ -52,7 +54,7 @@ body {
      Manualens udtryk hviler på whitespace, ikke på skillelinjer. */
   margin: var(--space-4) 0 var(--space-5);
   max-width: 720px;
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
+  font-size: var(--fs-lead);
+  line-height: var(--lh-lead);
   color: var(--color-text-muted);
 }

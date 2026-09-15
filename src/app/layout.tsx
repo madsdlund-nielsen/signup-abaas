@@ -6,6 +6,7 @@ import "@/styles/components.css";
 
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { TopBar } from "@/components/TopBar";
 
 export const metadata: Metadata = {
   title: "Advisory Board Unlimited",
@@ -23,6 +24,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="da">
       <body>
+        {/* Samme krom som signupacademy.com: tynd navy kontaktbar over header-baren (ADR 0044). */}
+        <TopBar>
+          <a href="mailto:info@signupacademy.com">info@signupacademy.com</a>
+          <a href="tel:+4531139580">+45 3113 9580</a>
+        </TopBar>
         <SiteHeader />
         {children}
         <SiteFooter />
