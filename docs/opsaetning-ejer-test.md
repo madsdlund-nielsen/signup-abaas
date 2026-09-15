@@ -52,15 +52,29 @@ Giver en **publiceret quiz** (ét kompetence-spørgsmål med otte tag-svar + fri
 frekvens-spørgsmål med 4/8/12 uger) og **seks demopartnere** med kompetence-tags, valgt så
 hvert tag er dækket og board-matchingen har noget reelt at arbejde med.
 
+**Befolket tilstand (ADR 0043).** Har du oprettet en ejer via `/signup` (trin 4), kan seed'et
+give hende et færdigt board med historik, så før/efter-skærme kan klikkes og designes uden
+at gennemspille rejsen hver gang:
+
+```bash
+DEMO_OWNER_EMAIL=DIN@EMAIL.dk npm run db:seed:demo
+```
+
+Det giver: quiz-svar, board med tre partnere, medlemskab med demo-kort, et kommende møde med
+dagsorden, et afholdt møde med note, to vurderinger og én opkrævning. Ejeren skal være **uden
+board** i forvejen — ellers nægter seed'et, så demodata aldrig blandes med rigtige.
+
 Alle demorækker har uuid'er i `d0000000-0000-4000-8000-…`-serien. Fjern dem igen med:
 
 ```bash
 npm run db:seed:demo:clean
 ```
 
-⚠ Der seedes **bevidst ingen prisregler**. Beløb er ejer-territorium (`docs/stub-politik.md`
-forbyder et plausibelt forretningstal i koden, også som demodata). Indtil Andreas og Mette
-har fastlagt satserne, kan `/betaling` ikke beregne en pris — det er et synligt hul, ikke en fejl.
+⚠ **Prisregel:** sammen med `DEMO_OWNER_EMAIL` indsættes én DEMO-regel på **1,00 kr + 1,00 kr
+pr. partner** (4,00 kr for tre) — kun hvis ingen aktiv regel findes. Tallet er åbenlyst falsk
+(ADR 0041) og fjernes af demo-clean; rigtige satser er ejer-territorium og tastes af admin i
+`/admin/priser`. Uden `DEMO_OWNER_EMAIL` seedes ingen prisregel, og `/betaling` viser "prisen
+er ikke fastsat" — et synligt hul, ikke en fejl.
 
 ## 4. Den første admin-bruger
 

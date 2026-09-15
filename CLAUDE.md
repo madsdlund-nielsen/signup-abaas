@@ -216,6 +216,9 @@ produktionskode — bruges også til salgsdemoer og designarbejde efter launch.
 
 Ny port → ny `demo.ts` i samme PR, og én linje i factoryen *efter* den rigtige provider.
 
+Befolket tilstand til design og test: `DEMO_OWNER_EMAIL=<signup-mail> npm run db:seed:demo`
+(ADR 0043) — kræver en ejer uden board; giver board, demo-kort, et kommende og et afholdt møde.
+
 ---
 
 ## Byggefaser (opslagsværk) og skiver (arbejdsenhed)
