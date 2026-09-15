@@ -51,5 +51,5 @@ auth-bruger kan ikke logge ind.
   Første gang db-testene er kørt lokalt i repoet — containeren har Postgres 16.
 - Negative/pris: ét manuelt trin (signup) før seed. Runbook'ens "ingen prisregler" bliver til
   "en 1-kr demo-regel, guarded". Den eksisterende db-test er omdøbt, ikke slettet.
-- Opfølgning: `FLAG_DEMO=true` på sua-abaas udestår stadig (Mads — Netlify-UI'et, eller
-  allow-reglen i backlog B-22).
+- Opfølgning: `FLAG_DEMO=true` på sua-abaas udestår stadig (Mads i Netlify-UI'et, eller
+  Claude Code på Mads' instruks via Netlify-MCP'en — ADR 0045).

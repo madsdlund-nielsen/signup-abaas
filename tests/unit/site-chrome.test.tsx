@@ -25,6 +25,16 @@ describe("SectionBand — charcoal-tonen (designmanual v1.2)", () => {
     const { container } = render(<SectionBand>x</SectionBand>);
     expect(container.querySelector("section")?.className).toBe("band band--white");
   });
+
+  it("hero-varianten lægger band--hero oven i tonen — og kun den (ADR 0044)", () => {
+    const { container } = render(
+      <SectionBand tone="charcoal" hero>
+        x
+      </SectionBand>,
+    );
+    expect(container.querySelector("section")?.className).toBe("band band--charcoal band--hero");
+    expect(container.querySelector("section")?.getAttribute("style")).toBeNull();
+  });
 });
 
 describe("SiteFooter", () => {
