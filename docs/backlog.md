@@ -38,7 +38,6 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 | ID | Punkt | Hvor | Handling | Ejer |
 |---|---|---|---|---|
 | **B-07** | **Tie-break-punktet har ingen ejer.** Byggespec §5.2 flager det og henviser til §12 — men punktet findes ikke i §12's tabel (numrene 3, 20 og 23 mangler). Det står heller ikke i `CLAUDE.md`'s liste over uafklarede punkter. | `src/server/matching/algorithm.ts:47`, `docs/fase-1-rapport.md` §3 | Tilføj punktet til `CLAUDE.md`'s ejer-liste (eller få §12 rettet), så det ikke falder mellem to stole. Koden holder en neutral, deterministisk pladsholder — registreret i stub-registret. | Ejer |
-| **B-22** | **Netlify-MCP: skriveadgang til env-vars er besluttet (Mads, 2026-09-14) men ikke implementeret.** `.claude/settings.json`'s deny-liste bruger `mcp__netlify__…`, men serveren registreres i dag som `mcp__Netlify__…` — reglerne matcher formentlig ikke længere. Claude må ikke selv redigere sine permissions (harness-grænse, "Self-Modification"), så ændringen skal committes af Mads: allow `mcp__Netlify__netlify-project-services-updater`; deny i begge stavemåder for deploy- og extension-updaterne. | `.claude/settings.json`, ADR 0037 | Commit ændringen; skriv derefter en ADR der erstatter 0037's Netlify-del med reglen "env-vars, kun på eksplicit instruks fra Mads". Indtil da sættes `FLAG_DEMO` i Netlify-UI'et. | Mads |
 
 ## 3. Leverandør-drift i kode (venter på sin fase)
 
