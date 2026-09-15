@@ -70,7 +70,7 @@ Der fandtes intet invitationsflow: `supabase.auth.admin` var ubrugt i hele kodeb
 ## Opdatering (2026-09-15) — identitetskæden får et tredje led
 
 Denne ADR's opfølgningspunkt lød "Cal.com managed users pr. partner". Det er overhalet:
-managed users hørte til **Platform-planen, som er lukket for nye kunder** (ADR 0044).
+managed users hørte til **Platform-planen, som er lukket for nye kunder** (ADR 0046).
 
 På **Teams**-planen er en partner i stedet et rigtigt **Cal.com-teammedlem** med sit eget
 sæde, og kæden bliver tre led frem for to:

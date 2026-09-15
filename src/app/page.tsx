@@ -11,8 +11,10 @@ export const metadata: Metadata = {
 
 /**
  * Forsiden. Bygget på designmanualens sektionsrytme (v1.2, side 11): vekslende bånd —
- * charcoal hero, hvid, lysegrå, navy — med ~90 px lodret luft. "Skiftet bærer siden";
- * der er hverken dekoration, gradienter eller skygger til at gøre arbejdet.
+ * charcoal hero, hvid, lysegrå, navy — med 100 px lodret luft (hero 155 px; sitets målte
+ * værdier, ADR 0044). "Skiftet bærer siden"; der er hverken dekoration, gradienter eller
+ * skygger til at gøre arbejdet. Hero'en er venstrestillet som sitets; sektionsintroerne er
+ * centrerede som sitets.
  *
  * Guld optræder på tre elementer i alt: de tre eyebrows og de to CTA'er. Det holder
  * accenten inden for manualens budget på ca. 5 % af fladen.
@@ -20,7 +22,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <>
-      <SectionBand tone="charcoal">
+      <SectionBand tone="charcoal" hero>
         <p className="eyebrow">Advisory Board as a Service</p>
         <h1 className="heading-1 heading--on-dark measure-wide">
           Et rådgivende board, sammensat til din virksomhed.
@@ -40,10 +42,12 @@ export default function Home() {
       </SectionBand>
 
       <SectionBand tone="white">
-        <p className="eyebrow">Sådan virker det</p>
-        <h2 className="heading-2 heading--on-light measure-wide">
-          Fra spørgeskema til siddende board på under en uge.
-        </h2>
+        <div className="band__intro">
+          <p className="eyebrow">Sådan virker det</p>
+          <h2 className="heading-2 heading--on-light measure-wide">
+            Fra spørgeskema til siddende board på under en uge.
+          </h2>
+        </div>
         <ol className="steps">
           <li className="steps__item">
             <p className="steps__num">01</p>
@@ -73,10 +77,12 @@ export default function Home() {
       </SectionBand>
 
       <SectionBand tone="grey">
-        <p className="eyebrow">Hvad du får</p>
-        <h2 className="heading-2 heading--on-light measure-wide">
-          Erfaring du ellers skulle ansætte dig til.
-        </h2>
+        <div className="band__intro">
+          <p className="eyebrow">Hvad du får</p>
+          <h2 className="heading-2 heading--on-light measure-wide">
+            Erfaring du ellers skulle ansætte dig til.
+          </h2>
+        </div>
         <div className="feature-grid">
           <div className="stack">
             <h3 className="heading-3 heading--on-light">Forberedte rådgivere</h3>
@@ -103,16 +109,18 @@ export default function Home() {
       </SectionBand>
 
       <SectionBand tone="navy">
-        <p className="eyebrow">Kom i gang</p>
-        <h2 className="heading-2 heading--on-dark measure-wide">
-          Se hvilket board vi ville sætte sammen til dig.
-        </h2>
-        <p className="lead lead--on-dark">
-          Quizzen tager få minutter, og du ser forslaget med det samme — før du beslutter noget.
-        </p>
-        <Link className="btn-primary" href="/signup">
-          Byg mit board
-        </Link>
+        <div className="band__intro">
+          <p className="eyebrow">Kom i gang</p>
+          <h2 className="heading-2 heading--on-dark measure-wide">
+            Se hvilket board vi ville sætte sammen til dig.
+          </h2>
+          <p className="lead lead--on-dark">
+            Quizzen tager få minutter, og du ser forslaget med det samme — før du beslutter noget.
+          </p>
+          <Link className="btn-primary" href="/signup">
+            Byg mit board
+          </Link>
+        </div>
       </SectionBand>
     </>
   );

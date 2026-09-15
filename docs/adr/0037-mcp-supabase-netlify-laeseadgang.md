@@ -1,6 +1,10 @@
 # 0037 — Supabase- og Netlify-MCP: læseadgang ja, skriveadgang nej
 
-- **Status:** Accepteret
+- **Status:** Accepteret — **Netlify-delen erstattet af ADR 0045**
+
+> Supabase-delen (ingen skrivning uden om migrationsflowet) står ved magt. Netlifys
+> `project-services-updater` er nu tilladt på eksplicit instruks fra Mads; deploy- og
+> extension-updaterne er stadig blokeret, nu i begge stavemåder — se ADR 0045.
 - **Dato:** 2026-08-27
 - **Fase:** 3
 - **Berører uafklaret punkt:** nej (indsnævrer rækkevidden af ADR 0015 og ADR 0008 uden at

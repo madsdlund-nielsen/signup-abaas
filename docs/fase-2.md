@@ -18,7 +18,7 @@
 
 - [x] Cal.com integreret via adapteren i `src/lib/booking/` — **ingen direkte SDK-kald uden
       for adapteren**. ⚠ Plan = **Teams** og multi-host = ét **collective event type pr.
-      board** (ADR 0044); adapterens nuværende felt-kontrakt skal rettes (`docs/backlog.md` B-23).
+      board** (ADR 0046); adapterens nuværende felt-kontrakt skal rettes (`docs/backlog.md` B-23).
 - [ ] ⚠ **Afventer liveverifikation.** Multi-host booking virker: 2-3 partnere + ejer på samme møde.
       ⚠ Bygges mod porten med stub aktiv; **liveverifikation (multi-host-spiken) udestår
       til Cal.com-nøglerne lander** (gate fjernet af Mads 2026-08-04, se 2.2).
@@ -90,7 +90,7 @@
 
 ### 2.6 Booking-UI (ejer + lead-partner)
 - Book, flyt og aflys i appen. ⚠ Atoms hørte til Platform-planen og er ikke en åben vej
-  (ADR 0044) — booking-UI'et er vores eget, stylet med design-tokens: firkantet, navy/guld,
+  (ADR 0046) — booking-UI'et er vores eget, stylet med design-tokens: firkantet, navy/guld,
   Open Sans.
 - Lead-partner kan initiere næste møde for sit board.
 - ⚠ Ændre/aflyse-vindue er uafklaret → læg reglen bag konfiguration + flag,
@@ -136,7 +136,7 @@
 > **DoD krydses IKKE af endnu:** alt Cal.com-vendt er bygget og testet mod porten med
 > stub aktiv — **liveverifikationen** (multi-host, EU-residens, join-URL-mapping,
 > webhook-payload-form) udestår til nøglerne lander. ~~plan-/tier-valget er fortsat
-> STOP-gate~~ → **lukket: Teams** (ADR 0044); dataresidens-delen af gaten består.
+> STOP-gate~~ → **lukket: Teams** (ADR 0046); dataresidens-delen af gaten består.
 > Booking-UI viser den ærlige NotConfiguredError-besked indtil da.
 >
 > **Flag:** ændre/aflyse-vindue (intet håndhævet), note-synlighed (restriktiv default),

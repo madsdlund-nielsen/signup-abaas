@@ -28,7 +28,7 @@ Board er kerneproduktet. Alt andet er støttefunktioner.
 |---|---|---|
 | Frontend/SSR | Next.js | App Router |
 | Database/backend | Supabase | **Sandhedskilde for forretningsdata** |
-| Booking | **Cal.com Teams-plan** ($12/bruger/md) | ✅ besluttet (ADR 0044) — Platform-planen er lukket for nye kunder. Multi-host = ét collective event type pr. board. Sæder = rådgivere + admin; ejere er attendees. self-host som exit |
+| Booking | **Cal.com Teams-plan** ($12/bruger/md) | ✅ besluttet (ADR 0046) — Platform-planen er lukket for nye kunder. Multi-host = ét collective event type pr. board. Sæder = rådgivere + admin; ejere er attendees. self-host som exit |
 | Video | Cal Video (multi-party) | RealtimeKit udgår. Cal.com ansvarlig for optag |
 | Betaling ind | **Alunta** | ✅ besluttet (ADR 0023) — erstatter Stripe Billing |
 | Betaling ud / bogføring | ⚠ e-conomic ELLER Dinero | ikke afgjort — afventer ejer |
@@ -117,10 +117,10 @@ samtykke.
 - Domæne (signupacademy.com) + DNS-adgang til Mads
 
 **Afventer Mads — teknisk afklaring (spike/verificér før byg):**
-- Cal.com EU-residens **på Teams** — plan-valget (ADR 0044) svarer ikke på det. `apiUrl` er
+- Cal.com EU-residens **på Teams** — plan-valget (ADR 0046) svarer ikke på det. `apiUrl` er
   udskiftelig (`cal.eu`/self-host). Gate før der lægges produktionsdata ind (spike L-7)
 - Cal.com mødeoptagelse — native **på Teams**? (spike L-8)
-- Cal.com multi-host-spike: **delvist lukket uden konto** (ADR 0044). L-2 er besvaret —
+- Cal.com multi-host-spike: **delvist lukket uden konto** (ADR 0046). L-2 er besvaret —
   `hosts` pr. booking findes ikke i API v2, så multi-host bygges som ét collective event
   type pr. board. **Plan-/tier-STOP'et er hermed også lukket: Teams.** Tilbage står L-1,
   L-3, L-4 og L-5, som kræver en konto. `docs/spikes/multi-host.md`
@@ -129,7 +129,7 @@ samtykke.
   parameter + webhook-secret + faktureringsinterval) og live-verifikation i test_mode
 
 **Lukket siden sidst:**
-- ~~Cal.com plan-/tier-valg~~ → **Teams** ($12/bruger/md) (Mads, 2026-09-15; ADR 0044).
+- ~~Cal.com plan-/tier-valg~~ → **Teams** ($12/bruger/md) (Mads, 2026-09-15; ADR 0046).
   Platform-planen er deprecated og lukket for nye kunder, så managed users + Atoms er ikke
   en åben vej. EU-residens og native optagelse er **ikke** lukket af dette
 - ~~Ordbogen DPA/databehandleraftale~~ → **håndteret uden for repoet** (Mads, 2026-09-15;

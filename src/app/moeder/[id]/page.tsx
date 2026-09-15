@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { PageBody, PageHeader } from "@/components/PageHeader";
 
 import { AuthForm } from "@/components/AuthForm";
+import { MeetingSummary } from "@/components/MeetingSummary";
 import { Select } from "@/components/Select";
 import { TextArea } from "@/components/TextArea";
 import { getCurrentUser } from "@/server/auth";
@@ -19,6 +20,7 @@ import {
 import { addAgendaItem, deleteAgendaItem, savePrepNote } from "@/server/preparation/actions";
 import { listMyRatingsForMeeting, RATING_MAX, RATING_MIN } from "@/server/ratings";
 import { submitRating } from "@/server/ratings/actions";
+import { getMeetingSummary } from "@/server/summaries";
 
 export const metadata: Metadata = {
   title: "Forberedelse — Advisory Board Unlimited",
@@ -44,11 +46,14 @@ function formatStart(startsAt: string): string {
 }
 
 /**
- * Forberedelsesrummet for ét møde (fase 4.1) plus vurdering efter afholdelse (4.2).
+ * Forberedelsesrummet for ét møde (fase 4.1), AI-opsummering efter afholdelse (4.4,
+ * skærm-først) og vurdering efter afholdelse (4.2).
  *
  * Ét sted for begge roller. RLS scoper allerede hvad ejer og partner må se, så siden
  * forgrener kun på hvad man må SKRIVE: ejeren redigerer dagsordenen, den deltagende
- * partner skriver sin egen forberedelse. Læsedelen er den samme kode for begge.
+ * partner skriver sin egen forberedelse. Læsedelen er den samme kode for begge — med én
+ * undtagelse: opsummeringen vises kun for ejeren (restriktiv default, fase-4.md §4.4),
+ * fordi der endnu ikke findes en tabel at lægge RLS på. TODO(ejer): note-synlighed.
  */
 export default async function MeetingPreparationPage({
   params,
@@ -69,10 +74,11 @@ export default async function MeetingPreparationPage({
     ? meeting.participants.find((p) => p.partnerProfileId === profile.id)
     : undefined;
 
-  const [agenda, prepNote, myRatings] = await Promise.all([
+  const [agenda, prepNote, myRatings, summaryState] = await Promise.all([
     listAgendaItems(meeting.id),
     myParticipation ? getMyPrepNote(meeting.id) : Promise.resolve(null),
     meeting.status === "afholdt" ? listMyRatingsForMeeting(meeting.id) : Promise.resolve([]),
+    isOwner && meeting.status === "afholdt" ? getMeetingSummary(meeting.id) : Promise.resolve(null),
   ]);
 
   const ratedSubjects = new Set(myRatings.map((r) => r.subjectPartnerProfileId));
@@ -164,6 +170,18 @@ export default async function MeetingPreparationPage({
                 required
               />
             </AuthForm>
+          </section>
+        ) : null}
+
+        {/* --- AI-opsummering: kun efter afholdelse, kun for ejeren (restriktiv default). --- */}
+        {summaryState ? (
+          <section className="stack measure">
+            <h2 className="heading-3 heading--on-light">Opsummering af mødet</h2>
+            <p className="body">
+              Et kort referat med handlingspunkter, lavet ud fra mødets optagelse. Kun du kan se
+              det indtil videre.
+            </p>
+            <MeetingSummary state={summaryState} />
           </section>
         ) : null}
 

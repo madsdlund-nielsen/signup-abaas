@@ -19,7 +19,7 @@ export interface ScheduledMeeting {
 }
 
 /**
- * Booking/scheduling. Leverandør: Cal.com, **Teams-plan** (ADR 0044) — Platform-planen med
+ * Booking/scheduling. Leverandør: Cal.com, **Teams-plan** (ADR 0046) — Platform-planen med
  * managed users + Atoms er deprecated og lukket for nye kunder.
  *
  * ⚠ TODO(mads) — docs/backlog.md B-23: denne port modellerer værter PR. BOOKING, men API v2

@@ -10,7 +10,7 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
 | Leverandør | Rolle i appen | Persondata behandlet | Region | EU-residens | DPA | Flag |
 |---|---|---|---|---|---|---|
 | **Supabase** | DB + auth — sandhedskilde | Navn, e-mail, roller, al forretningsdata | EU — eu-north-1 (Stockholm) | ✅ EU (eu-north-1, ADR 0013) | 🔴 afventer underskrift (Supabase DPA findes) | — |
-| **Cal.com** | Booking (multi-host) — **Teams-plan** (ADR 0044) | Navne, e-mails, mødetider. Ejere/kunder er *attendees* (`navn, e-mail, tidszone`), ikke brugere | 🔴 afventer verifikation | 🔴 afventer (punkt 5) — plan-valget svarer **ikke** på residens; `apiUrl` er udskiftelig (`cal.eu`/self-host) | 🔴 afventer underskrift | `booking` |
+| **Cal.com** | Booking (multi-host) — **Teams-plan** (ADR 0046) | Navne, e-mails, mødetider. Ejere/kunder er *attendees* (`navn, e-mail, tidszone`), ikke brugere | 🔴 afventer verifikation | 🔴 afventer (punkt 5) — plan-valget svarer **ikke** på residens; `apiUrl` er udskiftelig (`cal.eu`/self-host) | 🔴 afventer underskrift | `booking` |
 | **Cal Video** | Multi-party video + optagelse | Billede/lyd af møder | 🔴 afventer verifikation | 🔴 afventer (punkt 6) — følger Cal.com; native optagelse på Teams er uverificeret | dækket af Cal.com-aftalen | `video` |
 | **Alunta** | Betaling ind — abonnement/fakturering (ADR 0023) | Navn, e-mail, medlemskabs- og faktureringsmetadata (ikke kortdata — de bor hos gatewayen) | DK (dansk udbyder) | 🟡 dansk udbyder; hosting ikke formelt verificeret | 🔴 afventer underskrift | `payments` |
 | **QuickPay** (gateway **+ indløser**) | Kortregistrering + træk bag Aluntas checkout, **og selve indløsningen** (ADR 0034-opdatering) | Kortdata, navn, betalingsmetadata | DK | 🟡 dansk udbyder; hosting ikke formelt verificeret | 🔴 afventer underskrift | `payments` |
@@ -28,7 +28,7 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
 
 - **EU-residens fra fase 0:** EU-hostede leverandører (Supabase eu-north-1, Resend, inMobile,
   PostHog) er bekræftet. Netlify (hosting) er valgt (ADR 0012) med EU-region (Frankfurt) — men
-  regionen skal aktivt sættes i Netlify-UI'et og **kræver Pro-planen** (🟡). Efter ADR 0044 er
+  regionen skal aktivt sættes i Netlify-UI'et og **kræver Pro-planen** (🟡). Efter ADR 0046 er
   de resterende 🔴 reduceret til: **Cal.com/Cal Video** (residens + optagelse skal verificeres
   på Teams) og **regnskab** (leverandørvalg hos ejer). Transskription og LLM er ikke længere
   blandt dem.

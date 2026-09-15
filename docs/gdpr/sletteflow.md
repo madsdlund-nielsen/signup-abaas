@@ -22,7 +22,7 @@ Flowet skal være **idempotent** og efterlade en kvittering/log.
 
 | Leverandør | Hvad slettes/anonymiseres | Note |
 |---|---|---|
-| Cal.com | **Ejer/kunde:** aflys/anonymisér møder — de er *attendees* og har ingen konto. **Partner:** fjern som host på boardets collective event type og som teammedlem (frigør sædet) | Teams-plan (ADR 0044). Ingen managed users at slette |
+| Cal.com | **Ejer/kunde:** aflys/anonymisér møder — de er *attendees* og har ingen konto. **Partner:** fjern som host på boardets collective event type og som teammedlem (frigør sædet) | Teams-plan (ADR 0046). Ingen managed users at slette |
 | Cal Video | Slet optagelser knyttet til brugerens møder | 🔴 optagelse er ikke bygget; kræver samtykkeflow (ejer) |
 | Alunta | Slet/anonymisér kunde + medlemskab | 🔴 fakturadata kan være underlagt opbevaringspligt (jura) |
 | QuickPay (gateway + indløser) | Slet/anonymisér korttoken + betalingsmetadata | 🔴 transaktionsdata er typisk underlagt opbevaringspligt (jura) |
@@ -35,7 +35,7 @@ Flowet skal være **idempotent** og efterlade en kvittering/log.
 
 4. **Kvittér** sletningen (tidsstempel + hvilke systemer) og log uden PII.
 
-> **Bemærk (ADR 0044):** kun **rådgivere og admin** har en Cal.com-brugerkonto. Ejere og
+> **Bemærk (ADR 0046):** kun **rådgivere og admin** har en Cal.com-brugerkonto. Ejere og
 > kunder booker som attendees med `{ navn, e-mail, tidszone }` og har intet at slette ud over
 > selve bookingerne. En partnersletning frigør desuden et betalt sæde.
 

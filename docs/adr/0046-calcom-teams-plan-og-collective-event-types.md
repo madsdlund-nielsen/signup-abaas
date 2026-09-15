@@ -1,4 +1,4 @@
-# 0044 — Cal.com: Teams-plan og ét collective event type pr. board
+# 0046 — Cal.com: Teams-plan og ét collective event type pr. board
 
 - **Status:** Accepteret
 - **Dato:** 2026-09-15

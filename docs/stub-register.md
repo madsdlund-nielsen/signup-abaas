@@ -5,7 +5,7 @@
 > Fase 6 (§6.4) gennemgår registret: hver post skal være løst eller have eksplicit
 > ejer-accept før launch.
 >
-> Sidst gennemgået: 2026-09-15 (Cal.com-plan + felt-kontrakt, ADR 0044; Ordbogen-DPA lukket).
+> Sidst gennemgået: 2026-09-15 (Cal.com-plan + felt-kontrakt, ADR 0046; Ordbogen-DPA lukket).
 
 ## Backend-stubs — kaster `NotConfiguredError`
 
@@ -14,8 +14,8 @@ udføre ægte kald, og lader være med at foregive andet.
 
 | Modul | Flag | Låses op af | Skylder svar |
 |---|---|---|---|
-| `src/lib/booking/` (Cal.com) | `FLAG_BOOKING` | **Adapteren er bygget, men mod en forkert felt-kontrakt** — `hosts` pr. booking findes ikke i API v2 (ADR 0044). Låses op af: **(a)** rework til collective event type pr. board (`docs/backlog.md` B-23), **(b)** Cal.com **Teams**-konto + `CALCOM_API_KEY`/`CALCOM_WEBHOOK_SECRET`, **(c)** liveverifikation L-1/L-3…L-9. ~~plan-/tier-STOP~~ → lukket: Teams | Mads |
-| `src/lib/video/` (Cal Video) | `FLAG_VIDEO` | ~~Cal.com-plan~~ (lukket: Teams, ADR 0044) + EU-residens (spike L-7); mødeoptagelse kræver desuden native støtte på Teams (L-8) **og** samtykkeflow | Mads + ejer |
+| `src/lib/booking/` (Cal.com) | `FLAG_BOOKING` | **Adapteren er bygget, men mod en forkert felt-kontrakt** — `hosts` pr. booking findes ikke i API v2 (ADR 0046). Låses op af: **(a)** rework til collective event type pr. board (`docs/backlog.md` B-23), **(b)** Cal.com **Teams**-konto + `CALCOM_API_KEY`/`CALCOM_WEBHOOK_SECRET`, **(c)** liveverifikation L-1/L-3…L-9. ~~plan-/tier-STOP~~ → lukket: Teams | Mads |
+| `src/lib/video/` (Cal Video) | `FLAG_VIDEO` | ~~Cal.com-plan~~ (lukket: Teams, ADR 0046) + EU-residens (spike L-7); mødeoptagelse kræver desuden native støtte på Teams (L-8) **og** samtykkeflow | Mads + ejer |
 | `src/lib/payments/` (Alunta) | `FLAG_PAYMENTS` | **Adapteren ER skrevet mod verificeret API** (ADR 0032, `alunta.ts`), men mod den **afløste usage-model** — ADR 0034 kræver fast abonnement pr. 4 uger (`docs/backlog.md` B-19). Låses op af: rework B-19 → Alunta-UI-opsætning (**abonnement med 4-ugers interval** + webhook-secret) → `ALUNTA_API_KEY`/`ALUNTA_PLAN_ID`/`ALUNTA_WEBHOOK_SECRET` + `FLAG_PAYMENTS` → live-verifikation i test_mode. ~~Gateway-valget~~ → lukket: **QuickPay**, som også er indløser (ADR 0034) | Mads |
 | `src/lib/accounting/` | `FLAG_ACCOUNTING` | Leverandørvalg: e-conomic vs. Dinero | Ejer |
 | `src/lib/llm/` (Ordbogen Odin) | `FLAG_AIFOLLOWUP` | ~~Ordbogen-DPA~~ → håndteret uden for repoet. **Konto bestilt** (2026-09-15); mangler kun `LLM_API_KEY` + flag | Mads |
@@ -69,6 +69,7 @@ deterministiske frem for plausible — se `docs/stub-politik.md`.
 | `src/server/meetings/actions.ts` (reschedule/cancel) | **Intet ændre-/aflyse-vindue håndhæves** — ejeren kan flytte/aflyse frit | Byggespec §12 pkt. 4: hvor langt inden mødet må der ændres/aflyses? Reglen tilføjes som konfiguration | Ejer |
 | `src/server/meetings/actions.ts` (registerMeetingStatus) | `forsinket_afbud`/`udeblivelse` registreres uden konsekvens | Honorar ved udeblivelse/sent afbud (§12 pkt. 13) — fase 5 beregner når reglen findes | Ejer |
 | `supabase/migrations/0012_meeting.sql` (meeting_note-RLS) | Note-synlighed: restriktiv default (forfatter + board-ejer) | Hvem må se møde-noter (§12 pkt. 16)? Udvidelse er én policy | Ejer |
+| `src/app/moeder/[id]/page.tsx` (AI-opsummering) | Opsummeringen vises **kun for ejeren** — restriktiv default håndhævet i siden, da der endnu ikke findes en tabel at lægge RLS på (skærm-først, fase 4.4) | Note-synlighed (§12 pkt. 16) gælder også resuméer. Når resuméet får en tabel, flytter reglen til RLS | Ejer |
 | `pricing_rule` (0013) | **Ingen aktiv prisregel findes** — beregning og charge-grundlag er slået fra indtil admin aktiverer en version. Demo-seed'et (ADR 0043) kan indsætte en åbenlyst falsk 1-kr-regel sammen med en demo-ejer, kun hvor ingen aktiv findes — demodata, ikke en pladsholder i kode | Startpris/meeting-fee + frekvensfaktorer (§12 pkt. 2). Tal indtastes af admin, aldrig af kode | Ejer |
 | `src/server/pricing/algorithm.ts` | Beløb er rå øre uden momslogik | Moms på partner-honorar/beløbsvisning (§12 pkt. 14) | Ejer |
 | `src/server/charges/` | Fejlet træk registreres (status + årsag) uden konsekvens for honorar eller adgang | §5.10 udløser honorar uafhængigt af betaling; koblingen er uafklaret (afledt af §12 pkt. 13) | Ejer |

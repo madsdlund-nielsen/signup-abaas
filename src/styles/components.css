@@ -19,21 +19,26 @@
   gap: var(--space-4);
 }
 
-/* --- Topbar (tynd kontaktbar) --- */
+/* --- Topbar (tynd kontaktbar) — navy, centreret, hvid semibold, IKKE versal.
+   Målt på signupacademy.com: e-mail og telefon side om side midt i baren (ADR 0044). --- */
 .topbar {
   background: var(--color-topbar-navy);
-  color: var(--text-on-dark-soft);
+  color: var(--color-white);
 }
 .topbar__inner {
   max-width: var(--container-max);
   margin: 0 auto;
   padding: var(--space-2) var(--space-4);
   display: flex;
-  justify-content: space-between;
-  gap: var(--space-4);
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-6);
   font-size: var(--fs-label);
-  letter-spacing: var(--letter-spacing-ui);
-  text-transform: uppercase;
+  font-weight: var(--fw-semibold);
+}
+.topbar__inner a {
+  color: var(--color-white);
+  text-decoration: none;
 }
 
 /* --- Sektionsbånd (skiftende baggrunde) --- */
@@ -59,11 +64,13 @@
 }
 
 /* --- Overskrifter (tynde; aldrig fede) --- */
+/* Hero-overskriften er vægt 400, ikke 300: sitets h1 er målt til 61 px/400. Ved 61 px
+   er 300 for tynd — det var den mest synlige "font-forskel" (ADR 0044). */
 .heading-1 {
   margin: 0;
   font-size: var(--fs-h1);
   line-height: var(--lh-h1);
-  font-weight: var(--fw-light);
+  font-weight: var(--fw-regular);
 }
 .heading-2 {
   margin: 0;
@@ -71,13 +78,13 @@
   line-height: var(--lh-h2);
   font-weight: var(--fw-light);
 }
+/* h3 er sentence case: sitets indholds-h3 er 26 px/400 uden versal og uden letter-spacing.
+   Versal h3 findes kun i foden. Versal-UI'et (nav, eyebrows, knapper) er uændret. */
 .heading-3 {
   margin: 0;
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
   font-weight: var(--fw-regular);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-ui);
 }
 .heading--on-light {
   color: var(--color-navy);
@@ -506,21 +513,22 @@
   .siteheader__mark { display: none; }
 }
 
+/* Navigation som sitets: 13 px, vægt 500, versal, 1 px, ren hvid (målt). */
 .siteheader__nav {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  font-size: var(--fs-label);
-  font-weight: var(--fw-semibold);
+  font-size: var(--fs-nav);
+  font-weight: var(--fw-medium);
   letter-spacing: var(--letter-spacing-ui);
   text-transform: uppercase;
 }
 .siteheader__nav a {
-  color: var(--text-on-dark-soft);
+  color: var(--color-white);
   text-decoration: none;
 }
 .siteheader__nav a:hover {
-  color: var(--color-white);
+  color: var(--text-on-dark-soft);
 }
 /* CTA'en i headeren beholder guldet — det er ét element, jf. guldbudgettet. */
 .siteheader__nav .btn-primary:hover {
@@ -619,8 +627,29 @@
   max-width: 960px;
 }
 
+/* Hero-båndet er bredere og luftigere end de øvrige bånd — målt: 1400 px række,
+   155 px lodret (85 px på mobil, via tokens). Overskriften bliver venstrestillet som sitets. */
+.band--hero .band__inner {
+  max-width: var(--container-hero);
+  padding-top: var(--space-hero);
+  padding-bottom: var(--space-hero);
+}
+
+/* Sektionsintro (eyebrow + overskrift + evt. lead/CTA) centreret — sådan står sitets
+   sektionsoverskrifter på de lyse bånd. Hero'en er derimod venstrestillet. */
+.band__intro {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+.band__intro > * {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Hero-underteksten er ren hvid på sitet (20 px/400/1.6), ikke dæmpet. */
 .lead--on-dark {
-  color: var(--text-on-dark-soft);
+  color: var(--color-white);
 }
 
 /* Nummereret proces. Tallene er redaktionelle, ikke dekorative: tynde og store,
@@ -780,6 +809,15 @@ a.btn-primary {
 }
 .factline--on-dark {
   color: var(--text-on-dark-soft);
+}
+
+/* Handlingspunkter fra AI-opsummeringen (fase 4.4): nummereret og redaktionel — ingen bokse. */
+.summary-actions {
+  margin: 0;
+  padding-left: var(--space-4);
+}
+.summary-actions > li + li {
+  margin-top: var(--space-2);
 }
 
 /* Tabellen skal kunne rulle vandret på små skærme uden at sprænge siden. */
