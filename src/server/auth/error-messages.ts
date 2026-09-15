@@ -18,6 +18,16 @@ export function translateAuthError(message: string): string {
   if (m.includes("email not confirmed")) {
     return "Din e-mail er ikke bekræftet endnu — tjek din indbakke.";
   }
+  // Supabase' HIBP-tjek (leaked password protection). Slås til i dashboardet, ikke i kode —
+  // oversættelsen ligger her, så brugeren ikke møder en engelsk fejl den dag flaget vendes.
+  if (
+    m.includes("easy to guess") ||
+    m.includes("known to be weak") ||
+    m.includes("pwned") ||
+    m.includes("compromised")
+  ) {
+    return "Adgangskoden optræder i kendte datalæk — vælg en anden.";
+  }
   if (m.includes("password should be") || m.includes("password is too short")) {
     return "Adgangskoden er for kort — brug mindst 8 tegn.";
   }

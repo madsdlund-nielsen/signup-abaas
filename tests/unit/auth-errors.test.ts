@@ -18,6 +18,14 @@ describe("translateAuthError", () => {
     expect(translateAuthError("Password should be at least 6 characters")).toMatch(/for kort/i);
   });
 
+  it("lækket adgangskode (HIBP) → dansk besked om datalæk, ikke \"for kort\"", () => {
+    const out = translateAuthError(
+      "Password is known to be weak and easy to guess, please choose a different one.",
+    );
+    expect(out).toMatch(/datalæk/i);
+    expect(out).not.toMatch(/for kort/i);
+  });
+
   it("ukendt fejl → generisk dansk besked (lækker ikke den rå engelske tekst)", () => {
     const out = translateAuthError("Some unexpected internal error xyz");
     expect(out).toMatch(/noget gik galt/i);
