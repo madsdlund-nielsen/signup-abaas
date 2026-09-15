@@ -1,6 +1,10 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "permissions": {
+  "permissions":
+    {"allow": [
+      "mcp__netlify__netlify-project-services-updater",
+      "mcp__Netlify__netlify-project-services-updater",
+    ],
     "deny": [
       "mcp__supabase__apply_migration",
       "mcp__supabase__execute_sql",
@@ -14,8 +18,9 @@
       "mcp__supabase__pause_project",
       "mcp__supabase__restore_project",
       "mcp__netlify__netlify-deploy-services-updater",
-      "mcp__netlify__netlify-project-services-updater",
-      "mcp__netlify__netlify-extension-services-updater"
+      "mcp__Netlify__netlify-deploy-services-updater",
+      "mcp__netlify__netlify-extension-services-updater",
+      "mcp__Netlify__netlify-extension-services-updater"
     ]
   },
   "hooks": {
