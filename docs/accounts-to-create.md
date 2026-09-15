@@ -29,7 +29,8 @@
 | **Cal Video** | (indeholdt i Cal.com) | `CALVIDEO_API_KEY` | `FLAG_VIDEO` | **Ikke en separat leverandør** — følger med Cal.com. 🔴 Native optagelse på Teams er uverificeret (spike L-8) |
 | **Ordbogen** (LLM + transskription) | kontakt salg | `LLM_API_KEY`, `TRANSCRIPTION_API_KEY` | `FLAG_AIFOLLOWUP`, `FLAG_TRANSCRIPTION` | ✅ Besluttet (ADR 0024). **Konto bestilt** (Mads, 2026-09-15). Én konto dækker begge. DPA er **håndteret uden for repoet**. Bemærk: `ordbogen.ai` → **`odincore.ai`** |
 | **Alunta** (betaling ind) | **Starter 199 kr/md** (25 kunder) → **Growth 499 kr/md** (100) | `ALUNTA_API_KEY`, `ALUNTA_PLAN_ID`, `ALUNTA_WEBHOOK_SECRET`, (`ALUNTA_API_URL`) | `FLAG_PAYMENTS` | ✅ ADR 0023/0032/0034. Free-tieren (10 kunder / 10.000 kr MRR) rækker kun til test_mode. ⚠ Planen oprettes som **abonnement med 4-ugers interval** — ikke usage-plan (ADR 0034). Priser indtastes af admin, aldrig af kode |
-| **QuickPay** (gateway **+ indløser**) | **148 kr/md** i alt | (konfigureres i Alunta-UI'et) | `FLAG_PAYMENTS` | ✅ Valgt (ADR 0034). **QuickPay udfylder også indløser-rollen** — ingen separat acquirer-aftale. 99 kr/md + **MobilePay Online-tillæg 49 kr/md** = 148 kr/md, + 0,25 kr/transaktion + variable kortgebyrer. ⚠ Liveverifikation udestår |
+| **QuickPay** (betalings**gateway**) | **148 kr/md** | (konfigureres i Alunta-UI'et) | `FLAG_PAYMENTS` | ✅ Valgt (ADR 0034). Gateway — **ikke** indløser. 99 kr/md + **MobilePay Online-tillæg 49 kr/md** = 148 kr/md, + 0,25 kr/transaktion. ⚠ Liveverifikation udestår |
+| **Nets** (**indløser**/acquirer) | ⚠ afhænger af aftalen | (indløsningsaftale, ikke env-var) | `FLAG_PAYMENTS` | ✅ Valgt (Mads, 2026-09-15; ADR 0034-opdatering). **Selvstændig aftale og konto — følger ikke med QuickPay.** Kortgebyrerne bor her; sats + evt. fast abonnement er ikke fastlagt og indsættes når aftalen foreligger. Skal på plads før betaling går live |
 | **Resend** (e-mail, EU/Dublin) | **Free** (3.000 mails/md) | `RESEND_API_KEY`, `RESEND_FROM_ADDRESS` | `FLAG_EMAIL` | EU ✅. Volumenestimat ligger langt under free-loftet; opgradér til Pro ($20) først hvis loftet eller en EU-region kræver det. Bruges også til Supabase-SMTP |
 | **inMobile** (SMS, DK) | **289 kr/md** + 0,289 kr/SMS | `INMOBILE_API_KEY`, `INMOBILE_SENDER` | `FLAG_SMS` | EU/DK ✅. Spørg om API-/gateway-adgang alene er billigere end fuld platformadgang |
 | **PostHog** (analytics, EU) | **Free** | `POSTHOG_KEY` (`POSTHOG_HOST` forudfyldt) | `FLAG_ANALYTICS` | Free-tieren (1M events/md) er rigeligt. Dedikeret ABaaS-projekt på eu.posthog.com |
@@ -54,8 +55,8 @@ med kataloget, ikke med omsætningen:
 | 25 | ~1.900 kr | ~3.100 kr/md |
 | 40 | ~3.100 kr | ~4.300 kr/md |
 
-Ordbogen er ikke med — pris kendes først ved kontakt. Kortgebyrer (indløser-delen hos
-QuickPay) er variable og kommer oveni.
+**Ikke med i tallene:** Ordbogen (pris kendes først ved kontakt) og **Nets** (kortgebyrer —
+og et evt. fast indløser-abonnement — afhænger af indløsningsaftalen). Begge kommer oveni.
 
 ## Tværgående
 

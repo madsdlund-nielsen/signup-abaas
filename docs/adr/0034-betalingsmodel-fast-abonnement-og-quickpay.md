@@ -72,23 +72,34 @@ konti før produktion — QuickPay-konto findes endnu ikke.
   **abonnement med 4-ugers interval**, ikke som usage-plan — `docs/accounts-to-create.md`
   er rettet tilsvarende.
 
-## Opdatering (2026-09-15) — QuickPay er også indløser, og prisen er kendt
+## Opdatering (2026-09-15) — betalingskæden er tre parter, og QuickPay-prisen er kendt
 
-Gateway-valget er uændret. Denne ADR beskrev QuickPay som *gateway*, hvilket efterlod et
-åbent spørgsmål om en separat indløsningsaftale (acquirer) hos fx Clearhaus eller Nets.
+Gateway-valget er uændret. Denne ADR beskrev QuickPay som *gateway* uden at gøre op med
+hvem der indløser. Rollefordelingen er nu fastlagt (Mads, 2026-09-15) — og den er **tre
+parter, ikke to**:
 
-**Det spørgsmål bortfalder: QuickPay udfylder også indløser-rollen, og det er indeholdt i
-prisen** (Mads, 2026-09-15). Betalingskæden er dermed to parter — Alunta → QuickPay — ikke tre.
+| Part | Rolle | Hvad den gør |
+|---|---|---|
+| **Alunta** | Abonnementssystem | Planer, medlemskaber, fakturering, webhooks (ADR 0023/0032) |
+| **QuickPay** | Betalingsgateway | Hosted checkout, korttokenisering, MobilePay Online |
+| **Nets** | **Indløser (acquirer)** | Indløsningsaftalen og kortgebyrerne |
+
+**Nets er en selvstændig aftale og en selvstændig konto** — den følger ikke med QuickPay.
+Den skal på plads før betaling kan gå live, på linje med de to andre.
 
 Pris (ekskl. moms):
 
 | Post | Beløb |
 |---|---|
-| QuickPay inkl. indløsning | 99 kr/md |
+| QuickPay (gateway) | 99 kr/md |
 | MobilePay Online-tillæg | 49 kr/md |
-| **Fast i alt** | **148 kr/md** |
-| Transaktionsgebyr | 0,25 kr/transaktion |
-| Kortgebyrer (indløser-delen) | variable |
+| **QuickPay fast i alt** | **148 kr/md** |
+| QuickPay transaktionsgebyr | 0,25 kr/transaktion |
+| **Nets — kortgebyrer** | **variable; sats + evt. fast abonnement afhænger af aftalen** |
 
-`docs/accounts-to-create.md` og `docs/gdpr/leverandoer-register.md` er rettet tilsvarende.
-Liveverifikationen mod en rigtig QuickPay-konto består uændret.
+⚠ **Nets' priser er ikke fastlagt her.** De afhænger af den konkrete indløsningsaftale og
+er ikke Claude Codes at gætte (Spand C) — tallet indsættes når aftalen foreligger.
+
+`docs/accounts-to-create.md`, `docs/gdpr/leverandoer-register.md` og
+`docs/gdpr/sletteflow.md` er rettet tilsvarende. Liveverifikationen mod rigtige
+QuickPay- og Nets-konti består uændret.

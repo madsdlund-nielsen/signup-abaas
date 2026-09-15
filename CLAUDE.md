@@ -134,9 +134,10 @@ samtykke.
   en åben vej. EU-residens og native optagelse er **ikke** lukket af dette
 - ~~Ordbogen DPA/databehandleraftale~~ → **håndteret uden for repoet** (Mads, 2026-09-15;
   ADR 0024-opdatering). Konto er bestilt. Samtykke til optagelse er stadig ejerens punkt
-- ~~Separat indløsningsaftale (acquirer)~~ → **QuickPay udfylder også indløser-rollen**, og
-  det er med i prisen: 148 kr/md + 0,25 kr/transaktion + variable kortgebyrer
-  (Mads, 2026-09-15; ADR 0034-opdatering)
+- ~~Hvem indløser?~~ → **Nets** (Mads, 2026-09-15; ADR 0034-opdatering). Betalingskæden er
+  **tre parter**: Alunta (abonnement) → QuickPay (gateway) → Nets (indløser). Nets er en
+  **selvstændig aftale og konto** — den følger ikke med QuickPay. QuickPay koster 148 kr/md
+  + 0,25 kr/transaktion; Nets' kortgebyrer afhænger af indløsningsaftalen og er ikke fastlagt
 - ~~Gateway-valg hos Alunta~~ → **QuickPay** (Mads, 2026-08-26; ADR 0034)
 - ~~MobilePay gennem Alunta~~ → MobilePay er ikke en Alunta-gateway (ADR 0032), men
   **QuickPay tilbyder MobilePay Online**, så den går via gatewayens checkout (ADR 0034).
