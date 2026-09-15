@@ -41,10 +41,16 @@ de tre synlighedsregimer er begrundet i **ADR 0038**.
 Udestår i 4.2: **signerede engangslinks** (B-21) — bevidst udskudt til 4.5, som er den der
 udsender dem.
 
-**4.3–4.6 er ikke startet.** Siden 2026-09-14 (ADR 0042) bygges de **skærm-først** mod
-demo-adapterne (ADR 0041): skærmen først, så Mads kan klikke og designe; leverandøren droppes
-ind når Ordbogen-DPA, samtykke til optagelse og Resend-/inMobile-konti lander. Den tidligere
-anbefaling om ikke at starte før konti findes (fase 3-rapporten §8) er trukket tilbage.
+**4.3–4.6 bygges skærm-først** siden 2026-09-14 (ADR 0042) mod demo-adapterne (ADR 0041):
+skærmen først, så Mads kan klikke og designe; leverandøren droppes ind når Ordbogen-DPA,
+samtykke til optagelse og Resend-/inMobile-konti lander. Den tidligere anbefaling om ikke at
+starte før konti findes (fase 3-rapporten §8) er trukket tilbage.
+
+**4.4 er startet 2026-09-15:** opsummeringsskærmen på `/moeder/[id]` (`src/server/summaries/`,
+`MeetingSummary`) viser referat + handlingspunkter for et afholdt møde — kun for ejeren
+(restriktiv default, §4.4). Datakilden går gennem portene ved læsning; persistens som
+mødeartefakt, generér-handling og samtykke-gate følger når Ordbogen lander. 4.3, 4.5 og 4.6
+udestår.
 
 ⚠ Db-testene for 0015 er **ikke kørt lokalt** — Docker mangler på maskinen (B-13). CI er eneste
 gate for denne migrations RLS.

@@ -811,6 +811,15 @@ a.btn-primary {
   color: var(--text-on-dark-soft);
 }
 
+/* Handlingspunkter fra AI-opsummeringen (fase 4.4): nummereret og redaktionel — ingen bokse. */
+.summary-actions {
+  margin: 0;
+  padding-left: var(--space-4);
+}
+.summary-actions > li + li {
+  margin-top: var(--space-2);
+}
+
 /* Tabellen skal kunne rulle vandret på små skærme uden at sprænge siden. */
 .table-wrap {
   overflow-x: auto;
