@@ -19,10 +19,16 @@ export interface ScheduledMeeting {
 }
 
 /**
- * Booking/scheduling. Leverandør: Cal.com (Platform managed users + Atoms).
- * TODO(mads): multi-host-liveverifikation når nøgler lander — 2-3 værter + ejer,
- * EU-residens på valgt niveau, og native mødeoptagelse på valgt plan. Byggegaten er
- * fjernet (2026-08-04); STOP ved plan-/tier-valg består. Se docs/spikes/multi-host.md.
+ * Booking/scheduling. Leverandør: Cal.com, **Teams-plan** (ADR 0046) — Platform-planen med
+ * managed users + Atoms er deprecated og lukket for nye kunder.
+ *
+ * ⚠ TODO(mads) — docs/backlog.md B-23: denne port modellerer værter PR. BOOKING, men API v2
+ * har intet `hosts`-felt; værter hører til event typen. Multi-host skal bygges som ét
+ * COLLECTIVE event type pr. board, og `ownerUserId` skal være ejerens kontaktoplysninger
+ * ({ name, email, timeZone }), ikke et auth-id. Kontrakten nedenfor overlever ikke den rework.
+ *
+ * TODO(mads): resten af liveverifikationen når nøgler lander — EU-residens på Teams (L-7) og
+ * native mødeoptagelse (L-8) er begge uverificerede. Se docs/spikes/multi-host.md.
  */
 export interface BookingProvider {
   readonly name: string;
