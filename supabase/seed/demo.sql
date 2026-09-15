@@ -111,4 +111,132 @@ join partner_profile p on p.id = m.partner_id
 join competence_tag t on t.slug = m.tag_slug
 on conflict do nothing;
 
+-- --- Befolket tilstand for en EKSISTERENDE ejer (ADR 0043) ------------------------------
+-- Seed'et kan ikke oprette auth-brugere, så board, medlemskab og møder hægtes på en ejer der
+-- allerede har oprettet sig via /signup. Scriptet sætter `demo.owner_email` på sessionen
+-- (DEMO_OWNER_EMAIL=… npm run db:seed:demo); uden den springes hele blokken over, og seed'et
+-- gør præcis som før (quiz + katalog).
+--
+-- Formål: før/efter-skærme kan klikkes og designes uden at gennemspille rejsen hver gang:
+-- board (tre partnere), medlemskab med demo-kort, et kommende møde med dagsorden, et afholdt
+-- møde med opkrævning, note og vurderinger. Alle id'er ligger i d0000000-…-serien.
+--
+-- ⚠ Prisregel: én DEMO-regel (1,00 kr + 1,00 kr pr. partner, faktor 1,0 → 4,00 kr for tre
+--   partnere) indsættes KUN hvis ingen aktiv regel findes. Tallet er åbenlyst falsk (ADR 0041's
+--   data-regel) og fjernes af demo-clean. Findes en rigtig regel, røres intet, og ingen
+--   opkrævning seedes — tal er stadig ejer-territorium.
+
+do $$
+declare
+  v_email        text := nullif(current_setting('demo.owner_email', true), '');
+  v_owner        uuid;
+  v_board        constant uuid := 'd0000000-0000-4000-8000-000000000401';
+  v_membership   constant uuid := 'd0000000-0000-4000-8000-000000000501';
+  v_rule         constant uuid := 'd0000000-0000-4000-8000-000000000601';
+  v_meeting_next constant uuid := 'd0000000-0000-4000-8000-000000000701';
+  v_meeting_held constant uuid := 'd0000000-0000-4000-8000-000000000702';
+  v_astrid       constant uuid := 'd0000000-0000-4000-8000-000000000301';
+  v_mikkel       constant uuid := 'd0000000-0000-4000-8000-000000000302';
+  v_camilla      constant uuid := 'd0000000-0000-4000-8000-000000000305';
+  v_next_start   timestamptz := date_trunc('day', now()) + interval '9 days' + interval '10 hours';
+  v_held_start   timestamptz := date_trunc('day', now()) - interval '19 days' + interval '10 hours';
+begin
+  if v_email is null then
+    raise notice '[seed] demo.owner_email er ikke sat — springer den befolkede tilstand over (kun quiz + katalog).';
+    return;
+  end if;
+
+  select id into v_owner from app_user where email = v_email;
+  if v_owner is null then
+    raise exception '[seed] ingen app_user med e-mail % — opret ejeren via /signup først (docs/opsaetning-ejer-test.md, trin 4).', v_email;
+  end if;
+
+  -- Demodata må ikke blandes med rigtige: en ejer der allerede har et board, afvises.
+  if exists (select 1 from board where owner_id = v_owner and id <> v_board) then
+    raise exception '[seed] ejeren % har allerede et board — den befolkede tilstand kræver en ejer uden board (brug en frisk signup).', v_email;
+  end if;
+
+  -- Ejerens quiz-svar: churn, priser, økonomi + hver 4. uge. Matcher de tre partnere nedenfor.
+  insert into quiz_answer (id, owner_id, quiz_option_id) values
+    ('d0000000-0000-4000-8000-000000000801', v_owner, 'd0000000-0000-4000-8000-000000000201'),
+    ('d0000000-0000-4000-8000-000000000802', v_owner, 'd0000000-0000-4000-8000-000000000202'),
+    ('d0000000-0000-4000-8000-000000000803', v_owner, 'd0000000-0000-4000-8000-000000000204'),
+    ('d0000000-0000-4000-8000-000000000804', v_owner, 'd0000000-0000-4000-8000-000000000221')
+  on conflict do nothing;
+
+  -- Board + tre partnere. Lead på den første interne — samme pladsholder som approveBoard.
+  -- TODO(ejer): lead-partner regler.
+  insert into board (id, owner_id, name) values (v_board, v_owner, 'Mit board')
+  on conflict (id) do nothing;
+
+  insert into board_partner (board_id, partner_id, is_lead) values
+    (v_board, v_astrid,  true),
+    (v_board, v_mikkel,  false),
+    (v_board, v_camilla, false)
+  on conflict do nothing;
+
+  -- Medlemskab med demo-kort — samme tilstandsskift som confirmDemoCard (ADR 0041).
+  insert into membership (id, board_id, frequency_weeks, status, provider_customer_ref, card_status) values
+    (v_membership, v_board, 4, 'aktiv', 'DEMO-CUSTOMER-' || v_membership::text, 'registreret')
+  on conflict (id) do nothing;
+
+  -- Prisregel: kun hvis ingen aktiv findes (se advarslen ovenfor).
+  if not exists (select 1 from pricing_rule where is_active) then
+    insert into pricing_rule (id, version, base_amount_minor, per_partner_amount_minor,
+                              factor_4_weeks, factor_8_weeks, factor_12_weeks, currency, is_active)
+    select v_rule, coalesce(max(version), 0) + 1, 100, 100, 1, 1, 1, 'DKK', true
+    from pricing_rule
+    on conflict (id) do nothing;
+  end if;
+
+  -- Kommende møde (planlagt). starts_at opdateres ved gentagne kørsler, så det forbliver i fremtiden.
+  insert into meeting (id, board_id, provider_booking_uid, starts_at, status, video_join_url) values
+    (v_meeting_next, v_board, 'DEMO-BOOKING-SEED-0701', v_next_start, 'planlagt', '/moeder/rum/DEMO-BOOKING-SEED-0701')
+  on conflict (id) do update set starts_at = excluded.starts_at, updated_at = now();
+
+  -- Afholdt møde, 19 dage tilbage; alle tre partnere registreret som afholdt.
+  insert into meeting (id, board_id, provider_booking_uid, starts_at, status, video_join_url) values
+    (v_meeting_held, v_board, 'DEMO-BOOKING-SEED-0702', v_held_start, 'afholdt', '/moeder/rum/DEMO-BOOKING-SEED-0702')
+  on conflict (id) do update set starts_at = excluded.starts_at, updated_at = now();
+
+  insert into meeting_partner (meeting_id, partner_profile_id, registered_status, registered_at) values
+    (v_meeting_next, v_astrid,  null, null),
+    (v_meeting_next, v_mikkel,  null, null),
+    (v_meeting_next, v_camilla, null, null),
+    (v_meeting_held, v_astrid,  'afholdt', v_held_start + interval '75 minutes'),
+    (v_meeting_held, v_mikkel,  'afholdt', v_held_start + interval '75 minutes'),
+    (v_meeting_held, v_camilla, 'afholdt', v_held_start + interval '75 minutes')
+  on conflict (meeting_id, partner_profile_id) do update
+    set registered_status = excluded.registered_status, registered_at = excluded.registered_at;
+
+  -- Dagsorden på det kommende møde (ejerens forberedelse, fase 4.1).
+  insert into meeting_agenda_item (id, meeting_id, kind, body, sort_order) values
+    ('d0000000-0000-4000-8000-000000000901', v_meeting_next, 'dagsorden',   'Status på fastholdelse: hvad har vi ændret siden sidst, og hvad viser tallene?', 1),
+    ('d0000000-0000-4000-8000-000000000902', v_meeting_next, 'dagsorden',   'Prispakkerne: skal vi forenkle til to, og hvad gør vi med de eksisterende kunder?', 2),
+    ('d0000000-0000-4000-8000-000000000903', v_meeting_next, 'spoergsmaal', 'Hvilke tre nøgletal bør jeg kigge på hver mandag morgen?', 1),
+    ('d0000000-0000-4000-8000-000000000904', v_meeting_next, 'materiale',   'Seneste kvartalsoversigt og churn-opgørelsen — sendes på mail inden mødet.', 1)
+  on conflict (id) do nothing;
+
+  -- Efter-møde-note fra Mikkel på det afholdte møde (fase 2.4).
+  insert into meeting_note (id, meeting_id, partner_profile_id, body) values
+    ('d0000000-0000-4000-8000-000000000a01', v_meeting_held, v_mikkel,
+     'Vi blev enige om at starte med likviditetsoverblikket. Ejeren sender nøgletallene inden næste møde, så vi kan gå direkte til prioriteringen.')
+  on conflict do nothing;
+
+  -- Ejerens vurderinger af det afholdte møde: mødet som helhed + Mikkel (fase 4.2).
+  insert into meeting_rating (id, meeting_id, rater_user_id, subject_partner_profile_id, score, comment) values
+    ('d0000000-0000-4000-8000-000000000a11', v_meeting_held, v_owner, null,     5, 'Konkret og brugbart — vi fik prioriteret.'),
+    ('d0000000-0000-4000-8000-000000000a12', v_meeting_held, v_owner, v_mikkel, 4, null)
+  on conflict do nothing;
+
+  -- Opkrævning for det afholdte møde — kun hvis demo-reglen er den aktive. Beløbet følger
+  -- formlen (base + 3 × pr. partner) × faktor_4 = (100 + 300) × 1,0 = 400 øre, præcis som
+  -- createChargeForMeeting ville regne. 'rapporteret' = indberettet, afregnes på næste faktura.
+  if exists (select 1 from pricing_rule where id = v_rule and is_active) then
+    insert into payment_charge (id, meeting_id, membership_id, pricing_rule_id, amount_minor, currency, status, provider_charge_ref) values
+      ('d0000000-0000-4000-8000-000000000b01', v_meeting_held, v_membership, v_rule, 400, 'DKK', 'rapporteret', 'DEMO-CHARGE-SEED-0702')
+    on conflict do nothing;
+  end if;
+end $$;
+
 commit;
