@@ -52,6 +52,21 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Kør på alle ruter undtagen statiske assets.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  // Kør på alle ruter undtagen statiske assets OG /api.
+  //
+  // `api` er udeladt af to grunde, hvoraf den første er en fejl og ikke en optimering:
+  // adgangsporten ovenfor omdirigerer ALT undtagen /gate, så med porten slået til ville
+  // Cal.com's og Alunta's callbacks blive sendt til /gate og aldrig nå deres handler.
+  // En maskine kan ikke taste en delt adgangskode. Webhooks bærer i forvejen deres eget
+  // værn — HMAC-signatur før alt andet, fail-closed (ADR 0027/0029) — så porten og
+  // sessionsopfriskningen har intet at bidrage med dér.
+  // Dernæst: Next 16's egen vejledning (node_modules/next/dist/docs, guides/authentication)
+  // udelader netop `api` i sit matcher-eksempel og advarer om at proxyen kører på hver
+  // request, også prefetches, og derfor skal holdes billig.
+  //
+  // Bemærk skråstregen i `api/`. Vejledningens eksempel skriver `api` uden, men et bart
+  // `api` rammer også ethvert PRÆFIKS — en fremtidig rute som /apifoo ville da slippe uden
+  // om adgangsporten. Det er et hul, ikke en optimering, så mønsteret er snævret ind til
+  // præcis det segment vi mener.
+  matcher: ["/((?!api/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };

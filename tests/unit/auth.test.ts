@@ -1,5 +1,6 @@
+import { cache } from "react";
 import { describe, expect, it } from "vitest";
-import { createSessionProvider, requireRole } from "@/server/auth";
+import { createSessionProvider, getCurrentUser, requireRole } from "@/server/auth";
 import { SupabaseSessionProvider } from "@/server/auth/supabase-provider";
 import type { AuthUser } from "@/server/auth";
 import type { SupabaseAuthGateway } from "@/server/auth/supabase-provider";
@@ -88,5 +89,27 @@ describe("requireRole", () => {
 
   it("kaster for anonym bruger", () => {
     expect(() => requireRole(null, "partner")).toThrow();
+  });
+});
+
+describe("getCurrentUser — request-scopet memoisering (ADR 0049)", () => {
+  it("stub-stien er uændret: ingen konfiguration → ingen bruger, hver gang", async () => {
+    expect(await getCurrentUser({})).toBeNull();
+    expect(await getCurrentUser({})).toBeNull();
+  });
+
+  it("React' cache memoiserer IKKE uden for et render-scope — sikkerhedsforudsætningen", async () => {
+    // Hele begrundelsen for at memoisere på autorisationslaget hviler på, at `cache` ikke
+    // har et modul-globalt map: huskede den på tværs af requests, kunne én brugers session
+    // lække ind i en anden brugers render. Forudsætningen er verificeret, ikke antaget —
+    // og låses fast her, så et React-skifte fanges af CI frem for i produktion.
+    let calls = 0;
+    const memoized = cache(async (key: string) => {
+      calls++;
+      return key;
+    });
+    await memoized("samme-nøgle");
+    await memoized("samme-nøgle");
+    expect(calls).toBe(2);
   });
 });

@@ -37,10 +37,10 @@ at efterlade en bruger uden rolle.
 
 ```bash
 npm run db:link        # npx supabase link
-npm run db:push        # anvender supabase/migrations/ (0001 → 0014)
+npm run db:push        # anvender supabase/migrations/ (0001 → 0016)
 ```
 
-Verificér bagefter at `schema_migrations` indeholder alle 14.
+Verificér bagefter at `schema_migrations` indeholder alle 16.
 
 ## 3. Demodata — så ejerne ikke møder tomme skærme
 

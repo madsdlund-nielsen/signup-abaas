@@ -1,10 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 
-import { getCurrentUser } from "@/server/auth";
 import { isDemoMode } from "@/server/flags";
 
 import { DemoBadge } from "./DemoBadge";
+import { SiteNav } from "./SiteNav";
 
 /**
  * Header-bar — én af designmanualens fire kanoniske former (v1.2, side 14):
@@ -20,10 +21,13 @@ import { DemoBadge } from "./DemoBadge";
  *
  * Både løsen og kortformen ligger i DOM'en; CSS vælger. Det er bevidst: et JS-baseret skift
  * ville give et synligt hop ved hydrering på hver eneste sideindlæsning.
+ *
+ * Komponenten er bevidst SYNKRON og rører ikke sessionen (ADR 0050). Den lå før i
+ * rodlayoutet og ventede på getCurrentUser(), hvilket gjorde hver eneste rute dynamisk og
+ * lod hele siden vente på en rundtur til Supabase før første byte. Det auth-afhængige led
+ * er flyttet til SiteNav bag en Suspense-grænse; kromet sendes af sted med det samme.
  */
-export async function SiteHeader() {
-  const user = await getCurrentUser();
-
+export function SiteHeader() {
   return (
     <header className="siteheader">
       <div className="siteheader__inner">
@@ -53,21 +57,12 @@ export async function SiteHeader() {
         <nav className="siteheader__nav" aria-label="Primær">
           {/* Demo-mærket (ADR 0041) står på hver side i demo-tilstand — og er væk ellers. */}
           {isDemoMode() ? <DemoBadge /> : null}
-          {user ? (
-            <>
-              <Link href="/dashboard">Dashboard</Link>
-              {user.roles.includes("ejer") ? <Link href="/moeder">Møder</Link> : null}
-              {user.roles.includes("partner") ? <Link href="/partner">Partner</Link> : null}
-              {user.roles.includes("admin") ? <Link href="/admin">Admin</Link> : null}
-            </>
-          ) : (
-            <>
-              <Link href="/login">Log ind</Link>
-              <Link className="btn-primary btn-primary--compact" href="/signup">
-                Kom i gang
-              </Link>
-            </>
-          )}
+          {/* Auth-afhængig del streames ind (ADR 0050). Fallback er tom frem for
+              udlogget-nav'en: en kort tom plads er ærligere end at vise "Log ind" til
+              en der ER logget ind. */}
+          <Suspense fallback={null}>
+            <SiteNav />
+          </Suspense>
         </nav>
       </div>
     </header>

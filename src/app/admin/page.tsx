@@ -57,6 +57,11 @@ export default function AdminHome() {
             body="Gennemsnit pr. rådgiver. Datagrundlag, ikke en offentlig score."
             href="/admin/vurderinger"
           />
+          <AdminEntry
+            title="Notifikationer"
+            body="Hvilke beskeder platformen skylder at sende, og hvor langt e-mail og SMS er fra at kunne sende dem."
+            href="/admin/notifikationer"
+          />
         </div>
       </PageBody>
     </>

@@ -10,8 +10,9 @@ import { SiteFooter } from "@/components/SiteFooter";
  * designmanualen binder dem til. Et mærke sat under sin grænse renderer gråt frem for at
  * fejle, så en test er den eneste vagt.
  *
- * SiteHeader er en async server-komponent der læser session og kan derfor ikke renderes
- * med RTL uden at mocke auth-laget. Dens mærkevalg dækkes af CSS-reglerne, ikke her.
+ * SiteHeader var før en async server-komponent der læste sessionen og derfor ikke kunne
+ * renderes med RTL. Efter opdelingen (ADR 0050) er den synkron og auth-fri, og dækkes nu
+ * sammen med nav'en i tests/unit/site-nav.test.tsx. Mærkevalget dækkes af CSS-reglerne.
  */
 describe("SectionBand — charcoal-tonen (designmanual v1.2)", () => {
   it("charcoal er en selvstændig tone, ikke navy", () => {

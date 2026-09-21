@@ -69,7 +69,7 @@ ikke guld — det sidder på alle sider og må ikke bruge guldbudgettet (ADR 003
 ## Konsekvenser
 
 - Positive: ejerrejsen fra signup til rating kan klikkes igennem uden én
-  `NotConfiguredError` — på sua-abaas.netlify.com, ikke kun lokalt. Skærme til det der
+  `NotConfiguredError` — på sua-abaas.netlify.app, ikke kun lokalt. Skærme til det der
   udestår kan bygges skærm-først (ADR 0042). Demoen har varig værdi efter launch.
 - Negative/pris: seks små klasser at vedligeholde når portene ændrer sig; én ekstra
   driftstilstand at holde styr på. **`FLAG_DEMO` SKAL være slået fra ved launch** — føjet
