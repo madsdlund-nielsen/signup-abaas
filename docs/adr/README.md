@@ -79,6 +79,7 @@ det gjort sådan?", så skriv en ADR.
 | 0046 | Cal.com: Teams-plan og ét collective event type pr. board (erstatter Platform-antagelsen) | Accepteret | 2 |
 | 0047 | SECURITY DEFINER-funktioner: hvad Supabase' linter må rette, og hvad den ikke må | Accepteret | — |
 | 0048 | Notifikationskataloget bor i kode indtil skabelonerne får en tabel | Accepteret | 4 |
+| 0049 | Brugeropslaget memoiseres pr. request, og proxyen holdes billig | Accepteret | — |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så
