@@ -23,7 +23,8 @@
       tændes når DPA og samtykkeflow er på plads.
 - [ ] Auto-resumé af møde via **Ordbogen (Odin-LLM)** bag `FLAG_AIFOLLOWUP`.
 - [ ] Notifikationsmotor: e-mail via **Resend (EU)**, SMS via **inMobile** — begge
-      porte findes allerede i `src/lib/email/` og `src/lib/sms/`.
+      porte findes allerede i `src/lib/email/` og `src/lib/sms/`. **(Oversigtsskærmen er
+      bygget 2026-09-21, ADR 0048; selve motoren udestår og er blokeret på konti.)**
 - [ ] Admin kan redigere notifikationsskabeloner **med live preview**.
 - [ ] Visuel markering i admin når en ændring er live.
 - [ ] Notifikationer dækker minimum: mødepåmindelse, aflysning/flytning,
@@ -51,6 +52,14 @@ tidligere anbefaling om ikke at starte før konti findes (fase 3-rapporten §8) 
 (restriktiv default, §4.4). Datakilden går gennem portene ved læsning; persistens som
 mødeartefakt, generér-handling og samtykke-gate følger når Ordbogen lander. 4.3, 4.5 og 4.6
 udestår.
+
+**4.5/4.6 er startet 2026-09-21:** notifikationsoversigten på `/admin/notifikationer`
+(`src/server/notifications/`, `NotificationOverview`) viser de fire påkrævede beskedtyper og
+den faktiske tilstand pr. kanal — e-mail og SMS er begge stubs i dag, og skærmen siger det
+frem for at love noget. Kataloget står i kode indtil skabelonerne får en tabel (**ADR 0048**);
+skabelontekst er hverken skrevet eller stubbet. Udestår i 4.5: selve motoren (Resend-/inMobile-
+adaptere, retry og fejllogning via PostHog, udsendelseslog) — blokeret på konti. Udestår i 4.6:
+redigering med live preview og den synlige markering af hvad der er live.
 
 ⚠ Db-testene for 0015 er **ikke kørt lokalt** — Docker mangler på maskinen (B-13). CI er eneste
 gate for denne migrations RLS.
