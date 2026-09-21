@@ -25,7 +25,7 @@ dokumentationen. Barriererne, rangeret efter hvad de kostede i uger:
    leverandøren var på plads. Vi skrev selv reglen.
 3. **Merge-økonomien** (CLAUDE.md, stående ordre 2026-07-22): en hel fase i ÉN PR. Fase 1–3
    landede hver i én commit; fase 2 blev aldrig gennemgået. Deploy-on-push til
-   sua-abaas.netlify.com fandtes hele tiden — reglen forbød at bruge den ofte. Omkostningen
+   sua-abaas.netlify.app fandtes hele tiden — reglen forbød at bruge den ofte. Omkostningen
    blev aldrig målt (backlog B-17).
 4. **Fase-gates:** bredde før dybde. Man kan ikke klikke på et lag, kun på en rejse.
 5. **"Uafklarede punkter — må ikke beslutte":** hvert designvalg blev til ugers ventetid.
@@ -47,7 +47,7 @@ og Mette, gerne snart. Det der ændres er hastigheden i interaktionen.
 ## Beslutning
 
 1. **Små PR'er, ship ofte.** Merge-økonomien ophæves (Mads, 2026-09-14). Hver PR er én
-   skive eller én skærm og skal kunne ses på sua-abaas.netlify.com. Backlog B-17 lukkes.
+   skive eller én skærm og skal kunne ses på sua-abaas.netlify.app. Backlog B-17 lukkes.
 2. **Skærm-først.** Det der udestår bygges i rækkefølgen: skærm med demo-data → Mads klikker
    og designer → logik kobles → rigtig adapter droppes ind. Skærmen er produktionskode fra
    første commit; kun datakilden skifter. "Byg ikke uden konto"-anbefalingen er trukket

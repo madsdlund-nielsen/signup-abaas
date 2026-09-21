@@ -15,8 +15,10 @@ En platform der sammensætter et lille rådgivende advisory board (2-3 partnere)
 for en virksomhedsejer, faciliterer betalte møder (60 min + 15 min betalt
 forberedelse = 75 min honorar), håndterer booking, video, betaling, honorar og
 AI-mødeopfølgning. **Launch: januar 2027** (udskudt fra 1. oktober 2026 — Mads,
-2026-08-26). **Næste milepæl: testbar MVP afleveres mandag 2026-08-31** — en MVP til
-ejer-test, ikke et færdigt produkt.
+2026-08-26). **Næste milepæl: ikke sat.** Den testbare MVP til ejer-test havde frist
+mandag 2026-08-31 (`docs/opsaetning-ejer-test.md`); fristen er passeret, og repoet
+registrerer ikke om testen blev afholdt eller hvad den gav.
+TODO(mads): sæt næste milepæl — og notér udfaldet af ejer-testen, hvis den blev holdt.
 
 Board er kerneproduktet. Alt andet er støttefunktioner.
 
@@ -233,7 +235,7 @@ Befolket tilstand til design og test: `DEMO_OWNER_EMAIL=<signup-mail> npm run db
 ## Byggefaser (opslagsværk) og skiver (arbejdsenhed)
 
 **Siden 2026-09-14 (ADR 0042) arbejder vi i vertikale skiver, ikke i fase-gates.** En skive
-er en rejse man kan klikke igennem på sua-abaas.netlify.com — ikke et lag. Det der udestår
+er en rejse man kan klikke igennem på sua-abaas.netlify.app — ikke et lag. Det der udestår
 bygges **skærm-først**: skærmen med demo-data → Mads klikker og designer → logikken kobles →
 den rigtige adapter droppes ind. Skærmen er produktionskode fra første commit; kun
 datakilden skifter. Rækkefølgen bestemmer Mads ved at klikke.
@@ -274,7 +276,7 @@ de gater ikke længere. Status pr. fase:
 
 1. Læs altid CLAUDE.md først; slå op i den relevante `docs/fase-N.md` for scope og krav.
 2. Arbejd i skiver: én klikbar rejse eller én skærm ad gangen, hver PR grøn og synlig på
-   sua-abaas.netlify.com. Fuld test suite er stadig gaten for hver merge.
+   sua-abaas.netlify.app. Fuld test suite er stadig gaten for hver merge.
 3. Når du rører et uafklaret punkt: byg den simpleste klikbare version bag flag, marker,
    flag — og opfind ikke et svar der binder forretning, pris, jura eller leverandør.
 4. **ADR-on-ship er obligatorisk, ikke valgfrit.** Hver gang du træffer et
@@ -285,7 +287,7 @@ de gater ikke længere. Status pr. fase:
    stadig i samme PR, aldrig bagud i fase 6.
 5. **Små PR'er, ship ofte (Mads, 2026-09-14 — erstatter merge-økonomien fra
    2026-07-22).** Hver PR er én skive eller én skærm og skal kunne ses på
-   sua-abaas.netlify.com. Draft-PR'er er fine til at samle commits; hele faser i én PR
+   sua-abaas.netlify.app. Draft-PR'er er fine til at samle commits; hele faser i én PR
    er det ikke. Netlify-omkostningen måles, ikke antages (ADR 0042).
 6. **Teknisk gæld og drift hører i `docs/backlog.md`** — ikke her, og ikke i
    `docs/stub-register.md`. Backloggen er til punkter hvor beslutningen allerede er
