@@ -21,6 +21,8 @@ Flowet skal være **idempotent** og efterlade en kvittering/log.
    Partnerens tilgængelighed (`partner_availability`, `partner_absence`, 0018) hænger på
    `partner_profile` med `on delete cascade` og forsvinder, når katalogposten slettes.
    Fraværsnoten kan indeholde helbredsoplysninger og er derfor privat (ADR 0052).
+   Udsendelseslogget (`notification_delivery`, 0021) hænger på `app_user` med `on delete cascade`
+   og forsvinder med brugeren; det indeholder alligevel ingen adresser (ADR 0057).
 3. **Eksterne behandlere** (kun de aktive flag; via adapter):
 
 | Leverandør | Hvad slettes/anonymiseres | Note |

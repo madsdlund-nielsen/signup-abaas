@@ -38,16 +38,14 @@ describe("integrationsstatus gennem portene", () => {
     }
   });
 
-  it("FLAG_DEMO giver demo for backend-portene, men ikke for de fire-and-forget-stubs", () => {
+  it("FLAG_DEMO giver demo for backend-portene og for e-mail/SMS (ADR 0057), men ikke for analytics", () => {
     const byKey = Object.fromEntries(
       listIntegrations({ FLAG_DEMO: "true" }).map((i) => [i.key, i.mode]),
     );
-    for (const key of ["booking", "video", "payments", "accounting", "llm", "transcription"]) {
+    for (const key of ["booking", "video", "payments", "accounting", "llm", "transcription", "email", "sms"]) {
       expect(byKey[key], key).toBe("demo");
     }
-    for (const key of ["email", "sms", "analytics"]) {
-      expect(byKey[key], key).toBe("stub");
-    }
+    expect(byKey.analytics).toBe("stub");
     expect(getIntegrationOverview({ FLAG_DEMO: "true" }).demoMode).toBe(true);
   });
 

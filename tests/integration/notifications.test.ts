@@ -53,3 +53,56 @@ describe("notifikationsoversigt — kanaltilstand gennem portene", () => {
     expect(NOTIFICATION_TYPES.every((t) => t.channels.includes("email"))).toBe(true);
   });
 });
+
+/**
+ * Kataloget som kontrakt mellem kode og skabeloner (fase 4.6, ADR 0057).
+ */
+describe("notifikationskataloget — variabler og tidsplan", () => {
+  it("tidsplanen kræver en tidstekst, og de planlagte typer er ikke fastlagt endnu (TODO(ejer))", () => {
+    for (const type of NOTIFICATION_TYPES) {
+      if (type.schedule !== null) expect(type.timing, type.key).not.toBeNull();
+    }
+    const scheduled = NOTIFICATION_TYPES.filter((t) => t.key === "meeting-reminder" || t.key === "rating-request");
+    expect(scheduled.every((t) => t.timing === null && t.schedule === null)).toBe(true);
+  });
+
+  it("variabelnøgler er gyldige, unikke pr. type, og hver type har et link til platformen", () => {
+    for (const type of NOTIFICATION_TYPES) {
+      const keys = type.variables.map((v) => v.key);
+      expect(new Set(keys).size, type.key).toBe(keys.length);
+      for (const key of keys) expect(key, `${type.key}.${key}`).toMatch(/^[a-z][a-z0-9_]*$/);
+      expect(keys, type.key).toContain("link");
+    }
+  });
+
+  it("der er ingen skabelontekst i kataloget — kun nøgler og etiketter", () => {
+    expect(JSON.stringify(NOTIFICATION_TYPES)).not.toMatch(/"subject"|"body"|Kære|Hej /i);
+  });
+
+  it("eksempelværdierne til preview er åbenlyst falske og dækker alle variabler", async () => {
+    const { PREVIEW_EXAMPLES } = await import("@/server/notifications/examples");
+    const keys = new Set(NOTIFICATION_TYPES.flatMap((t) => t.variables.map((v) => v.key)));
+    for (const key of keys) {
+      const example = PREVIEW_EXAMPLES[key];
+      expect(example, key).toBeDefined();
+      expect(example, key).toMatch(/\[DEMO\]|demo\.invalid/);
+    }
+  });
+});
+
+describe("kanaltilstand med demo (ADR 0041/0057)", () => {
+  it("kalder en demo-kanal 'demo' — hverken 'live' eller 'stub' — og den tæller ikke som live", () => {
+    const channels = listNotificationChannels({ FLAG_DEMO: "true" });
+    expect(channels.map((c) => c.state)).toEqual(["demo", "demo"]);
+    expect(getNotificationOverview({ FLAG_DEMO: "true" }).anyChannelLive).toBe(false);
+  });
+
+  it("kalder en kanal med flag og nøgler 'live'", () => {
+    const [email] = listNotificationChannels({
+      FLAG_EMAIL: "true",
+      RESEND_API_KEY: "test",
+      RESEND_FROM_ADDRESS: "x@example.invalid",
+    });
+    expect(email?.state).toBe("live");
+  });
+});

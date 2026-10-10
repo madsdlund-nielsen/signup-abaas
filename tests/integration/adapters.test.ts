@@ -16,7 +16,7 @@ describe("adapter-registry uden nøgler/flag", () => {
     const { email } = getAdapters(emptyEnv);
     await expect(
       email.send({ to: "x@y.dk", subject: "hej", body: "test" }),
-    ).resolves.toBeUndefined();
+    ).resolves.toEqual({ reference: null });
   });
 
   it("backend-stub (payments) kaster NotConfiguredError", async () => {
@@ -54,7 +54,8 @@ describe("adapter-registry uden nøgler/flag", () => {
  */
 const demoEnv: Record<string, string | undefined> = { FLAG_DEMO: "true" };
 const BACKEND_PORTS = ["booking", "video", "payments", "accounting", "llm", "transcription"] as const;
-const FIRE_AND_FORGET_PORTS = ["email", "sms", "analytics"] as const;
+// E-mail og SMS har siden fase 4.5 en demo (ADR 0057); analytics logger og resolver stadig kun.
+const DEMO_FIRE_AND_FORGET_PORTS = ["email", "sms"] as const;
 
 describe("demo-tilstand (ADR 0041)", () => {
   it("(a) vælger demo for alle backend-porte når rigtig config mangler", () => {
@@ -84,11 +85,41 @@ describe("demo-tilstand (ADR 0041)", () => {
     }
   });
 
-  it("rører ikke fire-and-forget-portene — de logger og resolver allerede", () => {
+  it("giver e-mail og SMS en demo (ADR 0057) — men rører ikke analytics, der stadig bare logger", () => {
     const adapters = getAdapters(demoEnv);
-    for (const port of FIRE_AND_FORGET_PORTS) {
-      expect(adapters[port].name, port).toBe("stub");
+    for (const port of DEMO_FIRE_AND_FORGET_PORTS) {
+      expect(adapters[port].name, port).toBe("demo");
     }
+    expect(adapters.analytics.name).toBe("stub");
+  });
+
+  it("e-mail og SMS: rigtige nøgler vinder over demo, og nøgler uden flag giver stub", () => {
+    const real = getAdapters({
+      ...demoEnv,
+      FLAG_EMAIL: "true",
+      RESEND_API_KEY: "test-key",
+      RESEND_FROM_ADDRESS: "noreply@example.invalid",
+      FLAG_SMS: "true",
+      INMOBILE_API_KEY: "test-key",
+      INMOBILE_SENDER: "ABaaS",
+    });
+    expect(real.email.name).toBe("resend");
+    expect(real.sms.name).toBe("inmobile");
+    // Nøgler uden flag: ikke rigtig, men heller ikke demo — demo vælges kun når config MANGLER.
+    const unflagged = getAdapters({
+      ...demoEnv,
+      RESEND_API_KEY: "test-key",
+      RESEND_FROM_ADDRESS: "noreply@example.invalid",
+    });
+    expect(unflagged.email.name).toBe("stub");
+  });
+
+  it("demo-e-mail og -SMS kvitterer med et åbenlyst falsk besked-id", async () => {
+    const { email, sms } = getAdapters(demoEnv);
+    const mail = await email.send({ to: "x@y.dk", subject: "[DEMO] emne", body: "[DEMO]" });
+    const text = await sms.send({ to: "+4500000000", message: "[DEMO]" });
+    expect(mail.reference).toMatch(/^DEMO-MSG-/);
+    expect(text.reference).toMatch(/^DEMO-MSG-/);
   });
 
   it("demo-booking bekræfter tidspunktet og peger Deltag på appens eget møderum", async () => {

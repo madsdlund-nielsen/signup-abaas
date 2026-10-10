@@ -858,6 +858,144 @@ a.btn-primary {
   overflow-x: auto;
 }
 
+/* --- Notifikationsskabeloner (fase 4.6, ADR 0057) -----------------------------
+   Statusmærket bærer det eksplicitte krav "admin skal aldrig være i tvivl om hvad der er
+   live": LIVE er guldfyldt, UDKAST er en navy kontur. Teksten gentager altid tilstanden —
+   farven forstærker, den bærer ikke alene. Ingen rød i paletten (jf. .form__notice). */
+.status-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid currentColor;
+  border-radius: var(--radius);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.status-badge--live {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-white);
+}
+.status-badge--draft {
+  color: var(--color-navy);
+}
+.status-badge--none {
+  color: var(--color-slate);
+}
+.status-badge--archived {
+  color: var(--color-text-muted);
+  border-color: var(--color-grey-bg);
+}
+
+/* Badge-linje i tabelcelle: flere mærker pr. kanal under hinanden. */
+.badge-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.badge-list__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* En kanals redigeringsflade: regel over, overskrift + mærker på én linje. */
+.template-channel {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-grey-bg);
+}
+.template-channel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.template-channel__head > * {
+  margin: 0;
+}
+
+/* Editor til venstre, preview til højre; stables under 720 px. */
+.template-editor {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-5);
+  align-items: start;
+}
+
+/* Variabel-chips: firkantede, kun en tynd kontur. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.chip {
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  color: var(--color-navy);
+  border: 1px solid var(--color-slate);
+  border-radius: var(--radius);
+  font: var(--fw-medium) var(--fs-label) / 1.2 var(--font-base);
+  cursor: pointer;
+}
+.chip:hover {
+  border-color: var(--color-gold);
+}
+
+/* Preview: grå flade, så den læses som "et eksempel", ikke som en del af formularen. */
+.preview {
+  padding: var(--space-4);
+  background: var(--color-grey-bg);
+  color: var(--color-text);
+}
+.preview > * {
+  margin: 0;
+}
+.preview > * + * {
+  margin-top: var(--space-3);
+}
+.preview__label {
+  display: block;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-slate);
+}
+.preview__subject {
+  font-weight: var(--fw-semibold);
+  color: var(--color-navy);
+}
+.preview__body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.preview__meta {
+  font-size: var(--fs-label);
+  color: var(--color-text-muted);
+}
+/* Flettet værdi: en guld-understregning viser hvad der er indsat. */
+.preview__value {
+  border-bottom: 1px solid var(--color-gold);
+  color: var(--color-navy);
+}
+/* Alt der ville forhindre en udsendelse: fyldt guld, så det ikke kan overses og aldrig er tomt. */
+.preview__problem {
+  padding: 0 var(--space-1);
+  background: var(--color-gold);
+  color: var(--color-white);
+  font-weight: var(--fw-bold);
+}
+.preview__problems {
+  padding-left: var(--space-4);
+  font-size: var(--fs-label);
+  color: var(--color-navy);
+}
+
 /* --- Fokuserede opgaver: auth, adgangsport, onboarding -----------------------
    Ét formål pr. side. Her ville et sidehoved-bånd være støj: der er intet at
    navigere væk fra, og manualens ro er vigtigere end konsekvent kromstruktur.

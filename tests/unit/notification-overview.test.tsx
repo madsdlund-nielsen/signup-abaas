@@ -33,6 +33,8 @@ const stubState: NotificationOverviewState = {
       recipients: "Ejer og boardets partnere",
       channels: ["email", "sms"],
       timing: null,
+      schedule: null,
+      variables: [],
     },
     {
       key: "payment-failed",
@@ -41,6 +43,8 @@ const stubState: NotificationOverviewState = {
       recipients: "Ejer",
       channels: ["email"],
       timing: "Straks ved fejlet træk",
+      schedule: null,
+      variables: [],
     },
   ],
   anyChannelLive: false,

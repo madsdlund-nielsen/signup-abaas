@@ -19,8 +19,8 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
 | **e-conomic / Dinero** | Bogføring ud | Faktura-/kundedata, CVR | DK/EU | afventer leverandørvalg | 🔴 afventer (leverandør uafklaret) | `accounting` |
 | **Ordbogen** (chat.dk / Odin-LLM, nu **odincore.ai**) — endpoint `api.odincore.ai` (alias `api.ordbogen.ai`), `/v1/chat/completions` | AI-mødeopfølgning (ADR 0024, 0058) | Mødeindhold/transskript (kan indeholde PII) | DK — dansk datacenter (oplyst for chat.dk; 🟡 for selve API'et ikke stadfæstet i spec'en — bekræftes skriftligt, `docs/spikes/ordbogen-api.md` #8) | ✅ DK (ADR 0024) | ✅ **håndteret uden for repoet** (Mads, 2026-09-15) — spores ikke herfra | `aiFollowup` |
 | **Ordbogen** (ordbogen.ai → **odincore.ai**) — endpoint `api.odincore.ai`, `/v1/audio/transcriptions` | Lyd → tekst (ADR 0024, 0058). 🔴 Sendes kun med registreret samtykke til optagelse (fail-closed) | Mødeoptagelse/-tekst | DK — dansk datacenter (som ovenfor: API-region bekræftes) | ✅ DK (ADR 0024) | ✅ **håndteret uden for repoet** (samme aftale som Odin-LLM) | `transcription` |
-| **Resend** | Transaktionsmails | E-mailadresser, mailindhold | EU (Dublin) | ✅ EU (Dublin) | 🔴 afventer underskrift (Resend DPA findes) | `email` |
-| **inMobile** | SMS | Telefonnumre, beskedindhold | DK | ✅ DK | 🔴 afventer underskrift | `sms` |
+| **Resend** | Transaktionsmails (notifikationsmotoren, ADR 0057) | E-mailadresser, mailindhold (aflysning/flytning, påmindelse, rating, fejlet betaling) | EU (Dublin, `eu-west-1`) — **vælges på afsenderdomænet i Resend-UI'et, ikke i API-kaldet** | ✅ EU (Dublin) — 🔴 TODO(mads): bekræft at domænet er oprettet i `eu-west-1` | 🔴 afventer underskrift (Resend DPA findes) | `email` |
+| **inMobile** | SMS (notifikationsmotoren, ADR 0057) | Telefonnumre, beskedindhold — ⚠ telefonnumre findes endnu ikke i datamodellen, så ingen SMS sendes | DK | ✅ DK | 🔴 afventer underskrift | `sms` |
 | **PostHog** | Analytics + fejlovervågning | Pseudonyme events, evt. IP/enhed | EU (eu.posthog.com) | ✅ EU | 🔴 afventer underskrift (PostHog DPA findes) | `analytics` |
 | **Netlify** (hosting) | SSR, logs, cron | Request-/session-metadata, logs | EU — Frankfurt (`fra`) | 🟡 kræver UI-region-valg + Pro-plan (ADR 0012) | 🔴 afventer underskrift (Netlify DPA findes) | — |
 | **GitHub Actions** | CI/CD | Kildekode (ingen prod-PII), CI-metadata | Global | n/a (ingen prod-persondata) | dækket af GitHub-vilkår | — |
@@ -42,3 +42,8 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
   nødvendig databehandling for ydelsen; analytics (PostHog) kræver samtykke
   (`analytics`-kategorien i `src/server/consent`).
 - **Dataminimering:** adaptere sender kun de felter en operation kræver (se porte i `src/lib`).
+- **Udsendelseslog (ADR 0057):** `notification_delivery` indeholder en bruger-reference
+  (`recipient_user_id`), aldrig en e-mailadresse eller et telefonnummer — adressen slås op i det
+  øjeblik der sendes og gemmes ikke. Fejltekster skrubbes for adresser før de logges eller sendes
+  til PostHog. Skabeloner (`notification_template`) indeholder ingen persondata; flettede værdier
+  (boardnavn, mødetidspunkt) findes kun i den udgående besked.

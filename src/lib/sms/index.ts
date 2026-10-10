@@ -1,7 +1,9 @@
-import { isEnabled } from "@/server/flags";
-import type { SmsMessage, SmsSender } from "./port";
+import { isDemoMode, isEnabled } from "@/server/flags";
+import { DemoSmsSender } from "./demo";
+import { InMobileSmsSender } from "./inmobile";
+import type { SmsMessage, SmsReceipt, SmsSender } from "./port";
 
-export type { SmsMessage, SmsSender } from "./port";
+export type { SmsMessage, SmsReceipt, SmsSender } from "./port";
 
 interface SmsConfig {
   apiKey: string | undefined;
@@ -19,16 +21,18 @@ function isConfigured(c: SmsConfig): boolean {
 /** Stub: virker uden nøgler — logger i stedet for at sende. */
 class StubSmsSender implements SmsSender {
   readonly name = "stub";
-  async send(message: SmsMessage): Promise<void> {
+  async send(message: SmsMessage): Promise<SmsReceipt> {
     console.info(`[sms:stub] ville sende til ${message.to}: "${message.message}"`);
+    return { reference: null };
   }
 }
 
-// TODO: rigtig inMobile-adapter når INMOBILE_API_KEY lander.
 export function createSmsSender(env: Record<string, string | undefined> = process.env): SmsSender {
   const config = readConfig(env);
-  if (isEnabled("sms", env) && isConfigured(config)) {
-    // return new InMobileSmsSender(config);
+  if (isEnabled("sms", env) && config.apiKey && config.sender) {
+    return new InMobileSmsSender({ apiKey: config.apiKey, sender: config.sender });
   }
+  // Demo (ADR 0041): kun når rigtig config mangler — rigtige nøgler vinder altid.
+  if (isDemoMode(env) && !isConfigured(config)) return new DemoSmsSender();
   return new StubSmsSender();
 }
