@@ -848,3 +848,107 @@ a.btn-primary {
   width: 96px;
   height: 96px;
 }
+
+/* --- Ugeoversigt (partner-tilgængelighed, fase 5.3) ---------------------------
+   Syv kolonner, mandag-søndag. Tynde skillelinjer frem for bokse; guld kun som
+   sparsom accent på selve tidsvinduet. Under 900 px stables dagene, så en
+   telefon aldrig scroller vandret. */
+.weekgrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-top: 1px solid var(--color-slate);
+}
+.weekgrid__day {
+  padding: var(--space-3);
+  border-right: 1px solid var(--color-grey-bg);
+  border-bottom: 1px solid var(--color-grey-bg);
+  min-height: 120px;
+}
+.weekgrid__day:first-child {
+  border-left: 1px solid var(--color-grey-bg);
+}
+.weekgrid__label {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-navy);
+}
+.weekgrid__none {
+  margin: 0;
+  color: var(--color-slate);
+}
+.weekgrid__slots {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.weekgrid__slot {
+  padding: var(--space-2) 0 var(--space-2) var(--space-2);
+  border-left: 3px solid var(--color-gold);
+  font-size: var(--fs-body);
+  color: var(--color-text);
+}
+.weekgrid__slot + .weekgrid__slot {
+  margin-top: var(--space-2);
+}
+.weekgrid__time {
+  display: block;
+  font-weight: var(--fw-medium);
+}
+.weekgrid__remove {
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  font: var(--fw-bold) var(--fs-nav) / 1.7 var(--font-base);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-slate);
+  cursor: pointer;
+}
+.weekgrid__remove:hover {
+  color: var(--color-navy);
+}
+@media (max-width: 900px) {
+  .weekgrid {
+    grid-template-columns: 1fr;
+  }
+  .weekgrid__day {
+    border-left: 1px solid var(--color-grey-bg);
+    min-height: 0;
+  }
+}
+
+/* --- Fælles ledige vinduer (ejerens bookingside, fase 5.3) --- */
+.slotlist {
+  margin: 0;
+  border-top: 1px solid var(--color-slate);
+}
+.slotlist__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-grey-bg);
+}
+.slotlist__day {
+  min-width: 14em;
+  font-weight: var(--fw-bold);
+  color: var(--color-navy);
+  text-transform: capitalize;
+}
+.slotlist__times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+.slotlist__time {
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
+}
+.slotlist__note {
+  color: var(--color-text-muted);
+}

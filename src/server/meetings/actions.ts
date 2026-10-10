@@ -20,6 +20,7 @@ import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/
 import { createServiceSupabase } from "@/server/auth/supabase-server";
 import { createBookingProvider } from "@/lib/booking";
 import { createChargeForMeeting } from "@/server/charges/create";
+import { assertBoardAvailable, assertMeetingBoardAvailable } from "@/server/availability/guard";
 import type { MeetingRegisteredStatus } from "./index";
 
 interface ActionContext {
@@ -91,6 +92,8 @@ async function createMeetingForBoard(
   boardId: string,
   startsAt: string,
 ): Promise<void> {
+  // Partner-tilgængelighed (fase 5.3, ADR 0052): afvis før noget skrives.
+  await assertBoardAvailable(service, boardId, startsAt);
   const info = await readBoardBookingInfo(service, boardId);
 
   const { data: members } = await service
@@ -216,6 +219,7 @@ export async function rescheduleMeeting(
     if (!meetingId || !startsAt) return { error: "Møde og nyt starttidspunkt er påkrævet." };
 
     const { providerBookingUid } = await requireOwnedMeeting(service, user, meetingId);
+    await assertMeetingBoardAvailable(service, meetingId, startsAt); // fase 5.3, ADR 0052
     let confirmed = new Date(startsAt).toISOString();
     if (providerBookingUid) {
       const scheduled = await createBookingProvider().rescheduleMeeting(providerBookingUid, confirmed);

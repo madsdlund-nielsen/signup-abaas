@@ -18,6 +18,9 @@ Flowet skal være **idempotent** og efterlade en kvittering/log.
 2. **Supabase:** slet `app_user`-rækken → FK `on delete cascade` fjerner
    `user_role_assignment`, `board` (ejet) og `board_partner`-medlemskaber. Mødenoter/
    ratings (senere faser) ryddes samme vej.
+   Partnerens tilgængelighed (`partner_availability`, `partner_absence`, 0018) hænger på
+   `partner_profile` med `on delete cascade` og forsvinder, når katalogposten slettes.
+   Fraværsnoten kan indeholde helbredsoplysninger og er derfor privat (ADR 0052).
 3. **Eksterne behandlere** (kun de aktive flag; via adapter):
 
 | Leverandør | Hvad slettes/anonymiseres | Note |

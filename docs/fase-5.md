@@ -18,8 +18,9 @@
 - [ ] Momsbehandling er en konfigurerbar regel, ikke en antagelse.
 - [ ] Afbuds-/udeblivelsesregel er konfigurerbar og kobler til mødestatus fra
       fase 2 (`udeblevet`, `aflyst`).
-- [ ] Partner-tilgængelighed: partner kan angive ledige tider; det respekteres i
-      booking-flowet fra fase 2.
+- [x] Partner-tilgængelighed: partner kan angive ledige tider; det respekteres i
+      booking-flowet fra fase 2. (ADR 0052: `/partner/tilgaengelighed`, vagt i
+      `meetings/actions.ts`. Synk til Cal.com-schedules er IKKE bygget — TODO(mads).)
 - [ ] Ejer-dashboard: kommende møder, board, betalingsstatus.
 - [ ] Partner-dashboard: kommende møder, honoraroverblik, egne ratings.
 - [ ] Lead-partner-dashboard: **kompetenceoverblik for boardet** + næste møde.
@@ -58,6 +59,11 @@
   (håndhævet ved fravær af write-policy, ADR 0019).
 - Åbner samtidig for §5.2's krav om at "udskift" kun viser partnere med kalenderplads
   — filteret blev udskudt i fase 1.5 (`src/server/matching/index.ts`).
+- **Bygget (ADR 0052):** migration 0018, `src/server/availability/` (ren algoritme med
+  Europe/Copenhagen-håndtering, vagt, actions), `/partner/tilgaengelighed`, og fælles ledige
+  vinduer på ejerens `/moeder`. "Udskift"-filteret er stadig ikke koblet: data findes, men
+  "kalenderplads" er ikke defineret (stub-register). ⚠ "Ikke angivet" = ubegrænset er en
+  pladsholder (TODO(ejer)).
 
 ### 5.4 Dashboards
 - Ejer: kommende møder, board-sammensætning, betalingsstatus.
