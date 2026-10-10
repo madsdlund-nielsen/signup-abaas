@@ -56,7 +56,10 @@ create function notification_template_guard() returns trigger
 language plpgsql as $$
 begin
   if tg_op = 'DELETE' then
-    if old.status <> 'udkast' then
+    -- Undtagelse: demoskabeloner (ADR 0043's faste id-navnerum) må ryddes op af demo-clean.sql.
+    -- Undtagelsen bor her frem for som `disable trigger` i oprydningen, fordi DDL tager en
+    -- eksklusiv tabellås og deadlocker mod samtidige transaktioner.
+    if old.status <> 'udkast' and old.id::text not like 'd0000000-0000-4000-8000-%' then
       raise exception 'En publiceret skabelonversion kan ikke slettes (append-only historik).';
     end if;
     return old;

@@ -19,13 +19,11 @@ delete from fee_rule     where id::text like 'd0000000-0000-4000-8000-%';
 delete from quiz_question   where id::text like 'd0000000-0000-4000-8000-%';
 delete from partner_profile where id::text like 'd0000000-0000-4000-8000-%';
 
--- Notifikationsskabeloner (fase 4.6, ADR 0057). En publiceret version kan ikke slettes (append-
--- only-trigger i 0021), så vagten slås fra for netop denne oprydning og tændes igen. Det kræver
--- tabelejeren — det er den rolle seed-scriptet kører som (DATABASE_URL). Udsendelser der brugte
--- en demoskabelon er selv demodata og går med (template_id har ingen cascade).
-alter table notification_template disable trigger notification_template_guard;
+-- Notifikationsskabeloner (fase 4.6, ADR 0057). En publiceret version kan normalt ikke slettes
+-- (append-only-trigger i 0021); vagten undtager demo-id-navnerummet, så oprydningen kræver
+-- hverken tabelejeren eller DDL. Udsendelser der brugte en demoskabelon er selv demodata og går
+-- med (template_id har ingen cascade).
 delete from notification_delivery where template_id::text like 'd0000000-0000-4000-8000-%';
 delete from notification_template where id::text like 'd0000000-0000-4000-8000-%';
-alter table notification_template enable trigger notification_template_guard;
 
 commit;

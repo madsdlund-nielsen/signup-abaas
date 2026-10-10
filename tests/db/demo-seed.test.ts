@@ -459,13 +459,13 @@ describe("demo-seed: notifikationsskabeloner", () => {
       await client.query(SEED);
       await client.query(CLEAN);
       expect(await templates(client)).toEqual([]);
-      // Vagten er tændt igen: en publiceret version kan stadig ikke slettes bagefter.
+      // Undtagelsen gælder kun demo-id-navnerummet: en rigtig publiceret version kan ikke slettes.
       await client.query(
         `insert into notification_template (id, type_key, channel, version, status, subject, body, published_at)
-         values ('d0000000-0000-4000-8000-000000001999', 'payment-failed', 'email', 1, 'live', 's', 'b', now())`,
+         values ('a1000000-0000-4000-8000-000000001999', 'payment-failed', 'email', 1, 'live', 's', 'b', now())`,
       );
       await expect(
-        client.query("delete from notification_template where id = 'd0000000-0000-4000-8000-000000001999'"),
+        client.query("delete from notification_template where id = 'a1000000-0000-4000-8000-000000001999'"),
       ).rejects.toThrow(/kan ikke slettes/);
     });
   });
