@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getAdapters, NotConfiguredError } from "@/lib";
+import { DEMO_EVENT_TYPE_ID } from "@/lib/booking";
 
 const emptyEnv: Record<string, string | undefined> = {};
 
@@ -34,10 +35,10 @@ describe("adapter-registry uden nøgler/flag", () => {
     const { booking } = getAdapters(emptyEnv);
     await expect(
       booking.createMultiHostMeeting({
-        ownerUserId: "o",
-        partnerUserIds: ["p1", "p2"],
-        startsAt: "2026-10-01T09:00:00Z",
-        durationMinutes: 75,
+        eventTypeId: 1,
+        start: "2026-10-01T09:00:00Z",
+        attendee: { name: "Ejer", email: "ejer@example.com", timeZone: "Europe/Copenhagen" },
+        metadata: {},
       }),
     ).rejects.toBeInstanceOf(NotConfiguredError);
   });
@@ -65,7 +66,6 @@ describe("demo-tilstand (ADR 0041)", () => {
       ...demoEnv,
       FLAG_BOOKING: "true",
       CALCOM_API_KEY: "test-key",
-      CALCOM_EVENT_TYPE_ID: "1",
       FLAG_PAYMENTS: "true",
       ALUNTA_API_KEY: "test-key",
       ALUNTA_PLAN_ID: "plan",
@@ -91,15 +91,26 @@ describe("demo-tilstand (ADR 0041)", () => {
   it("demo-booking bekræfter tidspunktet og peger Deltag på appens eget møderum", async () => {
     const { booking } = getAdapters(demoEnv);
     const scheduled = await booking.createMultiHostMeeting({
-      ownerUserId: "o",
-      partnerUserIds: ["p1", "p2"],
-      startsAt: "2026-10-01T09:00:00Z",
-      durationMinutes: 75,
+      eventTypeId: DEMO_EVENT_TYPE_ID,
+      start: "2026-10-01T09:00:00Z",
+      attendee: { name: "Ejer", email: "ejer@example.com", timeZone: "Europe/Copenhagen" },
+      metadata: {},
     });
     expect(scheduled.uid).toMatch(/^DEMO-BOOKING-/);
     expect(scheduled.startsAt).toBe("2026-10-01T09:00:00Z");
     expect(scheduled.joinUrl).toBe(`/moeder/rum/${scheduled.uid}`);
     await expect(booking.cancelMeeting(scheduled.uid)).resolves.toBeUndefined();
+  });
+
+  it("demo-event-type er et åbenlyst falsk id uden for det Cal.com udsteder", async () => {
+    const { booking } = getAdapters(demoEnv);
+    const eventType = await booking.upsertBoardEventType({
+      title: "Board",
+      slug: "board",
+      lengthInMinutes: 60,
+      hostUserIds: [1, 2],
+    });
+    expect(eventType.eventTypeId).toBe(DEMO_EVENT_TYPE_ID);
   });
 
   it("demo-betaling sender til appens demo-checkout for netop det medlemskab", async () => {

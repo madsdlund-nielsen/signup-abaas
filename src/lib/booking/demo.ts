@@ -1,5 +1,18 @@
 import { demoRef, demoRoomPath } from "../demo";
-import type { BookingProvider, MultiHostMeetingRequest, ScheduledMeeting } from "./port";
+import type {
+  BoardEventType,
+  BoardEventTypeRequest,
+  BookingProvider,
+  MultiHostMeetingRequest,
+  ScheduledMeeting,
+} from "./port";
+
+/**
+ * Åbenlyst falsk event type-id til demo (ADR 0041): ikke et id Cal.com kan have udstedt. Gemmes
+ * ALDRIG i `board.calcom_event_type_id` — et demo-id i databasen ville ellers blive sendt til en
+ * rigtig Cal.com den dag nøglerne lander.
+ */
+export const DEMO_EVENT_TYPE_ID = 2_147_000_000;
 
 /**
  * Demo (ADR 0041): en booking der virker uden Cal.com. Bekræfter det ønskede tidspunkt
@@ -12,9 +25,14 @@ import type { BookingProvider, MultiHostMeetingRequest, ScheduledMeeting } from 
 export class DemoBookingProvider implements BookingProvider {
   readonly name = "demo";
 
+  /** Intet event type findes hos en leverandør der ikke findes — returnerer det falske demo-id. */
+  async upsertBoardEventType(_req: BoardEventTypeRequest): Promise<BoardEventType> {
+    return { eventTypeId: DEMO_EVENT_TYPE_ID };
+  }
+
   async createMultiHostMeeting(req: MultiHostMeetingRequest): Promise<ScheduledMeeting> {
     const uid = demoRef("booking");
-    return { id: uid, uid, startsAt: req.startsAt, joinUrl: demoRoomPath(uid) };
+    return { id: uid, uid, startsAt: req.start, joinUrl: demoRoomPath(uid) };
   }
 
   async rescheduleMeeting(uid: string, startsAt: string): Promise<ScheduledMeeting> {

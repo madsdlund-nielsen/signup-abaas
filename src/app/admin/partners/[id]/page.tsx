@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { PageBody, PageHeader } from "@/components/PageHeader";
 import { getPartner } from "@/server/partners";
 import { invitePartner, setPartnerTags, updatePartner } from "@/server/partners/actions";
+import { setPartnerCalcomUserId } from "@/server/meetings/booking-admin";
 import { listTags } from "@/server/tags";
 import { AuthForm } from "@/components/AuthForm";
 import { Field } from "@/components/Field";
@@ -53,6 +54,23 @@ export default async function AdminPartnerEditPage({
               </AuthForm>
             </>
           )}
+        </section>
+
+        <section className="stack measure">
+          <h2 className="heading-3 heading--on-light">Cal.com-sæde</h2>
+          <p className="body">
+            Partnerens bruger hos Cal.com (Teams-sæde). Uden det kan partneren ikke være vært på
+            boardets event type. Tomt felt fjerner koblingen.
+          </p>
+          <AuthForm action={setPartnerCalcomUserId} submitLabel="Gem Cal.com-bruger">
+            <input type="hidden" name="partner_id" value={partner.id} />
+            <Field
+              name="calcom_user_id"
+              label="Cal.com-bruger-id"
+              type="number"
+              defaultValue={partner.calcomUserId ?? undefined}
+            />
+          </AuthForm>
         </section>
 
         <form className="form measure" action={updatePartner}>

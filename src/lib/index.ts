@@ -33,7 +33,14 @@ export { NotConfiguredError } from "./errors";
 
 export type { AccountingExporter, AccountingExport, InvoiceLine } from "./accounting";
 export type { Analytics, AnalyticsEvent } from "./analytics";
-export type { BookingProvider, MultiHostMeetingRequest, ScheduledMeeting } from "./booking";
+export type {
+  BoardEventType,
+  BoardEventTypeRequest,
+  BookingAttendee,
+  BookingProvider,
+  MultiHostMeetingRequest,
+  ScheduledMeeting,
+} from "./booking";
 export type { EmailSender, EmailMessage } from "./email";
 export type { LlmProvider, MeetingSummary, MeetingSummaryRequest } from "./llm";
 export type {
