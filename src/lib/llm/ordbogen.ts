@@ -109,6 +109,10 @@ export class OrdbogenLlmProvider implements LlmProvider {
 
   constructor(private readonly config: OrdbogenLlmConfig) {}
 
+  get model(): string {
+    return this.config.model;
+  }
+
   async summarizeMeeting(req: MeetingSummaryRequest): Promise<MeetingSummary> {
     // Intet transskript = intet at opsummere. Fejl højlydt frem for at sende en tom prompt
     // (og frem for at lade modellen finde på et møde).

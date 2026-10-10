@@ -14,5 +14,7 @@ export interface MeetingSummary {
  */
 export interface LlmProvider {
   readonly name: string;
+  /** Modelnavnet, hvis adapteren har et — gemmes som audit på resuméet (ADR 0059). */
+  readonly model?: string;
   summarizeMeeting(req: MeetingSummaryRequest): Promise<MeetingSummary>;
 }
