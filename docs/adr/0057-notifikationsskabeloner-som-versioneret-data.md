@@ -137,7 +137,7 @@ katalogets `schedule` er `null` — og det er den, til ejeren beslutter. En besk
     bekræftelse ved aflysning/flytning (i dag kun partnerne)?
   - TODO(ejer): telefonnumre — hvor indsamles de, og med hvilket samtykke.
   - TODO(mads): verificér inMobile-adapteren live; bekræft Resend-domænets region (`eu-west-1`).
-  - TODO(mads): kobl `notifyPaymentFailed` på det fejlede træk når B-19 lander (backlog B-41).
+  - ~~Kobl `notifyPaymentFailed` på det fejlede træk~~ → koblet i Alunta-webhookens `invoice.payment_failed` (B-41, 2026-10-10).
   - Backlog B-40: Cal.com-webhookens aflysning/flytning sender ingen besked.
   - Signerede engangslinks til rating (B-21) er stadig ikke bygget; ratinganmodningen linker
     til `/moeder/[id]`, hvor ejeren er logget ind.

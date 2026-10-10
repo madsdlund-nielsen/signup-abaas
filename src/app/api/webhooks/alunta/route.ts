@@ -7,6 +7,8 @@
  * mutationerne her er små og hurtige. Webhooks opdaterer status; de opretter aldrig data.
  */
 
+import { after } from "next/server";
+
 import { getAdapters } from "@/lib";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServiceSupabase } from "@/server/auth/supabase-server";
@@ -17,6 +19,7 @@ import {
   parseAluntaEvent,
   verifyAluntaSignature,
 } from "@/server/charges/webhook";
+import { notifyPaymentFailed } from "@/server/notifications/meetings";
 
 export async function POST(request: Request): Promise<Response> {
   const secret = process.env.ALUNTA_WEBHOOK_SECRET;
@@ -142,12 +145,29 @@ export async function POST(request: Request): Promise<Response> {
               provider_invoice_ref: mutation.invoiceUuid,
               failure_reason: mutation.failureReason,
             };
-      const { error } = await service
+      const { data: updated, error } = await service
         .from("payment_charge")
         .update({ ...update, updated_at: new Date().toISOString() })
         .eq("membership_id", (membership as { id: string }).id)
-        .eq("status", "rapporteret");
+        .eq("status", "rapporteret")
+        .select("id");
       if (error) return fail("charge-update", error.message);
+      // «Fejlet betaling» til ejeren (B-41, ADR 0057) — efter svaret, så Aluntas 3-sekunders-frist
+      // holder, og en notifikationsfejl aldrig gør webhooken rød. Motoren er idempotent pr. træk.
+      if (mutation.kind === "invoice_failed") {
+        const chargeIds = ((updated ?? []) as Array<{ id: string }>).map((row) => row.id);
+        after(async () => {
+          for (const chargeId of chargeIds) {
+            try {
+              await notifyPaymentFailed(service, chargeId);
+            } catch (e) {
+              console.error(
+                `[alunta-webhook] notifikation om fejlet betaling fejlede: ${e instanceof Error ? e.name : "ukendt"}`,
+              );
+            }
+          }
+        });
+      }
       break;
     }
     case "membership_cancelled": {

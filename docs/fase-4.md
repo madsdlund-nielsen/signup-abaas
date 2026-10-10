@@ -36,8 +36,8 @@
       ratinganmodning, fejlet betaling (fra fase 3). **(Delvist: aflysning/flytning er koblet
       på `rescheduleMeeting`/`cancelMeeting`. Påmindelse og ratinganmodning er bygget som
       «find de skyldige + send», men sender intet før ejeren har fastsat tidspunkterne og ruten
-      `/api/cron/notifications` er planlagt. Fejlet betaling har sin afsendelsesfunktion, men er
-      ikke koblet på trækket — betalingsskiven ejer det, B-41. Ingen skabelontekst er skrevet.)**
+      `/api/cron/notifications` er planlagt. Fejlet betaling sendes fra Alunta-webhooken når et
+      træk skifter til `fejlet` (B-41). Ingen skabelontekst er skrevet.)**
 - [ ] Fuld test suite grøn, inkl. RLS på ratings, resuméer og forberedelsesnoter
       (positive **og** negative cases).
 
@@ -75,8 +75,7 @@ preview og LIVE/UDKAST-markering, motoren (`engine.ts`: reservér → live skabe
 med retry → log → analytics), Resend- og inMobile-adaptere og e-mail/SMS-demo. Aflysning/flytning
 er koblet på møde-handlingerne. **Udestår:** konti og nøgler (adaptere aldrig kørt live — inMobile
 er desuden uverificeret), ejerens udsendelsestidspunkter (så planlagte beskeder ikke sendes og
-ruten ikke er planlagt), skabelonteksten, telefonnumre (SMS kan ikke sendes), og koblingen af
-«fejlet betaling» på trækket (B-41). Signerede engangslinks til rating (B-21) er stadig ikke bygget.
+ruten ikke er planlagt), skabelonteksten, telefonnumre (SMS kan ikke sendes). Signerede engangslinks til rating (B-21) er stadig ikke bygget.
 
 **4.3/4.4 — Ordbogen-adapterne er bygget 2026-10-10 (ADR 0058)** mod OdinCores offentlige
 OpenAPI-spec (`docs/spikes/ordbogen-api.md`): `src/lib/llm/ordbogen.ts` (`/v1/chat/completions`,

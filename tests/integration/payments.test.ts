@@ -293,3 +293,74 @@ describe("Alunta-adapteren mod en falsk fetch (ADR 0056)", () => {
     expect(init.method).toBe("POST");
   });
 });
+
+describe("betalings-webhook: fejlet faktura sender «fejlet betaling» til ejeren (B-41, ADR 0057)", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("hvert træk der skifter til 'fejlet' får sin notifikation — efter svaret, uden at påvirke det", async () => {
+    vi.stubEnv("ALUNTA_WEBHOOK_SECRET", "s3cret");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://localhost:54321");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service");
+
+    const notified: string[] = [];
+    const afterCallbacks: Array<() => Promise<void>> = [];
+    vi.resetModules();
+    vi.doMock("next/server", () => ({
+      after: (callback: () => Promise<void>) => afterCallbacks.push(callback),
+    }));
+    vi.doMock("@/server/notifications/meetings", () => ({
+      notifyPaymentFailed: async (_service: unknown, chargeId: string) => {
+        notified.push(chargeId);
+        if (chargeId === "c2") throw new Error("leverandør nede");
+        return [];
+      },
+    }));
+    vi.doMock("@/server/auth/supabase-server", () => ({
+      createServiceSupabase: () => ({
+        from(table: string) {
+          const chain = {
+            select: () => chain,
+            eq: () => chain,
+            insert: async () => ({ error: null }),
+            update: () => chain,
+            maybeSingle: async () => ({ data: { id: "m1" }, error: null }),
+            then: (resolve: (r: unknown) => unknown) =>
+              Promise.resolve(
+                table === "payment_charge"
+                  ? { data: [{ id: "c1" }, { id: "c2" }], error: null }
+                  : { data: null, error: null },
+              ).then(resolve),
+          };
+          return chain;
+        },
+      }),
+      createServerSupabase: async () => null,
+    }));
+    const { POST: post } = await import("@/app/api/webhooks/alunta/route");
+
+    const body = JSON.stringify({
+      event: "invoice.payment_failed",
+      team_uuid: "team-1",
+      timestamp: "2026-10-10T10:00:00Z",
+      data: { customer: { uuid: "cus-1" }, invoice: { uuid: "inv-1" } },
+    });
+    const signature = createHmac("sha256", "s3cret").update(body).digest("hex");
+    const response = await post(
+      new Request("http://localhost/api/webhooks/alunta", { method: "POST", body, headers: { Signature: signature } }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(notified).toEqual([]); // intet sendes før svaret
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    for (const callback of afterCallbacks) await callback();
+    expect(notified).toEqual(["c1", "c2"]); // c2's fejl stopper ikke resten
+    expect(errors).toHaveBeenCalledTimes(1);
+    expect(String(errors.mock.calls[0]?.[0])).not.toContain("cus-1");
+    errors.mockRestore();
+
+    vi.doUnmock("next/server");
+    vi.doUnmock("@/server/notifications/meetings");
+    vi.doUnmock("@/server/auth/supabase-server");
+  });
+});
