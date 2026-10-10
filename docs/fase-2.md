@@ -18,7 +18,7 @@
 
 - [x] Cal.com integreret via adapteren i `src/lib/booking/` — **ingen direkte SDK-kald uden
       for adapteren**. ⚠ Plan = **Teams** og multi-host = ét **collective event type pr.
-      board** (ADR 0046); adapterens nuværende felt-kontrakt skal rettes (`docs/backlog.md` B-23).
+      board** (ADR 0046); felt-kontrakten er rettet (B-23 lukket 2026-10-10, migration 0019) — kun mock-testet.
 - [ ] ⚠ **Afventer liveverifikation.** Multi-host booking virker: 2-3 partnere + ejer på samme møde.
       ⚠ Bygges mod porten med stub aktiv; **liveverifikation (multi-host-spiken) udestår
       til Cal.com-nøglerne lander** (gate fjernet af Mads 2026-08-04, se 2.2).

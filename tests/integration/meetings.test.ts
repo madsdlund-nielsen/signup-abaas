@@ -18,14 +18,17 @@ vi.mock("@/server/auth/supabase-server", () => ({
 describe("booking-port uden konfiguration (backend-stub — kaster, foregiver aldrig)", () => {
   const stub = createBookingProvider({});
 
-  it("alle fire operationer kaster NotConfiguredError", async () => {
+  it("alle fem operationer kaster NotConfiguredError", async () => {
     await expect(
       stub.createMultiHostMeeting({
-        ownerUserId: "o",
-        partnerUserIds: ["p"],
-        startsAt: "2026-09-01T10:00:00Z",
-        durationMinutes: 60,
+        eventTypeId: 7,
+        start: "2026-09-01T10:00:00Z",
+        attendee: { name: "Ejer", email: "ejer@example.com", timeZone: "Europe/Copenhagen" },
+        metadata: {},
       }),
+    ).rejects.toBeInstanceOf(NotConfiguredError);
+    await expect(
+      stub.upsertBoardEventType({ title: "Board", slug: "board", lengthInMinutes: 60, hostUserIds: [1] }),
     ).rejects.toBeInstanceOf(NotConfiguredError);
     await expect(stub.rescheduleMeeting("uid", "2026-09-02T10:00:00Z")).rejects.toBeInstanceOf(
       NotConfiguredError,
@@ -39,7 +42,7 @@ describe("booking-port uden konfiguration (backend-stub — kaster, foregiver al
       createBookingProvider({ FLAG_BOOKING: "true" }).cancelMeeting("uid"),
     ).rejects.toBeInstanceOf(NotConfiguredError);
     await expect(
-      createBookingProvider({ CALCOM_API_KEY: "nøgle", CALCOM_EVENT_TYPE_ID: "7" }).cancelMeeting("uid"),
+      createBookingProvider({ CALCOM_API_KEY: "nøgle", CALCOM_TEAM_ID: "7" }).cancelMeeting("uid"),
     ).rejects.toBeInstanceOf(NotConfiguredError);
   });
 });

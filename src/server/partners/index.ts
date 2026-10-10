@@ -25,6 +25,8 @@ export interface PartnerProfileDetail extends PartnerProfile {
   competenceTagIds: string[];
   /** Auth-kobling (0011, ADR 0025): null = ikke inviteret/koblet endnu. */
   appUserId: string | null;
+  /** Cal.com-bruger (Teams-sæde, 0019, ADR 0046). Null = ikke koblet → kan ikke være vært på et board. */
+  calcomUserId: number | null;
 }
 
 interface PartnerRow {
@@ -86,18 +88,20 @@ export async function getPartner(
   const supabase = await createServerSupabase(config);
   const { data, error } = await supabase
     .from("partner_profile")
-    .select(`${PARTNER_COLUMNS}, app_user_id, partner_profile_competence_tag(competence_tag_id)`)
+    .select(`${PARTNER_COLUMNS}, app_user_id, calcom_user_id, partner_profile_competence_tag(competence_tag_id)`)
     .eq("id", id)
     .maybeSingle();
   if (error || !data) return null;
 
   const row = data as PartnerRow & {
     app_user_id: string | null;
+    calcom_user_id: number | null;
     partner_profile_competence_tag: Array<{ competence_tag_id: string }> | null;
   };
   return {
     ...rowToPartner(row),
     competenceTagIds: (row.partner_profile_competence_tag ?? []).map((t) => t.competence_tag_id),
     appUserId: row.app_user_id,
+    calcomUserId: row.calcom_user_id,
   };
 }

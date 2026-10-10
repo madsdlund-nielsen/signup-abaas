@@ -48,6 +48,11 @@ export default function AdminHome() {
             href="/admin/partners"
           />
           <AdminEntry
+            title="Boards"
+            body="Cal.com-koblingen: ét collective event type pr. board, med partnernes sæder som værter."
+            href="/admin/boards"
+          />
+          <AdminEntry
             title="Prisregler"
             body="Versionerede satser. Uden en aktiv version kan der ikke beregnes en pris."
             href="/admin/priser"

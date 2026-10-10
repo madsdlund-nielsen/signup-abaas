@@ -5,7 +5,7 @@
 > Fase 6 (§6.4) gennemgår registret: hver post skal være løst eller have eksplicit
 > ejer-accept før launch.
 >
-> Sidst gennemgået: 2026-09-15 (Cal.com-plan + felt-kontrakt, ADR 0046; Ordbogen-DPA lukket).
+> Sidst gennemgået: 2026-10-10 (Cal.com collective event type pr. board, ADR 0046/B-23).
 
 ## Backend-stubs — kaster `NotConfiguredError`
 
@@ -14,7 +14,7 @@ udføre ægte kald, og lader være med at foregive andet.
 
 | Modul | Flag | Låses op af | Skylder svar |
 |---|---|---|---|
-| `src/lib/booking/` (Cal.com) | `FLAG_BOOKING` | **Adapteren er bygget, men mod en forkert felt-kontrakt** — `hosts` pr. booking findes ikke i API v2 (ADR 0046). Låses op af: **(a)** rework til collective event type pr. board (`docs/backlog.md` B-23), **(b)** Cal.com **Teams**-konto + `CALCOM_API_KEY`/`CALCOM_WEBHOOK_SECRET`, **(c)** liveverifikation L-1/L-3…L-9. ~~plan-/tier-STOP~~ → lukket: Teams | Mads |
+| `src/lib/booking/` (Cal.com) | `FLAG_BOOKING` | **Adapteren er reworket til collective event type pr. board** (ADR 0046, B-23 lukket) — men aldrig kørt mod en konto. Låses op af: **(a)** Cal.com **Teams**-konto + `CALCOM_API_KEY`/`CALCOM_TEAM_ID`/`CALCOM_WEBHOOK_SECRET`, **(b)** admin: Cal.com-sæde på hver partner + "Opret Cal.com-event type" pr. board (`/admin/boards`), **(c)** liveverifikation L-1/L-3…L-10. Uden event type på boardet fejler booking højlydt. `// TODO(mads)`: ejerens tidszone/navn gemmes ikke (fast `Europe/Copenhagen`, e-mail som navn); partnerudskiftning opdaterer ikke hosts automatisk. ~~plan-/tier-STOP~~ → lukket: Teams | Mads |
 | `src/lib/video/` (Cal Video) | `FLAG_VIDEO` | ~~Cal.com-plan~~ (lukket: Teams, ADR 0046) + EU-residens (spike L-7); mødeoptagelse kræver desuden native støtte på Teams (L-8) **og** samtykkeflow | Mads + ejer |
 | `src/lib/payments/` (Alunta) | `FLAG_PAYMENTS` | **Adapteren ER skrevet mod verificeret API** (ADR 0032, `alunta.ts`), men mod den **afløste usage-model** — ADR 0034 kræver fast abonnement pr. 4 uger (`docs/backlog.md` B-19). Låses op af: rework B-19 → Alunta-UI-opsætning (**abonnement med 4-ugers interval** + webhook-secret) → `ALUNTA_API_KEY`/`ALUNTA_PLAN_ID`/`ALUNTA_WEBHOOK_SECRET` + `FLAG_PAYMENTS` → live-verifikation i test_mode. ~~Gateway-valget~~ → lukket: **QuickPay** (gateway) + **Nets** (indløser) — to selvstændige konti (ADR 0034-opdatering) | Mads |
 | `src/lib/accounting/` | `FLAG_ACCOUNTING` | Leverandørvalg: e-conomic vs. Dinero | Ejer |
@@ -29,7 +29,7 @@ altid. Alt de returnerer er åbenlyst falsk. **`FLAG_DEMO` skal være slået fra
 
 | Modul | `demo.ts` | Hvad demoen gør |
 |---|---|---|
-| `src/lib/booking/` | ✅ | Bekræfter tidspunktet uændret; "Deltag" → `/moeder/rum/[uid]`. Tjekker ingen kalendere |
+| `src/lib/booking/` | ✅ | Bekræfter tidspunktet uændret; "Deltag" → `/moeder/rum/[uid]`. Tjekker ingen kalendere. Boards uden event type bookes med det falske `DEMO_EVENT_TYPE_ID` (gemmes aldrig); "Opret event type" i demo gemmer intet |
 | `src/lib/video/` | ✅ | Møderum → `/moeder/rum/[meetingId]` |
 | `src/lib/payments/` | ✅ | Kortregistrering → `/betaling/demo-kort/[membershipId]` (bekræftes af `confirmDemoCard`); forbrug kvitteres med `DEMO-CHARGE-…` |
 | `src/lib/accounting/` | ✅ | Kvitterer med `DEMO-INVOICE-…` |

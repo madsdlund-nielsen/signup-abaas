@@ -107,3 +107,32 @@ Beslutningen er Mads' (2026-09-15) under den tekniske beslutningsret han har få
     desuden ejerens samtykkeflow, uændret.
   - Resten af `docs/spikes/multi-host.md`'s liveverifikations-checkliste (L-1, L-3, L-4, L-5)
     kræver stadig en konto.
+
+## Implementering (B-23, migration 0019)
+
+Reworket er udført; det er stadig kun kørt mod mock (ingen konto), så felt-kontrakten er
+bygget mod API v2's dokumenterede form og afventer liveverifikation (L-1, L-3, L-10).
+
+- **Datamodel:** `board.calcom_event_type_id` og `partner_profile.calcom_user_id`, begge
+  nullable `integer` med `> 0`-check og delvist unikke indekser (to boards deler ikke et event
+  type; to katalogposter ikke et sæde). **Ingen nye policies:** kolonnerne arver de eksisterende
+  læsepolicies, og der findes ingen write-policies på tabellerne — admin skriver via
+  service-role bag `requireRole('admin')`. Negativ-cases i `tests/db/calcom-collective-rls.test.ts`.
+- **Port:** `MultiHostMeetingRequest = { eventTypeId, start, attendee: {name,email,timeZone},
+  metadata }` — ingen værter pr. booking. Ny port-metode `upsertBoardEventType` (POST/PATCH
+  `/teams/{teamId}/event-types`, `schedulingType: "collective"`, `hosts: [{userId}]`).
+  `CALCOM_EVENT_TYPE_ID` er fjernet; nyt env `CALCOM_TEAM_ID` (kun til event type-oprettelse).
+- **`cal-api-version`:** `2024-08-13` på `/bookings` (uændret), `2024-06-14` på event-types.
+  Hverken ADR'en eller spike-dokumentet angav en version for event-types — værdien er et
+  kvalificeret gæt og står som **L-10** i checklisten.
+- **Booking uden event type:** rigtig tilstand fejler højlydt (dansk besked, før mødet oprettes);
+  stub svarer `NotConfiguredError`; demo fortsætter med det falske `DEMO_EVENT_TYPE_ID`, som
+  **aldrig** gemmes på boardet (et demo-id i databasen ville nå en rigtig Cal.com).
+- **Ejer som attendee:** e-mail fra `app_user`; vi indsamler intet ejernavn, så e-mailen bruges
+  som navn, og tidszonen er fast `Europe/Copenhagen`. Begge er `TODO(mads)`.
+- **Admin:** `/admin/boards` (opret/opdatér event type; idempotent pr. eksisterende id) og et
+  Cal.com-sæde-felt på `/admin/partners/[id]`. En partner uden `calcom_user_id` blokerer
+  oprettelsen højlydt frem for at give et board med færre værter end partnere.
+- **Åbent:** partnerudskiftning på et board opdaterer ikke event typens `hosts` automatisk
+  (`TODO(mads)` i `createBoardEventType`) — admin genkører handlingen indtil board-livscyklus
+  er afklaret. Webhook-stien (`provider_booking_uid`) afhang aldrig af `hosts` og er uændret.
