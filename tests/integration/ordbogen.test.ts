@@ -231,12 +231,12 @@ describe("OrdbogenTranscriptionProvider", () => {
 });
 
 describe("getMeetingSummary med rigtige Ordbogen-adaptere", () => {
-  it("🔴 uden samtykke-mekanisme: AI-opfølgning er utilgængelig med samtykke-årsag, og intet sendes", async () => {
+  it("🔴 læsning kalder aldrig leverandøren (B-45): uden gemt række er svaret 'på vej', og intet sendes", async () => {
+    // Samtykke-gaten bor i baggrundsgeneringen (tests/integration/summaries-generate.test.ts);
+    // siden læser kun den gemte række og kan derfor ikke starte en betalt kørsel.
     const fetchMock = mockFetch(() => json({}));
     const state = await getMeetingSummary("m-1", { ...llmEnv, ...trEnv });
-    expect(state.kind).toBe("unavailable");
-    if (state.kind !== "unavailable") return;
-    expect(state.reason).toMatch(/Samtykke til mødeoptagelse er ikke registreret/);
+    expect(state.kind).toBe("pending");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

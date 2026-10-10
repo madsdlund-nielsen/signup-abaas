@@ -21,6 +21,7 @@ import { addAgendaItem, deleteAgendaItem, savePrepNote } from "@/server/preparat
 import { listMyRatingsForMeeting, RATING_MAX, RATING_MIN } from "@/server/ratings";
 import { submitRating } from "@/server/ratings/actions";
 import { getMeetingSummary } from "@/server/summaries";
+import { retryMeetingSummary } from "@/server/summaries/actions";
 
 export const metadata: Metadata = {
   title: "Forberedelse — Advisory Board Unlimited",
@@ -51,9 +52,12 @@ function formatStart(startsAt: string): string {
  *
  * Ét sted for begge roller. RLS scoper allerede hvad ejer og partner må se, så siden
  * forgrener kun på hvad man må SKRIVE: ejeren redigerer dagsordenen, den deltagende
- * partner skriver sin egen forberedelse. Læsedelen er den samme kode for begge — med én
- * undtagelse: opsummeringen vises kun for ejeren (restriktiv default, fase-4.md §4.4),
- * fordi der endnu ikke findes en tabel at lægge RLS på. TODO(ejer): note-synlighed.
+ * partner skriver sin egen forberedelse. Læsedelen er den samme kode for begge.
+ *
+ * Opsummeringen er et gemt mødeartefakt (`meeting_summary`, B-45): siden læser rækken og
+ * genererer aldrig. Synligheden (boardets ejer + admin, fase-4.md §4.4) håndhæves af RLS —
+ * `isOwner` her bestemmer kun hvem der får SEKTIONEN vist, så partnere ikke ser en tom
+ * statuslinje. TODO(ejer): note-synlighed (§12 pkt. 16).
  */
 export default async function MeetingPreparationPage({
   params,
@@ -173,7 +177,7 @@ export default async function MeetingPreparationPage({
           </section>
         ) : null}
 
-        {/* --- AI-opsummering: kun efter afholdelse, kun for ejeren (restriktiv default). --- */}
+        {/* --- AI-opsummering: kun efter afholdelse, kun for ejeren (RLS på meeting_summary). --- */}
         {summaryState ? (
           <section className="stack measure">
             <h2 className="heading-3 heading--on-light">Opsummering af mødet</h2>
@@ -181,7 +185,14 @@ export default async function MeetingPreparationPage({
               Et kort referat med handlingspunkter, lavet ud fra mødets optagelse. Kun du kan se
               det indtil videre.
             </p>
-            <MeetingSummary state={summaryState} />
+            <MeetingSummary
+              state={summaryState}
+              retry={
+                <AuthForm action={retryMeetingSummary} submitLabel="Generér igen">
+                  <input type="hidden" name="meeting_id" value={meeting.id} />
+                </AuthForm>
+              }
+            />
           </section>
         ) : null}
 

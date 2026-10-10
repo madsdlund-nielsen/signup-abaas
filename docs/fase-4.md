@@ -85,7 +85,11 @@ ovenfor er derfor stadig ikke afkrydset: intet er kørt mod Ordbogen, og modelna
 API'ets dataresidens er uverificerede (`TODO(mads)`). Transskription **fejler lukket** uden
 registreret samtykke til optagelse (ejerens punkt; mekanismen findes ikke —
 `src/server/consent/recording.ts`) og kræver desuden at Cal.com-optagelsen kan hentes (L-8).
-Udestår: gem resuméet som mødeartefakt og generér i baggrundsjob (B-45).
+**Resuméet gemmes nu som mødeartefakt og genereres i baggrunden (ADR 0059, B-45 lukket):** migration
+`0022` (`meeting_summary`, RLS boardets ejer + admin), `generatePendingSummaries` bag samtykke-gaten,
+`/api/cron/summaries` + Netlify scheduled function (hvert 15. min), og `/moeder/[id]` læser den gemte
+række (status: på vej / mangler samtykke / mangler optagelse / fejlet + "Generér igen"). Rigtige
+møder ender indtil videre som `mangler_samtykke` (ejerens punkt) / `mangler_optagelse` (L-8).
 
 ⚠ Db-testene for 0015 er **ikke kørt lokalt** — Docker mangler på maskinen (B-13). CI er eneste
 gate for denne migrations RLS.
@@ -122,7 +126,7 @@ gate for denne migrations RLS.
 - Udfyld porten i `src/lib/llm/` mod **Ordbogen (chat.dk / Odin-LLM)** — dansk model,
   dansk datacenter, hele værdikæden i Danmark (ADR 0024).
 - ⚠ Samme DPA som 4.3 — én leverandør, én aftale. Skal foreligge før produktionsbrug.
-- Resumé gemmes i Supabase som mødeartefakt, ikke kun hos udbyderen.
+- Resumé gemmes i Supabase som mødeartefakt, ikke kun hos udbyderen. ✅ `meeting_summary` (ADR 0059).
 - ⚠ Note-synlighed (ejer) gælder også resuméer → restriktiv default.
 
 ### 4.5 Notifikationsmotor
