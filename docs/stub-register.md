@@ -5,7 +5,7 @@
 > Fase 6 (§6.4) gennemgår registret: hver post skal være løst eller have eksplicit
 > ejer-accept før launch.
 >
-> Sidst gennemgået: 2026-10-10 (Cal.com collective event type pr. board, ADR 0046/B-23; admin-drift og juridisk interface, ADR 0053).
+> Sidst gennemgået: 2026-10-10 (Cal.com collective event type pr. board, ADR 0046/B-23; admin-drift og juridisk interface, ADR 0053; rolle-dashboards, ADR 0055).
 
 ## Backend-stubs — kaster `NotConfiguredError`
 
@@ -78,6 +78,8 @@ deterministiske frem for plausible — se `docs/stub-politik.md`.
 | `fee_rule.vat_mode` (0017), `src/server/fees/algorithm.ts` | Moms på honorar er `ikke_fastlagt` (default). Beløbet vises uden momsbehandling, og **koden beregner aldrig en momssats** — også når admin sætter `ekskl_moms`/`inkl_moms`, videregives kun måden, så bogholderen ikke får en antagelse serveret som et tal | Moms på partner-honorar (§12 pkt. 14). Om og hvordan moms lægges til/trækkes fra er ejerens/bogholderens anvendelse af reglen | Ejer |
 | `fee_rule.absence_rule` (0017), `src/server/fees/algorithm.ts` | Forsinket afbud/udeblivelse er `ikke_fastlagt` (default): linjen får status `afventer_regel` — grundlaget er registreret, intet beløb er medregnet, og opgørelsen siger det | Honorar ved udeblivelse/sent afbud (§12 pkt. 13). Værdierne `intet_honorar`/`fuldt_honorar` er klar; en mellemting (fx delvist honorar) er et nyt enum-valg og dermed en ejerbeslutning | Ejer |
 | `src/app/admin/honorar/eksport/route.ts`, `src/lib/accounting/` | Opgørelsen eksporteres som **CSV** (rå øre, ingen moms) — der er ingen forbindelse til et regnskabssystem, og **udbetaling er ikke automatiseret**. `src/lib/accounting/` forbliver på stub | Regnskabssystem: e-conomic vs. Dinero (§12) samt om udbetaling skal automatiseres ved launch (`docs/fase-5.md` §5.2) | Ejer |
+| `src/components/Dashboard.tsx` (`RatingsPanel`) | **Partnerens egne vurderinger vises ikke på dashboardet** — panelet siger det højt. RLS (0015) lader kun den der afgav en vurdering og admin læse `meeting_rating`; den vurderede partner ser den ikke, og der er bevidst ikke bygget en ny læsevej (ADR 0055) | Hvad vurderinger skal bruges til, og om en partner må se sine egne (gennemsnit/antal)? Svaret låser op for en view-læsevej som `partner_fee_line` (§4.2, B-07) | Ejer |
+| `src/server/dashboard/index.ts` (`getLeadBoardNeeds`) | **Lead-partneren ser ejerens kompetencebehov** (kun tag-id'er) via service-role bag et lead-tjek — ikke via RLS. Hvem der er lead afgøres af `board_partner.is_lead` i data, uanset flaget `leadPartner` (ADR 0055) | (1) Lead-tildeling og -rotation (§12 pkt. 15). (2) Skal ejeren informeres om at boardets lead ser hendes behov? Vilkår/privatlivstekst (ToS) | Ejer |
 | `src/server/pricing/algorithm.ts` | Beløb er rå øre uden momslogik | Moms på partner-honorar/beløbsvisning (§12 pkt. 14) | Ejer |
 | `src/app/admin/drift/page.tsx` (PostHog-driftstatus) | **Ingen fejlrate/seneste fejl vises** — kun et link til PostHog (EU). Analytics-porten er en stub og har ingen query-grænseflade (ADR 0053) | Live PostHog-projektnøgle + en læse-adapter bag analytics-porten. Ingen falske tal før da | Mads |
 | `src/server/admin/legal.ts` (ToS + honoraraftale) | Begge står som **"Ikke udarbejdet — afventer ejer"** på `/admin/juridisk`. Interfacet er bygget, indholdet findes ikke | ToS og honoraraftale (CLAUDE.md, uafklarede punkter); honoraraftalen hænger sammen med honorarsats/moms (§12) | Ejer |
@@ -93,5 +95,5 @@ Til afgrænsning, så gennemgangen i fase 6 ikke leder efter dem:
 
 - **Adgangsporten** (ADR 0020) er fuldt implementeret, blot ikke aktiveret — de tre
   `APP_GATE_*`-env-vars er ikke sat. Det er en driftstilstand, ikke en stub.
-- **Dashboards** (fase 5.4) findes ikke endnu. Manglende kode er ikke en stub; de hører
-  til fase 5.
+- **Dashboards** (fase 5.4, ADR 0055) er bygget. Hullerne i dem (partnerens ratings, lead-
+  tildeling, PostHog-driftstatus) står i tabellerne ovenfor.

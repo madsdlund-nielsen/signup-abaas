@@ -14,7 +14,8 @@ export const dynamic = "force-dynamic";
  * /admin/layout.tsx; tallene læses via den authede klient, så RLS (admin-policies på
  * tabellerne) er andet lag. Siden er passiv med vilje: tal og status, ingen handlinger.
  *
- * Honorar er ikke med — det kobles på, når honorarskiven (fase 5.1/5.2) lander.
+ * Honorar (indeværende måned, pr. linjestatus) indgår fra ADR 0055; PostHog-driftstatus er
+ * stadig TODO(mads) nedenfor.
  */
 export default async function AdminOpsPage() {
   const [ops, integrations] = await Promise.all([getOpsOverview(), getIntegrationOverview()]);
@@ -50,14 +51,6 @@ export default async function AdminOpsPage() {
               PostHog (EU)
             </a>
             .
-          </p>
-        </section>
-
-        <section className="stack section-rule">
-          <p className="eyebrow">Honorar</p>
-          <p className="body">
-            Honoraroverblikket kobles på, når honorarskiven er landet (fase 5.1/5.2). Det vises ikke her
-            før der er en opgørelse at læse.
           </p>
         </section>
       </PageBody>

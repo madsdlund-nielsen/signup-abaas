@@ -7,14 +7,18 @@
  * Ukonfigureret Supabase → [] (kontofri CI/dev).
  */
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServerSupabase } from "@/server/auth/supabase-server";
-import type {
-  FeeAbsenceRule,
-  FeeMeetingStatus,
-  FeeRegisteredStatus,
-  FeeRuleInput,
-  FeeVatMode,
+import {
+  summarizeFees,
+  type FeeAbsenceRule,
+  type FeeMeetingStatus,
+  type FeeRegisteredStatus,
+  type FeeRuleInput,
+  type FeeTotals,
+  type FeeVatMode,
 } from "./algorithm";
 import { buildFeeLines, type FeeLine, type FeeLineRow } from "./lines";
 
@@ -148,6 +152,48 @@ export async function listMyFeeLines(
   const uid = userData?.user?.id;
   if (!uid) return [];
   return readLines(period, { appUserId: uid }, env);
+}
+
+export interface FeeTotalsOverview {
+  totals: FeeTotals;
+  /** Antal linjer der indgår (til at opdage rækkegrænsen). */
+  lineCount: number;
+  /** Antal honorarregel-versioner der findes — 0 betyder at satsen slet ikke er fastsat. */
+  ruleCount: number;
+}
+
+/**
+ * Honorar-tal for en periode til driftsoverblikket (fase 5.4, ADR 0055). Tager den authede
+ * klient udefra og KASTER ved læsefejl — modsat `readLines`, der svarer [] — fordi et
+ * driftsoverblik der viser "0 linjer" fordi forespørgslen fejlede, er værre end ingen tal
+ * (ADR 0053). RLS afgør hvad klienten ser; for en ikke-admin giver viewen 0 rækker, så kaldstedet
+ * skal selv kræve admin.
+ */
+export async function loadFeeTotals(
+  db: SupabaseClient,
+  period: FeePeriodQuery,
+  rowLimit: number,
+): Promise<FeeTotalsOverview> {
+  const [lines, rules] = await Promise.all([
+    db
+      .from("partner_fee_line")
+      .select(LINE_COLUMNS)
+      .gte("starts_at", period.from)
+      .lt("starts_at", period.to)
+      .limit(rowLimit),
+    db.from("fee_rule").select(RULE_COLUMNS).order("version", { ascending: false }),
+  ]);
+  if (lines.error) throw new Error(lines.error.message);
+  if (rules.error) throw new Error(rules.error.message);
+
+  const lineRows = ((lines.data ?? []) as unknown as LineRow[]).map(rowToLineRow);
+  const ruleList = ((rules.data ?? []) as unknown as RuleRow[]).map(rowToRule);
+  const built = buildFeeLines(lineRows, ruleList);
+  return {
+    totals: summarizeFees(built.map((line) => line.result)),
+    lineCount: lineRows.length,
+    ruleCount: ruleList.length,
+  };
 }
 
 /** Alle partneres honorarlinjer i perioden (admin — for en ikke-admin giver viewen 0 rækker). */

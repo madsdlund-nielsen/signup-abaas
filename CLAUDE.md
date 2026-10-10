@@ -241,8 +241,7 @@ den rigtige adapter droppes ind. Skærmen er produktionskode fra første commit;
 datakilden skifter. Rækkefølgen bestemmer Mads ved at klikke.
 
 **Skærm-først-kandidater (hver sin lille PR):** AI-opsummering på `/moeder/[id]` ·
-notifikationsoversigt · partner-honorar · partner-tilgængelighed · rolle-dashboards ·
-admin-drift.
+notifikationsoversigt.
 
 Fase-dokumenterne `docs/fase-0.md` … `docs/fase-6.md` og `docs/fase-0-eksekvering.md` er
 **opslagsværk** for scope, krav og de uafklarede punkter pr. område — de slettes ikke, og

@@ -110,5 +110,5 @@ præcis det. En admin-policy på `app_user` er en migration og kan komme når ta
   - TODO(ejer): ToS og honoraraftale.
   - TODO(mads): PostHog-driftstatus (kræver live nøgle); persistent revisionslog over udtræk
     (tabel + RLS); en admin-select-policy på `app_user` hvis "ejere uden board" skal tælles.
-  - Honorar kobles på driftsskærmen, når honorarskiven lander.
+  - ~~Honorar kobles på driftsskærmen, når honorarskiven lander.~~ → koblet på (ADR 0055).
   - Sletteaction: egen skive efter ejer/jura-afklaring af opbevaringspligt.

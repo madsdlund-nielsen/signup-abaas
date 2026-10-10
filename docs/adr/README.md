@@ -80,6 +80,7 @@ det gjort sådan?", så skriv en ADR.
 | 0047 | SECURITY DEFINER-funktioner: hvad Supabase' linter må rette, og hvad den ikke må | Accepteret | — |
 | 0048 | Notifikationskataloget bor i kode indtil skabelonerne får en tabel | Accepteret | 4 |
 | 0049 | Brugeropslaget memoiseres pr. request, og proxyen holdes billig | Accepteret | — |
+| 0055 | Rolle-dashboards: læsevejene, og lead-partnerens service-role-læsning af ejerens behov | Accepteret | 5 |
 | 0050 | Sessionen ud af rodlayoutet: header-nav'en streames | Accepteret | — |
 | 0051 | Partner-honorar: regel med gyldighedstidspunkt og en view der kun viser egne linjer | Accepteret | 5 |
 | 0052 | Partner-tilgængelighed: lokal vægurstid i Supabase, ingen ejer-læsning, "ikke angivet" = ubegrænset | Accepteret | 5 |

@@ -55,14 +55,18 @@ export function PeriodNav({
   );
 }
 
+/** Summen af de beregnede beløb pr. valuta, eller "—" når intet er beregnet (aldrig "0 kr"). */
+export function formatFeeSum(totals: FeeTotals): string {
+  return totals.totalsByCurrency.length === 0
+    ? "—"
+    : totals.totalsByCurrency
+        .map(({ currency, amountMinor }) => formatMinor(amountMinor, currency))
+        .join(" + ");
+}
+
 /** Nøgletallene først: sum, afholdte møder, og hvor meget der endnu ikke kan regnes. */
 export function FeeFigures({ totals }: { totals: FeeTotals }) {
-  const sum =
-    totals.totalsByCurrency.length === 0
-      ? "—"
-      : totals.totalsByCurrency
-          .map(({ currency, amountMinor }) => formatMinor(amountMinor, currency))
-          .join(" + ");
+  const sum = formatFeeSum(totals);
   const open = totals.awaitingRuleCount + totals.noRateCount + totals.notRegisteredCount;
 
   return (
