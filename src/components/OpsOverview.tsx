@@ -1,5 +1,8 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { FeeFigures, FeeNotices } from "@/components/FeeStatement";
+import { formatMonth } from "@/server/fees/period";
 import type {
   IntegrationMode,
   IntegrationOverview,
@@ -49,6 +52,12 @@ function StatSection({
       {children}
     </section>
   );
+}
+
+/** Hvor mange honorarregel-versioner der findes — "ingen" er pointen, ikke et nul. */
+export function ruleCountLabel(count: number): string {
+  if (count === 0) return "Ingen honorarsats fastsat";
+  return count === 1 ? "1 regelversion" : `${count} regelversioner`;
 }
 
 /** Dato + klokkeslæt i dansk format. Ren, så den kan testes og ikke afhænger af serverens tidszone. */
@@ -157,6 +166,7 @@ export function OpsOverview({
   const charges = ops?.charges ?? null;
   const meetings = ops?.meetings ?? null;
   const missing = ops?.missingRegistrations ?? null;
+  const fees = ops?.fees ?? null;
   const webhooks = ops?.webhooks ?? null;
   const atLeast = ops?.truncated ?? false;
 
@@ -244,6 +254,31 @@ export function OpsOverview({
               />
               <Stat label="Manglende partner-registreringer" value={missing?.registrations ?? null} atLeast={atLeast} />
             </div>
+          </StatSection>
+
+          <StatSection title="Honorar" unreadable={fees === null}>
+            {fees ? (
+              <>
+                <p className="factline">
+                  <span>{formatMonth(fees.month)}</span>
+                  <span>{ruleCountLabel(fees.ruleCount)}</span>
+                </p>
+                <FeeFigures totals={fees.totals} />
+                <div className="stats">
+                  <Stat label="Beregnede linjer" value={fees.totals.calculatedCount} atLeast={atLeast} />
+                  <Stat label="Afventer afbudsregel" value={fees.totals.awaitingRuleCount} atLeast={atLeast} />
+                  <Stat label="Ingen sats" value={fees.totals.noRateCount} atLeast={atLeast} />
+                  <Stat label="Ikke registreret" value={fees.totals.notRegisteredCount} atLeast={atLeast} />
+                  <Stat label="Aflyst" value={fees.totals.cancelledCount} atLeast={atLeast} />
+                </div>
+                <FeeNotices totals={fees.totals} hasRules={fees.ruleCount > 0} />
+                <p className="body">
+                  <Link className="btn-secondary" href="/admin/honorar">
+                    Se opgørelsen
+                  </Link>
+                </p>
+              </>
+            ) : null}
           </StatSection>
 
           <StatSection title="Webhooks" unreadable={webhooks === null}>

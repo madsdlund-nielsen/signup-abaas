@@ -4,7 +4,7 @@
  */
 
 export { getOpsOverview } from "./ops";
-export type { OpsOverview, WebhookActivity, WebhookEvent } from "./ops";
+export type { FeeOverview, OpsOverview, WebhookActivity, WebhookEvent } from "./ops";
 export type {
   ChargeCounts,
   ChargeFailure,

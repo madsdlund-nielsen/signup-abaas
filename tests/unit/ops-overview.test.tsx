@@ -7,7 +7,14 @@ import {
   LegalDocumentTable,
   SubjectAccessForm,
 } from "@/components/LegalInterface";
-import { IntegrationStatusTable, OpsOverview, Stat, integrationNote } from "@/components/OpsOverview";
+import {
+  IntegrationStatusTable,
+  OpsOverview,
+  Stat,
+  integrationNote,
+  ruleCountLabel,
+} from "@/components/OpsOverview";
+import { summarizeFees } from "@/server/fees/algorithm";
 import { LEGAL_DOCUMENTS, subjectAccessErrorMessage } from "@/server/admin/legal";
 import type { IntegrationOverview, IntegrationStatus } from "@/server/admin";
 import type { OpsOverview as OpsState } from "@/server/admin";
@@ -49,6 +56,12 @@ const ops: OpsState = {
   },
   meetings: { windowDays: 30, upcoming: 2, overdue: 0, held: 4, cancelled: 1 },
   missingRegistrations: { meetings: 1, registrations: 2 },
+  fees: {
+    month: "2026-10",
+    ruleCount: 0,
+    // Ingen regel: to afholdte møder uden sats, ét uregistreret. Ingen beløb — og aldrig "0 kr".
+    totals: summarizeFees([{ kind: "ingen_sats" }, { kind: "ingen_sats" }, { kind: "ikke_registreret" }]),
+  },
   webhooks: { meeting: [], payment: [{ provider: "alunta", eventType: "charge.failed", receivedAt: "2026-10-09T08:00:00Z" }] },
   truncated: false,
 };
@@ -124,6 +137,31 @@ describe("OpsOverview", () => {
     const { container } = render(<OpsOverview ops={{ ...ops, truncated: true }} integrations={integrations} />);
     expect(container.textContent).toMatch(/gulv/);
     expect(container.textContent).toMatch(/≥ 3/);
+  });
+
+  it("viser indeværende måneds honorar pr. linjestatus — og siger at satsen ikke er fastsat", () => {
+    const { container, getByText } = render(<OpsOverview ops={ops} integrations={integrations} />);
+    expect(getByText("Honorar")).toBeTruthy();
+    expect(getByText("Oktober 2026")).toBeTruthy();
+    expect(getByText("Ingen honorarsats fastsat")).toBeTruthy();
+    expect(getByText("Ingen sats")).toBeTruthy();
+    expect(getByText("Afventer afbudsregel")).toBeTruthy();
+    expect(container.textContent).toMatch(/Honorarsatsen er ikke fastlagt endnu/);
+    // Ingen beregnede linjer → summen er "—", aldrig et nul.
+    expect(container.textContent).not.toMatch(/0,00/);
+    expect(container.querySelector('a[href="/admin/honorar"]')).toBeTruthy();
+  });
+
+  it("honorar der ikke kunne læses står som hul, ikke som nuller", () => {
+    const { container } = render(<OpsOverview ops={{ ...ops, fees: null }} integrations={integrations} />);
+    expect(container.textContent).toMatch(/Kunne ikke læses/);
+    expect(container.querySelector('a[href="/admin/honorar"]')).toBeNull();
+  });
+
+  it("ruleCountLabel: ingen er pointen, ikke et nul", () => {
+    expect(ruleCountLabel(0)).toBe("Ingen honorarsats fastsat");
+    expect(ruleCountLabel(1)).toBe("1 regelversion");
+    expect(ruleCountLabel(3)).toBe("3 regelversioner");
   });
 
   it("bruger kun token-klasser — ingen inline-styles", () => {

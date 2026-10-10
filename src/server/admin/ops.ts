@@ -18,6 +18,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCurrentUser, requireRole } from "@/server/auth";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServerSupabase } from "@/server/auth/supabase-server";
+import { loadFeeTotals, monthOf, monthPeriod, type FeeTotals } from "@/server/fees";
 import {
   MEETING_WINDOW_DAYS,
   countCharges,
@@ -52,6 +53,15 @@ export interface WebhookActivity {
   payment: WebhookEvent[];
 }
 
+/** Indeværende måneds honorar (fase 5.4, ADR 0055): optælling pr. linjestatus, ikke en opgørelse. */
+export interface FeeOverview {
+  /** "ÅÅÅÅ-MM" (dansk tid). */
+  month: string;
+  totals: FeeTotals;
+  /** Antal honorarregel-versioner — 0 = satsen er ikke fastsat, og intet beløb kan beregnes. */
+  ruleCount: number;
+}
+
 export interface OpsOverview {
   generatedAt: string;
   platform: PlatformCounts | null;
@@ -59,6 +69,7 @@ export interface OpsOverview {
   charges: ChargeCounts | null;
   meetings: MeetingCounts | null;
   missingRegistrations: MissingRegistrations | null;
+  fees: FeeOverview | null;
   webhooks: WebhookActivity | null;
   /** Mindst én sektion ramte rækkegrænsen — tallene er et gulv, ikke totalen. */
   truncated: boolean;
@@ -158,6 +169,15 @@ async function loadMissingRegistrations(db: SupabaseClient) {
   return { value: countMissingRegistrations(result.rows), truncated: result.truncated };
 }
 
+async function loadFees(db: SupabaseClient, now: Date) {
+  const period = monthPeriod(monthOf(now));
+  const result = await loadFeeTotals(db, period, ROW_LIMIT);
+  return {
+    value: { month: period.month, totals: result.totals, ruleCount: result.ruleCount },
+    truncated: result.lineCount >= ROW_LIMIT,
+  };
+}
+
 async function loadWebhooks(db: SupabaseClient) {
   const [meeting, payment] = await Promise.all([
     rows<WebhookRow>(
@@ -196,12 +216,13 @@ export async function getOpsOverview(
   requireRole(await getCurrentUser(env), "admin");
   const db = await createServerSupabase(config);
 
-  const [platform, memberships, charges, meetings, missing, webhooks] = await Promise.all([
+  const [platform, memberships, charges, meetings, missing, fees, webhooks] = await Promise.all([
     section("board/partner", () => loadPlatform(db)),
     section("membership", () => loadMemberships(db)),
     section("payment_charge", () => loadCharges(db)),
     section("meeting", () => loadMeetings(db, now)),
     section("meeting_partner", () => loadMissingRegistrations(db)),
+    section("partner_fee_line", () => loadFees(db, now)),
     section("webhook", () => loadWebhooks(db)),
   ]);
 
@@ -212,7 +233,8 @@ export async function getOpsOverview(
     charges: charges.value,
     meetings: meetings.value,
     missingRegistrations: missing.value,
+    fees: fees.value,
     webhooks: webhooks.value,
-    truncated: [platform, memberships, charges, meetings, missing].some((s) => s.truncated),
+    truncated: [platform, memberships, charges, meetings, missing, fees].some((s) => s.truncated),
   };
 }

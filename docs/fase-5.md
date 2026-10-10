@@ -21,13 +21,20 @@
 - [x] Partner-tilgængelighed: partner kan angive ledige tider; det respekteres i
       booking-flowet fra fase 2. (ADR 0052: `/partner/tilgaengelighed`, vagt i
       `meetings/actions.ts`. Synk til Cal.com-schedules er IKKE bygget — TODO(mads).)
-- [ ] Ejer-dashboard: kommende møder, board, betalingsstatus.
-- [ ] Partner-dashboard: kommende møder, honoraroverblik, egne ratings.
-- [ ] Lead-partner-dashboard: **kompetenceoverblik for boardet** + næste møde.
-- [ ] Admin-dashboard: boards, partnere, betalinger, honorar, driftstatus.
-      **Delvist** (`/admin/drift`, ADR 0053): boards, partnere, medlemskaber, betalingstræk, møder,
-      webhooks og integrationsstatus er bygget. Mangler: **honorar** (kobles på med honorarskiven)
-      og PostHog-driftstatus (`TODO(mads)`: live nøgle).
+- [x] Ejer-dashboard: kommende møder, board, betalingsstatus. *(`/dashboard`, ADR 0055: næste møde
+      med deltagere/forberedelse/Deltag, op til tre møder derefter, boardets sammensætning med lead,
+      abonnement/kort/frekvens med CTA hvis kort mangler; tomtilstand → "Start onboarding")*
+- [x] Partner-dashboard: kommende møder, honoraroverblik, egne ratings. *(`/dashboard`: møder,
+      månedens honorar via `src/server/fees/` med "ingen sats"/"afventer regel"-tilstande,
+      tilgængelighed. **Ratings:** RLS tillader ikke en partner at læse sine egne vurderinger
+      (0015), så panelet siger at de ikke vises endnu — TODO(ejer), ingen ny læsevej bygget.)*
+- [x] Lead-partner-dashboard: **kompetenceoverblik for boardet** + næste møde. *(ejerens behov vs.
+      boardets dækning pr. tag via `computeBoardCoverage`; "Initiér næste møde" fremhæves når intet er
+      aftalt. Ejerens behov læses via service-role bag lead-tjek — ADR 0055. Lead-tildeling er
+      stadig uafklaret, TODO(ejer).)*
+- [x] Admin-dashboard: boards, partnere, betalinger, honorar, driftstatus. *(Resumé på `/dashboard`
+      og honorar for indeværende måned på `/admin/drift` (ADR 0053/0055). **Rest:** PostHog-
+      driftstatus — TODO(mads): live nøgle.)*
 - [x] Juridisk download-interface til admin (jf. §11-krav) er tilgængeligt (`/admin/juridisk`,
       ADR 0053): indsigtsudtræk (art. 15), dokumentoversigt og henvisning til sletteflowet.
       Interfacet er bygget, ikke indholdet: ToS/honoraraftale ikke udarbejdet (`TODO(ejer)`),
@@ -76,6 +83,9 @@
   pladsholder (TODO(ejer)).
 
 ### 5.4 Dashboards
+> **Bygget** (ADR 0055): `/dashboard` med en sektion pr. rolle (en bruger med flere roller ser flere),
+> `src/server/dashboard/`, honorar-sektion på `/admin/drift`. PostHog-driftstatus står tilbage (TODO(mads)).
+
 - Ejer: kommende møder, board-sammensætning, betalingsstatus.
 - Partner: kommende møder, honoraroverblik, egne ratings.
 - **Lead-partner:** kompetenceoverblik for boardet + ansvar for næste møde
