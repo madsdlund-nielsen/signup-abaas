@@ -84,6 +84,7 @@ det gjort sådan?", så skriv en ADR.
 | 0051 | Partner-honorar: regel med gyldighedstidspunkt og en view der kun viser egne linjer | Accepteret | 5 |
 | 0052 | Partner-tilgængelighed: lokal vægurstid i Supabase, ingen ejer-læsning, "ikke angivet" = ubegrænset | Accepteret | 5 |
 | 0053 | Admin-drift og juridisk interface: indsigtsudtrækkets form og integrationsstatus via factoryen | Accepteret | 5 |
+| 0054 | *(nummer reserveret til Cal.com-skiven, ikke brugt — valget blev skrevet ind i 0046)* | — | — |
 | 0055 | Rolle-dashboards: læsevejene, og lead-partnerens service-role-læsning af ejerens behov | Accepteret | 5 |
 | 0056 | Abonnementsfakturering: periodekæde i Supabase, pris sat på Alunta-abonnementet (erstatter triggeren fra 0030/0032 i kode) | Accepteret | 3 |
 | 0057 | Notifikationsskabeloner som versioneret data, motor med idempotensnøgle, og en log uden persondata | Accepteret | 4 |
