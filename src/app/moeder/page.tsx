@@ -4,8 +4,10 @@ import type { Metadata } from "next";
 
 import { AuthForm } from "@/components/AuthForm";
 import { Field } from "@/components/Field";
+import { CommonWindowsList } from "@/components/CommonWindowsList";
 import { PageBody, PageHeader } from "@/components/PageHeader";
 import { getCurrentUser } from "@/server/auth";
+import { getBoardCommonWindows } from "@/server/availability";
 import { getMyBoard } from "@/server/boards";
 import { listMyMeetings, type Meeting } from "@/server/meetings";
 import { bookMeeting, cancelMeeting, rescheduleMeeting } from "@/server/meetings/actions";
@@ -33,6 +35,8 @@ export default async function MeetingsPage() {
   if (!user.roles.includes("ejer")) redirect("/dashboard");
 
   const [board, meetings] = await Promise.all([getMyBoard(), listMyMeetings()]);
+  // Boardets fælles ledige tider de næste 7 døgn (fase 5.3) — hjælp til at vælge tidspunkt.
+  const commonWindows = board ? await getBoardCommonWindows(board.id) : null;
 
   return (
     <>
@@ -62,6 +66,21 @@ export default async function MeetingsPage() {
             </AuthForm>
           </section>
         )}
+
+        {commonWindows ? (
+          <section className="stack section-rule">
+            <h2 className="heading-3 heading--on-light">Ledige tider næste uge</h2>
+            <p className="body measure">
+              De tidspunkter de kommende syv dage hvor hele dit board er ledigt til et møde på
+              60 minutter.
+            </p>
+            <CommonWindowsList
+              windows={commonWindows.windows}
+              anyRestriction={commonWindows.anyRestriction}
+              restrictedNames={commonWindows.restrictedNames}
+            />
+          </section>
+        ) : null}
 
         {meetings.length > 0 ? (
           <div className="table-wrap section-rule">

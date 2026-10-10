@@ -80,6 +80,7 @@ det gjort sådan?", så skriv en ADR.
 | 0047 | SECURITY DEFINER-funktioner: hvad Supabase' linter må rette, og hvad den ikke må | Accepteret | — |
 | 0048 | Notifikationskataloget bor i kode indtil skabelonerne får en tabel | Accepteret | 4 |
 | 0049 | Brugeropslaget memoiseres pr. request, og proxyen holdes billig | Accepteret | — |
+| 0052 | Partner-tilgængelighed: lokal vægurstid i Supabase, ingen ejer-læsning, "ikke angivet" = ubegrænset | Accepteret | 5 |
 | 0050 | Sessionen ud af rodlayoutet: header-nav'en streames | Accepteret | — |
 | 0053 | Admin-drift og juridisk interface: indsigtsudtrækkets form og integrationsstatus via factoryen | Accepteret | 5 |
 

@@ -55,6 +55,7 @@ src/server/
 ├── boards/          # board-sammensætning, lead-partner
 ├── matching/        # board-matching-algoritmen
 ├── meetings/        # booking, status, noter
+├── availability/    # partner-tilgængelighed: ugevinduer, fravær, booking-vagt
 ├── memberships/     # medlemskab + betalingsfrekvens
 ├── pricing/         # versionerede prisregler
 └── charges/         # opkrævningsgrundlag
