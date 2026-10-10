@@ -67,6 +67,16 @@ export default function AdminHome() {
             body="Hvilke beskeder platformen skylder at sende, og hvor langt e-mail og SMS er fra at kunne sende dem."
             href="/admin/notifikationer"
           />
+          <AdminEntry
+            title="Drift"
+            body="Boards, partnere, medlemskaber, betalingstræk, møder og webhooks — og hvilke integrationer der kører rigtigt, som demo eller som stub."
+            href="/admin/drift"
+          />
+          <AdminEntry
+            title="Juridisk"
+            body="Indsigtsudtræk (GDPR art. 15), samtykke, juridiske dokumenter og henvisning til sletteflowet."
+            href="/admin/juridisk"
+          />
         </div>
       </PageBody>
     </>
