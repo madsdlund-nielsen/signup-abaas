@@ -1,5 +1,6 @@
 /**
- * Alunta-webhook-endpoint (Fase 3, ADR 0032 — verificeret mod OpenAPI-spec'en).
+ * Alunta-webhook-endpoint (Fase 3, ADR 0032 — verificeret mod OpenAPI-spec'en; abonnements-
+ * semantik fra ADR 0056).
  * ADR 0027-mønstret: rå body → signatur (`Signature`-header, HMAC-SHA256 hex) →
  * idempotensrække FØR mutation → mutér. Manglende secret/Supabase → 503, aldrig
  * fail-open. Alunta genleverer op til 8 gange over ~24 t og kræver 2xx inden 3 sek. —
@@ -9,6 +10,7 @@
 import { getAdapters } from "@/lib";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServiceSupabase } from "@/server/auth/supabase-server";
+import { copenhagenDate } from "@/server/charges/periods";
 import {
   buildEventId,
   mapAluntaEvent,
@@ -81,10 +83,15 @@ export async function POST(request: Request): Promise<Response> {
 
   switch (mutation.kind) {
     case "card_registered": {
+      // Kunde- og abonnements-uuid kobles på. Abonnementet er det vi siden sætter prisen på
+      // (ADR 0056); mangler payloaden det, kobles kun kunden og synkroniseringen fejler højlydt.
       const { data, error } = await service
         .from("membership")
         .update({
           provider_customer_ref: mutation.aluntaCustomerUuid,
+          ...(mutation.aluntaSubscriptionUuid
+            ? { provider_subscription_ref: mutation.aluntaSubscriptionUuid }
+            : {}),
           card_status: "registreret",
           updated_at: new Date().toISOString(),
         })
@@ -97,7 +104,16 @@ export async function POST(request: Request): Promise<Response> {
           distinctId: "system",
           properties: { externalCustomerId: mutation.externalCustomerId },
         });
+        break;
       }
+      // Periodeankeret sættes ÉN gang (dagen kortet blev registreret, dansk dato) og flyttes
+      // aldrig: genleverancer og senere kort-skift må ikke forskyde perioderne.
+      const { error: anchorError } = await service
+        .from("membership")
+        .update({ billing_anchor: copenhagenDate(new Date()) })
+        .eq("id", mutation.externalCustomerId)
+        .is("billing_anchor", null);
+      if (anchorError) return fail("billing-anchor", anchorError.message);
       break;
     }
     case "invoice_paid":
@@ -116,8 +132,8 @@ export async function POST(request: Request): Promise<Response> {
         });
         break;
       }
-      // Fakturaen afregner membershipets RAPPORTEREDE forbrug (periode-aggregat, ADR 0032) —
-      // kobling pr. enkeltmøde findes ikke i payloaden.
+      // Fakturaen afregner membershipets RAPPORTEREDE periode-opkrævninger (aggregat, ADR 0032/0056) —
+      // kobling pr. enkelt periode findes ikke i payloaden.
       const update =
         mutation.kind === "invoice_paid"
           ? { status: "gennemfoert", provider_invoice_ref: mutation.invoiceUuid }
@@ -140,6 +156,15 @@ export async function POST(request: Request): Promise<Response> {
         .update({ status: "opsagt", updated_at: new Date().toISOString() })
         .eq("provider_customer_ref", mutation.aluntaCustomerUuid);
       if (error) return fail("membership-cancel", error.message);
+      // Opsigelsesdatoen afskærer NYE perioder (ADR 0056) og sættes kun første gang, så en
+      // genleveret subscription.ended ikke rykker den. Opsigelsesvarsel/refusion er ikke besluttet.
+      // TODO(ejer): opsigelsesvarsel.
+      const { error: dateError } = await service
+        .from("membership")
+        .update({ cancelled_at: copenhagenDate(new Date()) })
+        .eq("provider_customer_ref", mutation.aluntaCustomerUuid)
+        .is("cancelled_at", null);
+      if (dateError) return fail("membership-cancel-date", dateError.message);
       break;
     }
     case "ignore":

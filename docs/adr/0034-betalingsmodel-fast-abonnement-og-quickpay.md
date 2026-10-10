@@ -3,7 +3,7 @@
 - **Status:** Accepteret
 - **Dato:** 2026-08-26
 - **Fase:** 3
-- **Erstatter opkrævnings-triggeren i:** ADR 0030 (charge pr. afholdt møde) og ADR 0032 (usage-abonnement)
+- **Erstatter opkrævnings-triggeren i:** ADR 0030 (charge pr. afholdt møde) og ADR 0032 (usage-abonnement) — koden fulgte med i ADR 0056
 - **Berører uafklaret punkt:** ja — lukker gateway-valget og MobilePay-spørgsmålet; **ændrer** betalingsmodellen
 
 ## Kontekst

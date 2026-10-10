@@ -21,11 +21,14 @@ describe("adapter-registry uden nøgler/flag", () => {
   it("backend-stub (payments) kaster NotConfiguredError", async () => {
     const { payments } = getAdapters(emptyEnv);
     await expect(
-      payments.reportUsageCharge({
+      payments.upsertSubscription({
+        membershipId: "m1",
         customerRef: "c1",
+        subscriptionRef: null,
         amountMinor: 1000,
-        idempotencyKey: "test-key",
-        description: "test",
+        currency: "DKK",
+        intervalDays: 28,
+        startsOn: "2026-10-01",
       }),
     ).rejects.toBeInstanceOf(NotConfiguredError);
   });
@@ -107,13 +110,21 @@ describe("demo-tilstand (ADR 0041)", () => {
     const session = await payments.registerCard({ customerRef: "membership-1" });
     expect(session.id).toMatch(/^DEMO-CHECKOUT-/);
     expect(session.url).toBe("/betaling/demo-kort/membership-1");
-    const charge = await payments.reportUsageCharge({
+    const request = {
+      membershipId: "membership-1",
       customerRef: "DEMO-CUSTOMER-membership-1",
+      subscriptionRef: null,
       amountMinor: 1000,
-      idempotencyKey: "k",
-      description: "test",
-    });
-    expect(charge.id).toMatch(/^DEMO-CHARGE-/);
+      currency: "DKK",
+      intervalDays: 28,
+      startsOn: "2026-10-01",
+    };
+    const subscription = await payments.upsertSubscription(request);
+    expect(subscription.id).toMatch(/^DEMO-SUB-/);
+    // Idempotent som hos en rigtig leverandør: en kendt reference returneres uændret.
+    await expect(payments.upsertSubscription({ ...request, subscriptionRef: subscription.id })).resolves.toEqual(
+      subscription,
+    );
   });
 
   it("demo-tekster er mærket [DEMO], så de aldrig kan læses som ægte indhold", async () => {

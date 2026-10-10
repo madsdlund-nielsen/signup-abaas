@@ -1,14 +1,18 @@
 /**
- * Webhook-ingest for Alunta (Fase 3, ADR 0032 — VERIFICERET mod OpenAPI-spec'en).
+ * Webhook-ingest for Alunta (Fase 3, ADR 0032 — VERIFICERET mod OpenAPI-spec'en; omlagt til
+ * abonnementsmodellen i ADR 0056).
  * Ren kerne adskilt fra route handleren (ADR 0027-mønstret): signatur, event-id og
  * mapping er unit-testbare uden HTTP/DB.
  *
  * Verificeret form (spec'en, webhooks-afsnittet):
  *   - Header `Signature`: HMAC-SHA256 hex over RÅ body, konstant-tids-sammenligning.
- *   - Payload-rod: { event, team_id, timestamp, data, test_mode? }. INTET stabilt
- *     event-id → nøglen afledes deterministisk af (event, primær ressource-uuid,
- *     timestamp) — samme greb som Cal.com (ADR 0027). Alunta genleverer op til 8 gange
- *     over ~24 t; genleverancer preller af på unique-constrainten.
+ *   - Payload-rod: { event, team_uuid, timestamp, data, test_mode? } (ADR 0032 sagde team_id;
+ *     spec'en siger nu team_uuid — begge accepteres, ingen af dem bruges). Nøglen til
+ *     idempotens: det stabile `webhook_uuid` (rod) eller `data.event_id` når Alunta sender dem
+ *     (spec'en: "primary idempotency key" / stabilt pr. transition på invoice.paid,
+ *     checkout.completed, subscription.started/ended m.fl.). Ellers — ADR 0032's afledte nøgle
+ *     (event, primær ressource-uuid, timestamp), samme greb som Cal.com (ADR 0027). Alunta
+ *     genleverer op til 8 gange over ~24 t; genleverancer preller af på unique-constrainten.
  *   - `test_mode` behandles ens (testmiljø-verifikation kræver reelle mutationer).
  *
  * Sikkerhedskrav (stub-politik — må ALDRIG stubbes): signaturverifikation + idempotens.
@@ -41,9 +45,14 @@ const KNOWN_EVENTS: ReadonlySet<string> = new Set([
 
 export interface AluntaWebhookPayload {
   event: AluntaEventType;
-  team_id: number;
+  team_id?: number;
+  team_uuid?: string;
   timestamp: string;
+  /** Stabil leverance-uuid (marketplace-leverancer) — foretrukket idempotensnøgle når den findes. */
+  webhook_uuid?: string;
   data: {
+    /** Stabil dedup-nøgle pr. lokal transition (invoice.paid, checkout.completed m.fl.). */
+    event_id?: string;
     customer?: { uuid?: string };
     invoice?: { uuid?: string };
     subscription?: { uuid?: string };
@@ -81,8 +90,14 @@ export function primaryUuid(payload: AluntaWebhookPayload): string {
   return data.customer?.uuid ?? "ukendt";
 }
 
-/** Deterministisk idempotensnøgle: genleverance = samme nøgle; ny hændelse = ny timestamp. */
+/**
+ * Idempotensnøgle: genleverance = samme nøgle; ny hændelse = ny nøgle. Foretræk leverandørens
+ * egne stabile id'er; afled ellers deterministisk (ADR 0032). Præfikset holder de tre
+ * nøgletyper adskilt, så de aldrig kan kollidere på tværs.
+ */
 export function buildEventId(payload: AluntaWebhookPayload): string {
+  if (payload.webhook_uuid) return `delivery:${payload.webhook_uuid}`;
+  if (payload.data.event_id) return `${payload.event}:event:${payload.data.event_id}`;
   return `${payload.event}:${primaryUuid(payload)}:${payload.timestamp}`;
 }
 
@@ -93,11 +108,14 @@ export type AluntaMutation =
       /** membership.id (vores external_customer_id) + Aluntas customer-uuid der kobles på. */
       externalCustomerId: string;
       aluntaCustomerUuid: string;
+      /** Abonnementet checkouten oprettede (B-19): det er det vi sætter prisen på. Null hvis
+       *  payloaden ikke bærer det — så kobles kun kunden, og synkroniseringen fejler højlydt. */
+      aluntaSubscriptionUuid: string | null;
     }
   | {
       kind: "invoice_paid";
       /** Aluntas customer-uuid → membership.provider_customer_ref; fakturaen afregner
-       *  membershipets rapporterede forbrug (periode-aggregat, ADR 0032). */
+       *  membershipets rapporterede periode-opkrævninger (aggregat, ADR 0032/0056). */
       aluntaCustomerUuid: string;
       invoiceUuid: string;
     }
@@ -126,6 +144,7 @@ export function mapAluntaEvent(payload: AluntaWebhookPayload): AluntaMutation {
         kind: "card_registered",
         externalCustomerId: data.external_customer_id,
         aluntaCustomerUuid: customerUuid,
+        aluntaSubscriptionUuid: data.subscription?.uuid ?? null,
       };
     }
     case "invoice.paid": {
@@ -157,8 +176,10 @@ export function mapAluntaEvent(payload: AluntaWebhookPayload): AluntaMutation {
     case "subscription.payment_failed":
     case "customer.usage_recorded":
       // Registreres (idempotensrækken) men muterer ikke: created afventer paid; refunded
-      // og payment_failed-retries er drift/fase-4-notifikationsstof; usage_recorded er
-      // ekko af vores egen indberetning.
+      // og payment_failed-retries er drift/fase-4-notifikationsstof; usage_recorded hører til
+      // den afløste usage-model (ADR 0034) og forekommer ikke længere.
+      // TODO(mads): subscription.payment_succeeded/started findes i spec'en og kunne drive
+      // statusskift pr. periode i stedet for invoice.paid — afklares ved live-verifikation.
       return { kind: "ignore", reason: `${payload.event} registreres uden mutation` };
   }
 }

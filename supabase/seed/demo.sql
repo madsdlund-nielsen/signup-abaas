@@ -140,6 +140,7 @@ declare
   v_camilla      constant uuid := 'd0000000-0000-4000-8000-000000000305';
   v_next_start   timestamptz := date_trunc('day', now()) + interval '9 days' + interval '10 hours';
   v_held_start   timestamptz := date_trunc('day', now()) - interval '19 days' + interval '10 hours';
+  v_anchor       date;
 begin
   if v_email is null then
     raise notice '[seed] demo.owner_email er ikke sat — springer den befolkede tilstand over (kun quiz + katalog).';
@@ -176,9 +177,16 @@ begin
   on conflict do nothing;
 
   -- Medlemskab med demo-kort — samme tilstandsskift som confirmDemoCard (ADR 0041).
-  insert into membership (id, board_id, frequency_weeks, status, provider_customer_ref, card_status) values
-    (v_membership, v_board, 4, 'aktiv', 'DEMO-CUSTOMER-' || v_membership::text, 'registreret')
+  -- billing_anchor = dansk dato for kortregistreringen (B-19, ADR 0056): 10 dage tilbage, så
+  -- "i dag" ligger midt i den første 4-ugers periode og /betaling viser både en indeværende og
+  -- en kommende forfaldsdato.
+  insert into membership (id, board_id, frequency_weeks, status, provider_customer_ref,
+                          provider_subscription_ref, card_status, billing_anchor) values
+    (v_membership, v_board, 4, 'aktiv', 'DEMO-CUSTOMER-' || v_membership::text,
+     'DEMO-SUB-' || v_membership::text, 'registreret',
+     (now() at time zone 'Europe/Copenhagen')::date - 10)
   on conflict (id) do nothing;
+  select billing_anchor into v_anchor from membership where id = v_membership;
 
   -- Prisregel: kun hvis ingen aktiv findes (se advarslen ovenfor).
   if not exists (select 1 from pricing_rule where is_active) then
@@ -229,12 +237,15 @@ begin
     ('d0000000-0000-4000-8000-000000000a12', v_meeting_held, v_owner, v_mikkel, 4, null)
   on conflict do nothing;
 
-  -- Opkrævning for det afholdte møde — kun hvis demo-reglen er den aktive. Beløbet følger
-  -- formlen (base + 3 × pr. partner) × faktor_4 = (100 + 300) × 1,0 = 400 øre, præcis som
-  -- createChargeForMeeting ville regne. 'rapporteret' = indberettet, afregnes på næste faktura.
+  -- Opkrævning for den første 4-ugers periode — kun hvis demo-reglen er den aktive. Beløbet
+  -- følger formlen (base + 3 × pr. partner) × faktor_4 = (100 + 300) × 1,0 = 400 øre, præcis som
+  -- createChargesForDuePeriods ville regne. 'rapporteret' = prisen er meldt til abonnementet,
+  -- som afregnes på næste faktura. Perioden er halvåben [anchor, anchor + 28).
   if exists (select 1 from pricing_rule where id = v_rule and is_active) then
-    insert into payment_charge (id, meeting_id, membership_id, pricing_rule_id, amount_minor, currency, status, provider_charge_ref) values
-      ('d0000000-0000-4000-8000-000000000b01', v_meeting_held, v_membership, v_rule, 400, 'DKK', 'rapporteret', 'DEMO-CHARGE-SEED-0702')
+    insert into payment_charge (id, membership_id, pricing_rule_id, amount_minor, currency, status,
+                                provider_charge_ref, period_start, period_end, frequency_weeks, partner_count) values
+      ('d0000000-0000-4000-8000-000000000b01', v_membership, v_rule, 400, 'DKK', 'rapporteret',
+       'DEMO-SUB-' || v_membership::text, v_anchor, v_anchor + 28, 4, 3)
     on conflict do nothing;
   end if;
 end $$;

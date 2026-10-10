@@ -205,8 +205,8 @@ Abonnementets STØRRELSE afhænger af antal rådgivere på boardet og mødefrekv
 (4 / 8 / 12 uger). Beslutning: Mads, 2026-08-26 — se **ADR 0034**.
 
 ⚠ **Dette erstatter den tidligere model** ("kort registreres ved booking, træk sker ved
-afholdelse"), som fase 3 er bygget efter. Koden opkræver i dag pr. afholdt møde og skal
-rettes — se `docs/backlog.md` B-19. Brug ikke ordet "varierende betalingsfrekvenser"
+afholdelse"), som fase 3 oprindeligt blev bygget efter. Koden følger nu modellen — se
+ADR 0056 (B-19 lukket). Brug ikke ordet "varierende betalingsfrekvenser"
 om selve opkrævningen længere; frekvensen er fast (4 uger), det er PRISEN der varierer.
 
 ---

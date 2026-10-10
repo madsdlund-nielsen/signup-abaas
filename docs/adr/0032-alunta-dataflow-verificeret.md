@@ -1,6 +1,6 @@
 # 0032 — Alunta-dataflow verificeret: usage-abonnement med øre-parameter
 
-- **Status:** Accepteret — **usage-modellen erstattet af ADR 0034**
+- **Status:** Accepteret — **usage-modellen erstattet af ADR 0034; delvist erstattet af 0056** (abonnement med pris i stedet for usage-events; de verificerede webhook-/signaturfakta står, men "intet stabilt event-id" gælder ikke længere)
 
 > **Læs ADR 0034 sammen med denne.** De verificerede API-fakta (webhook-form, signatur,
 > checkout-flow) står ved magt. Men Alunta-planen skal være et **abonnement med

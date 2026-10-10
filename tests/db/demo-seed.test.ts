@@ -218,19 +218,31 @@ describe("demo-seed — befolket tilstand for en eksisterende ejer (ADR 0043)", 
       expect(Number(registered[0].antal)).toBe(3);
 
       const { rows: charge } = await client.query(
-        `select amount_minor, currency, status, provider_charge_ref, pricing_rule_id
+        `select amount_minor, currency, status, provider_charge_ref, pricing_rule_id,
+                meeting_id, period_start::text as period_start, period_end::text as period_end,
+                frequency_weeks, partner_count
            from payment_charge where id::text like $1`,
         [DEMO_PREFIX],
       );
-      // (100 + 3 × 100) × 1,0 = 400 øre — åbenlyst falsk, og samme formel som createChargeForMeeting.
+      // (100 + 3 × 100) × 1,0 = 400 øre — åbenlyst falsk, og samme formel som createChargesForDuePeriods.
       expect(charge[0]).toMatchObject({ amount_minor: 400, currency: "DKK", status: "rapporteret", pricing_rule_id: DEMO_RULE_ID });
-      expect(charge[0].provider_charge_ref).toMatch(/^DEMO-CHARGE-/);
+      expect(charge[0].provider_charge_ref).toMatch(/^DEMO-SUB-/);
+      // Opkrævningen er pr. 4-ugers periode (B-19) og hænger ikke på et møde.
+      expect(charge[0]).toMatchObject({ meeting_id: null, frequency_weeks: 4, partner_count: 3 });
+      const { rows: span } = await client.query(
+        `select (period_end - period_start) as dage from payment_charge where id::text like $1`,
+        [DEMO_PREFIX],
+      );
+      expect(span[0].dage).toBe(28);
 
       const { rows: membership } = await client.query(
-        `select provider_customer_ref from membership where id::text like $1`,
+        `select provider_customer_ref, provider_subscription_ref, billing_anchor <= current_date as anker_i_fortiden
+           from membership where id::text like $1`,
         [DEMO_PREFIX],
       );
       expect(membership[0].provider_customer_ref).toMatch(/^DEMO-CUSTOMER-/);
+      expect(membership[0].provider_subscription_ref).toMatch(/^DEMO-SUB-/);
+      expect(membership[0].anker_i_fortiden).toBe(true);
 
       const { rows: lead } = await client.query(
         `select count(*) as antal from board_partner where board_id::text like $1 and is_lead`,

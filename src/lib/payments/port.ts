@@ -1,6 +1,5 @@
-/** Betalingsfrekvenser (mødekadence i domænet): kort registreres ved booking, forbrug
- *  indberettes ved afholdelse. Faktureringskadencen hos leverandøren er en anden akse
- *  (Alunta fakturerer i måneds-intervaller — ADR 0032). */
+/** Mødefrekvens (domænet): hvor ofte boardet mødes — 4 / 8 / 12 uger. Det er en akse i PRISEN,
+ *  ikke i opkrævningen: abonnementet forfalder altid hver 4. uge (ADR 0034). */
 export type PaymentFrequencyWeeks = 4 | 8 | 12;
 
 export interface CardRegistration {
@@ -10,18 +9,32 @@ export interface CardRegistration {
 }
 
 /**
- * Indberet et afholdt mødes meeting-fee som forbrug til opkrævning. Alunta har INTET
- * synkront kort-træk (verificeret, ADR 0032): trækket udløses her og opkræves automatisk
- * på leverandørens næste periodefaktura. Webhooken er autoritativ for gennemført/fejlet.
+ * Sæt kundens fast-pris-abonnement (B-19, ADR 0034 + 0056): beløbet pr. faktureringsperiode og
+ * kadencen. Vores versionerede `pricing_rule` er stadig den autoritative prisberegner —
+ * leverandøren bærer kun beløbet og opkrævningen, ingen prislogik.
+ *
+ * Kaldet er IDEMPOTENT og kan gentages med samme indhold: det opdaterer prisen på det
+ * eksisterende abonnement. Ændringer gælder fra leverandørens NÆSTE periode (ingen
+ * proratering — det er ikke besluttet, TODO(ejer)).
  */
-export interface UsageChargeRequest {
+export interface SubscriptionRequest {
+  /** Vores medlemskabs-id — leverandør-neutralt opslag/audit. */
+  membershipId: string;
   /** Leverandørens customer-uuid (fra checkout.completed → membership.provider_customer_ref). */
   customerRef: string;
-  /** Beløb i mindste valutaenhed (øre). TODO(ejer): sats bindes af honorar/meeting-fee. */
+  /** Leverandørens eksisterende abonnement (membership.provider_subscription_ref), hvis kendt. */
+  subscriptionRef: string | null;
+  /** Beløb pr. periode i mindste valutaenhed (øre), beregnet af den aktive prisregel. */
   amountMinor: number;
-  /** Idempotensnøgle (payment_charge.id) — leverandøren dedupliker i ~30 dage. */
-  idempotencyKey: string;
-  description: string;
+  currency: string;
+  /**
+   * Kadencen vi forventer: 28 dage (hver 4. uge, ADR 0034). En adapter der ikke kan levere den
+   * eksakt må ikke skjule afvigelsen: den dokumenterer den og markerer den med en TODO. Alunta
+   * kan det ikke (intervaller i måneder) — se alunta.ts og docs/backlog.md B-35.
+   */
+  intervalDays: number;
+  /** Første dag i abonnementet (membership.billing_anchor), "YYYY-MM-DD". */
+  startsOn: string;
 }
 
 export interface CheckoutSession {
@@ -30,17 +43,16 @@ export interface CheckoutSession {
 }
 
 /**
- * Betaling ind. Leverandør: Alunta (ADR 0023; dataflow verificeret i ADR 0032).
- *
- * Bevidst INGEN opsig/opgradér- eller synkron charge-operation: med træk-pr-afholdelse
- * findes intet abonnement at opdatere hos leverandøren ud over forbruget, og Aluntas
- * /payments-API er read-only. Op-/nedgradering og opsigelse er membership-operationer
- * i Supabase (ADR 0030/0031).
+ * Betaling ind. Leverandør: Alunta (ADR 0023; dataflow verificeret i ADR 0032 og udvidet i
+ * ADR 0056). Porten har to operationer: registrér kort (hosted checkout, der også opretter
+ * abonnementet hos leverandøren) og sæt abonnementets pris. Der er bevidst INGEN synkron
+ * charge — leverandøren fakturerer og trækker selv; webhooken er autoritativ for gennemført/fejlet.
+ * Opsigelse og op-/nedgradering er membership-operationer i Supabase (ADR 0030/0031).
  */
 export interface PaymentProvider {
   readonly name: string;
   /** Start kortregistrering: opret hosted checkout-session og returnér URL'en. */
   registerCard(reg: CardRegistration): Promise<CheckoutSession>;
-  /** Indberet meeting-fee som forbrug (idempotent hos leverandøren). Returnerer reference. */
-  reportUsageCharge(req: UsageChargeRequest): Promise<{ id: string }>;
+  /** Sæt abonnementets pris/kadence (idempotent). Returnerer leverandørens abonnements-reference. */
+  upsertSubscription(req: SubscriptionRequest): Promise<{ id: string }>;
 }

@@ -1,14 +1,10 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildCheckoutSessionRequest,
-  buildUsageEventRequest,
-  USAGE_PARAMETER,
-} from "@/lib/payments/alunta";
+import { buildCheckoutSessionRequest, buildSubscriptionPriceRequest } from "@/lib/payments/alunta";
 
 /**
- * Alunta-adapterens rene request-byggere (ADR 0032) — testet mod den verificerede spec-form:
- * checkout-sessions kræver type/plan_id/external_customer_id; usage-events kræver
- * parameter/quantity og bærer idempotency_key.
+ * Alunta-adapterens rene request-byggere (ADR 0032/0056) — testet mod spec-formen:
+ * checkout-sessions kræver type/plan_id/external_customer_id; `PUT /subscriptions/{uuid}/price`
+ * tager `price` (flat-rate, mindste valutaenhed).
  */
 describe("buildCheckoutSessionRequest", () => {
   it("bygger subscription-session med plan og vores kunde-reference", () => {
@@ -30,20 +26,11 @@ describe("buildCheckoutSessionRequest", () => {
   });
 });
 
-describe("buildUsageEventRequest — meeting-fee som forbrug i øre", () => {
-  it("indberetter beløbet som counter-delta med idempotensnøgle", () => {
-    expect(
-      buildUsageEventRequest({
-        customerRef: "cust-1",
-        amountMinor: 12345,
-        idempotencyKey: "charge-1",
-        description: "møde",
-      }),
-    ).toEqual({
-      parameter: USAGE_PARAMETER,
-      quantity: 12345,
-      kind: "counter",
-      idempotency_key: "charge-1",
-    });
+describe("buildSubscriptionPriceRequest — abonnementets pris i øre", () => {
+  it("sender hele det tilbagevendende beløb som `price`, uden gættet effective_date", () => {
+    const request = buildSubscriptionPriceRequest({ amountMinor: 12345 });
+    expect(request).toEqual({ price: 12345 });
+    // Default er "næste kommende periode"; en gættet dato ville give 422 (kun available_price_change_dates).
+    expect(request).not.toHaveProperty("effective_date");
   });
 });
