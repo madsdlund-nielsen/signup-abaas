@@ -240,8 +240,9 @@ bygges **skærm-først**: skærmen med demo-data → Mads klikker og designer �
 den rigtige adapter droppes ind. Skærmen er produktionskode fra første commit; kun
 datakilden skifter. Rækkefølgen bestemmer Mads ved at klikke.
 
-**Skærm-først-kandidater (hver sin lille PR):** AI-opsummering på `/moeder/[id]` ·
-notifikationsoversigt.
+**Skærm-først-kandidater:** alle seks er bygget (AI-opsummering på `/moeder/[id]`,
+notifikationsoversigt, partner-honorar, partner-tilgængelighed, rolle-dashboards, admin-drift —
+ADR 0048, 0051-0053, 0055). Næste skridt er at koble de rigtige adaptere på, når nøglerne lander.
 
 Fase-dokumenterne `docs/fase-0.md` … `docs/fase-6.md` og `docs/fase-0-eksekvering.md` er
 **opslagsværk** for scope, krav og de uafklarede punkter pr. område — de slettes ikke, og
