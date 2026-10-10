@@ -16,6 +16,7 @@ import { asPostgres } from "./helpers";
  */
 const DEMO_PREFIX = "d0000000-0000-4000-8000-%";
 const DEMO_RULE_ID = "d0000000-0000-4000-8000-000000000601";
+const DEMO_FEE_RULE_ID = "d0000000-0000-4000-8000-000000000602";
 
 /** Ejer-E fra tests/setup/seed.sql: har rollen ejer og — afgørende — intet board. */
 const OWNER_E = { id: "00000000-0000-0000-0000-00000000000e", email: "ejer-e@example.com" };
@@ -51,6 +52,7 @@ async function populatedCounts(client: Client): Promise<Record<string, number>> 
        (select count(*) from meeting_rating      where id::text like $1) as vurderinger,
        (select count(*) from payment_charge      where id::text like $1) as opkraevninger,
        (select count(*) from pricing_rule        where id::text like $1 and is_active) as demoregler,
+       (select count(*) from fee_rule            where id::text like $1) as honorarregler,
        (select count(*) from quiz_answer         where id::text like $1) as svar`,
     [DEMO_PREFIX],
   );
@@ -68,6 +70,7 @@ const EMPTY = {
   vurderinger: 0,
   opkraevninger: 0,
   demoregler: 0,
+  honorarregler: 0,
   svar: 0,
 };
 
@@ -82,6 +85,7 @@ const POPULATED = {
   vurderinger: 2,
   opkraevninger: 1,
   demoregler: 1,
+  honorarregler: 1,
   svar: 4,
 };
 
@@ -150,6 +154,8 @@ describe("demo-seed (supabase/seed/demo.sql)", () => {
       await client.query(SEED);
       const { rows } = await client.query("select count(*) as antal from pricing_rule");
       expect(Number(rows[0].antal)).toBe(0);
+      const fees = await client.query("select count(*) as antal from fee_rule");
+      expect(Number(fees.rows[0].antal)).toBe(0);
       expect(await populatedCounts(client)).toEqual(EMPTY);
     });
   });
@@ -263,6 +269,66 @@ describe("demo-seed — befolket tilstand for en eksisterende ejer (ADR 0043)", 
     });
   });
 
+  it("seeder en åbenlyst falsk honorarregel (1 kr i timen) så opgørelsen kan klikkes", async () => {
+    await asPostgres(async (client) => {
+      await seedAsOwner(client, OWNER_E.email);
+      const { rows } = await client.query(
+        `select id, version, hourly_rate_minor, currency, vat_mode, absence_rule,
+                effective_from < now() as gaelder_allerede
+           from fee_rule where id::text like $1`,
+        [DEMO_PREFIX],
+      );
+      // 100 øre pr. time = 1 kr; moms og afbudsregel er IKKE besluttet af seed'et.
+      expect(rows).toEqual([
+        {
+          id: DEMO_FEE_RULE_ID,
+          version: 1,
+          hourly_rate_minor: 100,
+          currency: "DKK",
+          vat_mode: "ikke_fastlagt",
+          absence_rule: "ikke_fastlagt",
+          gaelder_allerede: true,
+        },
+      ]);
+
+      // Det afholdte demo-møde afregnes efter reglen: regelen gælder fra før mødet.
+      const { rows: covered } = await client.query(
+        `select count(*) as antal from meeting m
+          where m.id::text like $1 and m.status = 'afholdt'
+            and m.starts_at >= (select effective_from from fee_rule where id = $2)`,
+        [DEMO_PREFIX, DEMO_FEE_RULE_ID],
+      );
+      expect(Number(covered[0].antal)).toBe(1);
+    });
+  });
+
+  it("admin ser demo-opgørelsen i viewen: tre partnerlinjer på det afholdte og tre på det kommende møde", async () => {
+    await asPostgres(async (client) => {
+      await seedAsOwner(client, OWNER_E.email);
+      await client.query("set local role app_authenticated");
+      await client.query("select set_config('request.jwt.claim.sub', $1, true)", ["00000000-0000-0000-0000-00000000000d"]);
+      const { rows } = await client.query(
+        `select meeting_status, count(*) as antal from partner_fee_line
+          where meeting_id::text like $1 group by meeting_status`,
+        [DEMO_PREFIX],
+      );
+      const byStatus = Object.fromEntries(rows.map((r) => [r.meeting_status, Number(r.antal)]));
+      expect(byStatus).toEqual({ afholdt: 3, planlagt: 3 });
+    });
+  });
+
+  it("rører ikke honorarregler når en findes — og seeder ingen", async () => {
+    await asPostgres(async (client) => {
+      await client.query(
+        `insert into fee_rule (version, hourly_rate_minor, effective_from) values (1, 0, '2026-01-01T00:00:00Z')`,
+      );
+      await seedAsOwner(client, OWNER_E.email);
+      expect(await populatedCounts(client)).toEqual({ ...POPULATED, honorarregler: 0 });
+      const { rows } = await client.query("select count(*) as antal from fee_rule");
+      expect(Number(rows[0].antal)).toBe(1);
+    });
+  });
+
   it("fejler højlydt når e-mailen ikke findes i app_user", async () => {
     await asPostgres(async (client) => {
       await expect(seedAsOwner(client, "findes-ikke@example.com")).rejects.toThrow(/opret ejeren via \/signup/);
@@ -290,7 +356,7 @@ describe("demo-seed — befolket tilstand for en eksisterende ejer (ADR 0043)", 
     });
   });
 
-  it("demo-clean fjerner den befolkede tilstand, opkrævningen og demo-reglen", async () => {
+  it("demo-clean fjerner den befolkede tilstand, opkrævningen og demo-reglerne", async () => {
     await asPostgres(async (client) => {
       await seedAsOwner(client, OWNER_E.email);
       await client.query(CLEAN);

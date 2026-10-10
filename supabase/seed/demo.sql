@@ -125,6 +125,8 @@ on conflict do nothing;
 --   partnere) indsættes KUN hvis ingen aktiv regel findes. Tallet er åbenlyst falsk (ADR 0041's
 --   data-regel) og fjernes af demo-clean. Findes en rigtig regel, røres intet, og ingen
 --   opkrævning seedes — tal er stadig ejer-territorium.
+--   Samme regel for honorarreglen (fee_rule, ADR 0051): én DEMO-regel på 1,00 kr i timen, kun hvis
+--   ingen honorarregel findes.
 
 do $$
 declare
@@ -133,6 +135,7 @@ declare
   v_board        constant uuid := 'd0000000-0000-4000-8000-000000000401';
   v_membership   constant uuid := 'd0000000-0000-4000-8000-000000000501';
   v_rule         constant uuid := 'd0000000-0000-4000-8000-000000000601';
+  v_fee_rule     constant uuid := 'd0000000-0000-4000-8000-000000000602';
   v_meeting_next constant uuid := 'd0000000-0000-4000-8000-000000000701';
   v_meeting_held constant uuid := 'd0000000-0000-4000-8000-000000000702';
   v_astrid       constant uuid := 'd0000000-0000-4000-8000-000000000301';
@@ -186,6 +189,18 @@ begin
                               factor_4_weeks, factor_8_weeks, factor_12_weeks, currency, is_active)
     select v_rule, coalesce(max(version), 0) + 1, 100, 100, 1, 1, 1, 'DKK', true
     from pricing_rule
+    on conflict (id) do nothing;
+  end if;
+
+  -- Honorarregel (fase 5.1, ADR 0051): kun hvis ingen findes. 100 øre pr. time = 1,00 kr — åbenlyst
+  -- falsk, og 75 min giver 1,25 kr pr. partner pr. afholdt møde. Moms og afbudsregel står som
+  -- 'ikke_fastlagt' (tabellens default), så opgørelsen viser forbeholdene præcis som i prod.
+  -- Gælder fra 60 dage tilbage, så det afholdte møde (19 dage tilbage) afregnes efter den.
+  -- Demopartnerne har ingen login; opgørelsen ses som admin på /admin/honorar.
+  -- Fjernes af demo-clean. TODO(ejer): honorarsats (§12 pkt. 1), moms (pkt. 14), udeblivelse (pkt. 13).
+  if not exists (select 1 from fee_rule) then
+    insert into fee_rule (id, version, hourly_rate_minor, currency, effective_from)
+    values (v_fee_rule, 1, 100, 'DKK', date_trunc('day', now()) - interval '60 days')
     on conflict (id) do nothing;
   end if;
 

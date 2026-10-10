@@ -848,3 +848,57 @@ a.btn-primary {
   width: 96px;
   height: 96px;
 }
+
+/* --- Honoraropgørelse (fase 5.1/5.2): tal først, derefter linjerne ---------------
+   Nøgletallene står som tynd, stor navy-tekst med en versal etiket over — samme hierarki som
+   resten af fladen (tynde overskrifter, versal-UI), ingen bokse eller badges. */
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+.figure__label {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.figure__value {
+  margin: 0;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: var(--fw-light);
+  color: var(--color-navy);
+}
+.figure__note {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-label);
+  color: var(--color-text-muted);
+}
+
+/* Periodevælger: forrige / måned / næste. */
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.pager__current {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-navy);
+}
+
+/* Beløbskolonner højrestilles; totalrækken bæres af en tyk navy linje, ikke en farveflade. */
+.table__cell--num,
+.table__head--num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.table__row--total {
+  border-top: 1px solid var(--color-navy);
+}

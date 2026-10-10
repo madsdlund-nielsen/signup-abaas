@@ -14,6 +14,7 @@ begin;
 -- rækker. Ejerens quiz-svar cascader fra quiz_option-sletningen nedenfor.
 delete from board        where id::text like 'd0000000-0000-4000-8000-%';
 delete from pricing_rule where id::text like 'd0000000-0000-4000-8000-%';
+delete from fee_rule     where id::text like 'd0000000-0000-4000-8000-%';
 
 delete from quiz_question   where id::text like 'd0000000-0000-4000-8000-%';
 delete from partner_profile where id::text like 'd0000000-0000-4000-8000-%';

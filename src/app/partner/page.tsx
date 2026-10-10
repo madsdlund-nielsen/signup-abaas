@@ -127,6 +127,17 @@ export default async function PartnerPortalPage() {
               </form>
             </section>
 
+            <section className="stack measure">
+              <h2 className="heading-3 heading--on-light">Dit honorar</h2>
+              <p className="body">
+                Opgørelse pr. måned over de møder du har deltaget i — sum, afholdte møder og
+                hvad der endnu ikke kan regnes.
+              </p>
+              <Link className="btn-secondary" href="/partner/honorar">
+                Se din opgørelse
+              </Link>
+            </section>
+
             <section className="stack">
               <h2 className="heading-3 heading--on-light">Dit board</h2>
               {board ? (
