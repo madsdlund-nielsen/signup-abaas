@@ -24,7 +24,13 @@
 - [ ] Partner-dashboard: kommende møder, honoraroverblik, egne ratings.
 - [ ] Lead-partner-dashboard: **kompetenceoverblik for boardet** + næste møde.
 - [ ] Admin-dashboard: boards, partnere, betalinger, honorar, driftstatus.
-- [ ] Juridisk download-interface til admin (jf. §11-krav) er tilgængeligt.
+      **Delvist** (`/admin/drift`, ADR 0053): boards, partnere, medlemskaber, betalingstræk, møder,
+      webhooks og integrationsstatus er bygget. Mangler: **honorar** (kobles på med honorarskiven)
+      og PostHog-driftstatus (`TODO(mads)`: live nøgle).
+- [x] Juridisk download-interface til admin (jf. §11-krav) er tilgængeligt (`/admin/juridisk`,
+      ADR 0053): indsigtsudtræk (art. 15), dokumentoversigt og henvisning til sletteflowet.
+      Interfacet er bygget, ikke indholdet: ToS/honoraraftale ikke udarbejdet (`TODO(ejer)`),
+      ingen samtykkelog at eksportere, og ingen admin-sletteaction (se stub-register).
 - [ ] Fuld test suite grøn, inkl. RLS: en partner må kun se eget honorar
       (positiv **og** negativ case).
 

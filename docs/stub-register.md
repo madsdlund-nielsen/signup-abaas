@@ -5,7 +5,7 @@
 > Fase 6 (§6.4) gennemgår registret: hver post skal være løst eller have eksplicit
 > ejer-accept før launch.
 >
-> Sidst gennemgået: 2026-09-15 (Cal.com-plan + felt-kontrakt, ADR 0046; Ordbogen-DPA lukket).
+> Sidst gennemgået: 2026-10-10 (admin-drift og juridisk interface, ADR 0053; før det 2026-09-15: Cal.com-plan + felt-kontrakt, ADR 0046; Ordbogen-DPA lukket).
 
 ## Backend-stubs — kaster `NotConfiguredError`
 
@@ -73,6 +73,11 @@ deterministiske frem for plausible — se `docs/stub-politik.md`.
 | `pricing_rule` (0013) | **Ingen aktiv prisregel findes** — beregning og charge-grundlag er slået fra indtil admin aktiverer en version. Demo-seed'et (ADR 0043) kan indsætte en åbenlyst falsk 1-kr-regel sammen med en demo-ejer, kun hvor ingen aktiv findes — demodata, ikke en pladsholder i kode | Startpris/meeting-fee + frekvensfaktorer (§12 pkt. 2). Tal indtastes af admin, aldrig af kode | Ejer |
 | `src/server/notifications/index.ts` (`NOTIFICATION_TYPES`) | **Udsendelsestidspunkt for mødepåmindelse og ratinganmodning er `null`** — skærmen viser "Ikke fastlagt" frem for et tal. De to øvrige typer udløses direkte af en hændelse og har derfor et tidspunkt uden at nogen har valgt det | Hvor længe før mødet påmindes der, og hvor hurtigt efter et møde bedes om rating? Påmindelsen hænger sammen med ændre-/aflyse-vinduet (§12 pkt. 4): en påmindelse efter fristen for at flytte er værdiløs. Skabelonteksten mangler også, og forudsætter ToS/samtykke (ADR 0048) | Ejer |
 | `src/server/pricing/algorithm.ts` | Beløb er rå øre uden momslogik | Moms på partner-honorar/beløbsvisning (§12 pkt. 14) | Ejer |
+| `src/app/admin/drift/page.tsx` (PostHog-driftstatus) | **Ingen fejlrate/seneste fejl vises** — kun et link til PostHog (EU). Analytics-porten er en stub og har ingen query-grænseflade (ADR 0053) | Live PostHog-projektnøgle + en læse-adapter bag analytics-porten. Ingen falske tal før da | Mads |
+| `src/server/admin/legal.ts` (ToS + honoraraftale) | Begge står som **"Ikke udarbejdet — afventer ejer"** på `/admin/juridisk`. Interfacet er bygget, indholdet findes ikke | ToS og honoraraftale (CLAUDE.md, uafklarede punkter); honoraraftalen hænger sammen med honorarsats/moms (§12) | Ejer |
+| `src/server/consent/` (samtykkelog) | **Der findes ingen samtykketabel** — samtykke er en typet kerne + en cookie i browseren; ingen bevis for hvem der sagde ja til hvad og hvornår. `/admin/juridisk` siger det højt og tilbyder ingen tom CSV (ADR 0053) | Samtykketekst + kategori-liste (ejer); derefter en `consent_event`-tabel med RLS og en CSV-eksport. Må ikke stubbes (samtykke) | Ejer |
+| `src/server/admin/subject-access.ts` (indsigtsudtræk) | **Modtagne vurderinger af en partner er udeladt** af partnerens udtræk, og udtrækket nævner det selv (`afgraensning`). Der er ingen persistent revisionslog over hvem der har hentet et udtræk — kun én logline uden persondata | Jura: må modtagne vurderinger med (evt. uden afgiver)? Plus en revisionstabel (migration + RLS) | Ejer / Mads |
+| `docs/gdpr/sletteflow.md` | **Ingen admin-sletteaction findes.** Flowet er kun en skitse; `/admin/juridisk` henviser til det og siger at der ikke er en sletteknap. Destruktiv, kræver egen skive (ADR 0053) | Opbevaringspligt vs. sletning (bogføring, QuickPay/Nets-data), slette-SLA — ejer/jura; adaptere får `eraseDataSubject` | Ejer |
 | `src/server/charges/` | Fejlet træk registreres (status + årsag) uden konsekvens for honorar eller adgang | §5.10 udløser honorar uafhængigt af betaling; koblingen er uafklaret (afledt af §12 pkt. 13) | Ejer |
 | ~~`src/server/charges/webhook.ts`~~ | ~~Provisorisk payload-form~~ → **verificeret mod spec'en (ADR 0032)**: `Signature`-header, WebhookPayload-form, afledt event-id | Lukket 2026-08-04 | — |
 

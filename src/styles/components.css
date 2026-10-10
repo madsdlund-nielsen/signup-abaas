@@ -811,6 +811,32 @@ a.btn-primary {
   color: var(--text-on-dark-soft);
 }
 
+/* Nøgletal (driftsoverblik, fase 5.4): tal først, tynd vægt, ingen bokse. Tallet bærer
+   hierarkiet — labelen er versal-UI under en tynd regel, som resten af admin-fladen. */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+}
+.stat {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-grey-bg);
+}
+.stat__value {
+  margin: 0;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: var(--fw-light);
+  color: var(--color-navy);
+}
+.stat__label {
+  margin: 0;
+  font-size: var(--fs-label);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
 /* Handlingspunkter fra AI-opsummeringen (fase 4.4): nummereret og redaktionel — ingen bokse. */
 .summary-actions {
   margin: 0;
