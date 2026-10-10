@@ -4,6 +4,10 @@
  * Supabase- eller React-afhængigheder.
  */
 
+import { copenhagenLocalToUtc as localToUtc } from "@/server/time/copenhagen";
+
+export { copenhagenLocalToIso } from "@/server/time/copenhagen";
+
 const TIME_ZONE = "Europe/Copenhagen";
 
 export interface Period {
@@ -16,31 +20,6 @@ export interface Period {
 }
 
 const MONTH_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/;
-
-/** Forskydningen til UTC (minutter) i Europe/Copenhagen på et givent tidspunkt. */
-function offsetMinutes(at: Date): number {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: TIME_ZONE,
-    timeZoneName: "longOffset",
-  }).formatToParts(at);
-  const name = parts.find((part) => part.type === "timeZoneName")?.value ?? "GMT";
-  const match = /^GMT(?:([+-])(\d{2}):(\d{2}))?$/.exec(name);
-  if (!match) throw new Error(`Uventet tidszoneforskydning: ${name}.`);
-  if (!match[1]) return 0;
-  const minutes = Number(match[2]) * 60 + Number(match[3]);
-  return match[1] === "-" ? -minutes : minutes;
-}
-
-/**
- * Lokal dansk dato/tid → UTC-instant. Forskydningen aflæses ved middag på samme dato: sommertids-
- * skift sker natten til en søndag (aldrig den 1. kl. 00:00), så forskydningen er den samme hele
- * dagen for månedsgrænser og for de tidspunkter admin vælger.
- */
-function localToUtc(year: number, month: number, day: number, hour: number, minute: number): Date {
-  const nominal = Date.UTC(year, month - 1, day, hour, minute);
-  const offset = offsetMinutes(new Date(Date.UTC(year, month - 1, day, 12, 0)));
-  return new Date(nominal - offset * 60_000);
-}
 
 /** Gyldig "ÅÅÅÅ-MM"? */
 export function isValidMonth(value: string | null | undefined): value is string {
@@ -98,33 +77,4 @@ export function formatMonth(month: string): string {
     year: "numeric",
   }).format(new Date(from));
   return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-/**
- * "datetime-local"-værdi ("ÅÅÅÅ-MM-DDTTT:MM", ingen zone) → UTC ISO, fortolket som dansk tid.
- * `new Date(value)` ville bruge serverens zone (UTC på Netlify) og forskyde med 1-2 timer.
- */
-export function copenhagenLocalToIso(value: string): string {
-  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
-  if (!match) throw new Error(`Ugyldigt tidspunkt '${value}'.`);
-  const [year, month, day, hour, minute] = match.slice(1).map(Number) as [
-    number,
-    number,
-    number,
-    number,
-    number,
-  ];
-  // Date.UTC ruller over (31. februar → marts); en dato der ikke findes afvises i stedet.
-  const nominal = new Date(Date.UTC(year, month - 1, day, hour, minute));
-  if (
-    nominal.getUTCFullYear() !== year ||
-    nominal.getUTCMonth() !== month - 1 ||
-    nominal.getUTCDate() !== day ||
-    nominal.getUTCHours() !== hour ||
-    nominal.getUTCMinutes() !== minute
-  ) {
-    throw new Error(`Ugyldigt tidspunkt '${value}'.`);
-  }
-  const date = localToUtc(year, month, day, hour, minute);
-  return date.toISOString();
 }

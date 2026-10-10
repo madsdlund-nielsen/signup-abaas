@@ -21,6 +21,7 @@ import { createServiceSupabase } from "@/server/auth/supabase-server";
 import { createBookingProvider, type BookingAttendee, type BookingProvider } from "@/lib/booking";
 import { createChargeForMeeting } from "@/server/charges/create";
 import { assertBoardAvailable, assertMeetingBoardAvailable } from "@/server/availability/guard";
+import { copenhagenLocalToIso } from "@/server/time/copenhagen";
 import { ownerAttendee, resolveEventTypeId } from "./booking-info";
 import type { MeetingRegisteredStatus } from "./index";
 
@@ -184,7 +185,7 @@ export async function bookMeeting(_prev: AuthFormState, formData: FormData): Pro
       .maybeSingle();
     if (!owned) return { error: "Board ikke fundet." };
 
-    await createMeetingForBoard(service, boardId, new Date(startsAt).toISOString());
+    await createMeetingForBoard(service, boardId, copenhagenLocalToIso(startsAt));
     revalidatePath("/moeder");
     return {};
   } catch (e) {
@@ -207,8 +208,8 @@ export async function rescheduleMeeting(
     if (!meetingId || !startsAt) return { error: "Møde og nyt starttidspunkt er påkrævet." };
 
     const { providerBookingUid } = await requireOwnedMeeting(service, user, meetingId);
-    await assertMeetingBoardAvailable(service, meetingId, startsAt); // fase 5.3, ADR 0052
-    let confirmed = new Date(startsAt).toISOString();
+    let confirmed = copenhagenLocalToIso(startsAt); // B-29: dansk vægurstid, ikke serverens zone
+    await assertMeetingBoardAvailable(service, meetingId, confirmed); // fase 5.3, ADR 0052
     if (providerBookingUid) {
       const scheduled = await createBookingProvider().rescheduleMeeting(providerBookingUid, confirmed);
       confirmed = scheduled.startsAt;
@@ -272,7 +273,7 @@ export async function initiateNextMeeting(
       .maybeSingle();
     if (!lead) return { error: "Kun boardets lead-partner kan initiere næste møde." };
 
-    await createMeetingForBoard(service, boardId, new Date(startsAt).toISOString());
+    await createMeetingForBoard(service, boardId, copenhagenLocalToIso(startsAt));
     revalidatePath("/partner");
     revalidatePath("/moeder");
     return {};
