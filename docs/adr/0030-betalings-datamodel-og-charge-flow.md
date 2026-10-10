@@ -1,6 +1,6 @@
 # 0030 — Betalings-datamodel: versionerede prisregler + charge pr. afholdt møde
 
-- **Status:** Accepteret — **opkrævnings-triggeren erstattet af ADR 0034**
+- **Status:** Accepteret — **opkrævnings-triggeren erstattet af ADR 0034; delvist erstattet af 0056** (charge pr. periode i stedet for pr. møde; prisreglen og dens versionering står ved magt)
 
 > **Læs ADR 0034 sammen med denne.** Prisreglen og dens versionering står ved magt.
 > Men opkrævningen sker ikke længere pr. afholdt møde: modellen er et fast abonnement

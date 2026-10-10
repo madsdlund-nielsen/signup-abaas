@@ -25,7 +25,7 @@ export default async function AdminPricingPage() {
           </>
         }
         title="Prisregler"
-        lead="Meeting-fee beregnes som (grundpris + antal partnere × pris pr. partner) × frekvensfaktor. Versioner er uforanderlige: opret en ny version og aktivér den — hver opkrævning refererer den version der blev anvendt. Beløb angives i øre."
+        lead="Abonnementet pr. 4. uge beregnes som (grundpris + antal partnere × pris pr. partner) × frekvensfaktor. Versioner er uforanderlige: opret en ny version og aktivér den — hver opkrævning refererer den version der blev anvendt. Beløb angives i øre."
       />
       <PageBody>
         {!active ? (

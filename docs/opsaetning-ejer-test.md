@@ -114,7 +114,7 @@ Gentag trin 1 uden trin 2 for at teste ejer-flowet som en almindelig kunde.
 | **Cal.com** (booking) | `CALCOM_API_KEY`, `CALCOM_TEAM_ID`, `CALCOM_WEBHOOK_SECRET` + `FLAG_BOOKING=true` (+ Cal.com-sæde pr. partner og event type pr. board under `/admin/boards`) | Booking-UI'et viser den ærlige "ikke konfigureret"-besked. Kør `docs/spikes/multi-host.md`-checklisten når nøglerne lander |
 | **Resend** (mail) | `RESEND_API_KEY`, `RESEND_FROM_ADDRESS` + `FLAG_EMAIL=true` | Supabase sender bekræftelsesmails med sin egen SMTP (rate-limited) |
 | **PostHog** | `POSTHOG_KEY` + `FLAG_ANALYTICS=true` | Fejl logges kun til konsollen |
-| **Alunta + QuickPay** | se `docs/accounts-to-create.md` | Betaling er slået fra. ⚠ Opret planen som **abonnement med 4-ugers interval**, ikke usage-plan (ADR 0034) |
+| **Alunta + QuickPay** | se `docs/accounts-to-create.md` | Betaling er slået fra. ⚠ Opret planen som **flat-rate-abonnement**, ikke usage-plan (ADR 0034/0056). Alunta fakturerer kun i måneder — 4-ugers-kadencen er et åbent Mads-punkt (B-35) |
 
 ## 7. Hvad ejerne kan teste mandag
 

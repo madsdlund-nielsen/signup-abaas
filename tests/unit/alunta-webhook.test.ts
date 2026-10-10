@@ -18,7 +18,7 @@ function sign(body: string, secret = SECRET): string {
 function payload(overrides: Partial<AluntaWebhookPayload> = {}): AluntaWebhookPayload {
   return {
     event: "invoice.paid",
-    team_id: 123,
+    team_uuid: "team-1",
     timestamp: "2026-08-04T10:30:00Z",
     data: {
       invoice: { uuid: "inv-1" },
@@ -64,7 +64,30 @@ describe("parseAluntaEvent — spec'ens WebhookPayload (event/team_id/timestamp/
   });
 });
 
-describe("afledt idempotensnøgle (payloaden har INTET stabilt event-id — spec-verificeret)", () => {
+describe("idempotensnøgle: leverandørens stabile id foretrækkes, ellers afledt", () => {
+  it("webhook_uuid (stabil pr. leverance) er den primære nøgle", () => {
+    const withUuid = payload({ webhook_uuid: "wh-1" });
+    expect(buildEventId(withUuid)).toBe("delivery:wh-1");
+    // Samme leverance med nyt timestamp (kan ikke ske, men) → stadig samme nøgle.
+    expect(buildEventId({ ...withUuid, timestamp: "2027-01-01T00:00:00Z" })).toBe("delivery:wh-1");
+  });
+
+  it("data.event_id (stabil pr. transition) bruges når webhook_uuid mangler", () => {
+    const key = buildEventId(payload({ data: { event_id: "ev-1", invoice: { uuid: "inv-1" } } }));
+    expect(key).toBe("invoice.paid:event:ev-1");
+  });
+
+  it("de tre nøgletyper kan ikke kollidere på tværs", () => {
+    const keys = new Set([
+      buildEventId(payload({ webhook_uuid: "x" })),
+      buildEventId(payload({ data: { event_id: "x" } })),
+      buildEventId(payload()),
+    ]);
+    expect(keys.size).toBe(3);
+  });
+});
+
+describe("afledt idempotensnøgle (fallback når payloaden ingen stabile id'er bærer)", () => {
   it("genleverance = samme nøgle; ny hændelse (nyt timestamp) = ny nøgle", () => {
     expect(buildEventId(payload())).toBe(buildEventId(payload()));
     expect(buildEventId(payload({ timestamp: "2026-08-04T11:00:00Z" }))).not.toBe(
@@ -92,7 +115,33 @@ describe("mapAluntaEvent — webhooks opdaterer status, opretter aldrig", () => 
           data: { type: "subscription", external_customer_id: "m-1", customer: { uuid: "cust-1" } },
         }),
       ),
-    ).toEqual({ kind: "card_registered", externalCustomerId: "m-1", aluntaCustomerUuid: "cust-1" });
+    ).toEqual({
+      kind: "card_registered",
+      externalCustomerId: "m-1",
+      aluntaCustomerUuid: "cust-1",
+      aluntaSubscriptionUuid: null,
+    });
+  });
+
+  it("checkout.completed bærer abonnements-uuid'et med, så prisen kan sættes på det (ADR 0056)", () => {
+    expect(
+      mapAluntaEvent(
+        payload({
+          event: "checkout.completed",
+          data: {
+            type: "subscription",
+            external_customer_id: "m-1",
+            customer: { uuid: "cust-1" },
+            subscription: { uuid: "sub-1" },
+          },
+        }),
+      ),
+    ).toEqual({
+      kind: "card_registered",
+      externalCustomerId: "m-1",
+      aluntaCustomerUuid: "cust-1",
+      aluntaSubscriptionUuid: "sub-1",
+    });
   });
 
   it("NEGATIV: checkout.completed for one_off_invoice eller uden referencer ignoreres", () => {
@@ -106,7 +155,7 @@ describe("mapAluntaEvent — webhooks opdaterer status, opretter aldrig", () => 
     ).toBe("ignore");
   });
 
-  it("invoice.paid → gennemført for membershipets rapporterede forbrug (periode-aggregat)", () => {
+  it("invoice.paid → gennemført for membershipets rapporterede periode-opkrævninger (aggregat)", () => {
     expect(mapAluntaEvent(payload())).toEqual({
       kind: "invoice_paid",
       aluntaCustomerUuid: "cust-1",

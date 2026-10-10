@@ -21,7 +21,15 @@ describe("payments-registry (ADR 0032): adapter ved flag+nøgler, ellers stub", 
     expect(stub.name).toBe("stub");
     await expect(stub.registerCard({ customerRef: "m-1" })).rejects.toBeInstanceOf(NotConfiguredError);
     await expect(
-      stub.reportUsageCharge({ customerRef: "c-1", amountMinor: 1, idempotencyKey: "k", description: "x" }),
+      stub.upsertSubscription({
+        membershipId: "m-1",
+        customerRef: "c-1",
+        subscriptionRef: null,
+        amountMinor: 1,
+        currency: "DKK",
+        intervalDays: 28,
+        startsOn: "2026-10-01",
+      }),
     ).rejects.toThrow(/alunta/);
   });
 
@@ -93,12 +101,20 @@ describe("alunta-webhook-endpointet — Signature-header, verifikation før alt 
 describe("betalings-webhook: idempotens skal betyde 'præcis én gang' (ADR 0029)", () => {
   afterEach(() => vi.unstubAllEnvs());
 
+  interface UpdateCall {
+    table: string;
+    values: Record<string, unknown>;
+    filters: Array<[string, string, unknown]>;
+  }
+
   /** Minimal Supabase-dobbelt med kaldsspor. `updateError` fremtvinger en fejlet mutation. */
   function fakeService(updateError: string | null) {
     const calls: string[] = [];
+    const updates: UpdateCall[] = [];
     const result = updateError ? { data: null, error: { message: updateError } } : { data: [{ id: "m1" }], error: null };
     return {
       calls,
+      updates,
       service: {
         from(table: string) {
           return {
@@ -106,12 +122,21 @@ describe("betalings-webhook: idempotens skal betyde 'præcis én gang' (ADR 0029
               calls.push(`insert:${table}`);
               return { error: null };
             },
-            update: () => ({
-              eq: async () => {
-                calls.push(`update:${table}`);
-                return result;
-              },
-            }),
+            update: (values: Record<string, unknown>) => {
+              const call: UpdateCall = { table, values, filters: [] };
+              // Både `await update().eq()` og `await update().eq().is()/.select()` skal virke.
+              const chain = {
+                eq: (column: string, value: unknown) => (call.filters.push(["eq", column, value]), chain),
+                is: (column: string, value: unknown) => (call.filters.push(["is", column, value]), chain),
+                select: () => chain,
+                then: (resolve: (r: typeof result) => unknown, reject: (e: unknown) => unknown) => {
+                  calls.push(`update:${table}`);
+                  updates.push(call);
+                  return Promise.resolve(result).then(resolve, reject);
+                },
+              };
+              return chain;
+            },
             delete: () => ({
               eq: () => ({
                 eq: async () => {
@@ -126,14 +151,13 @@ describe("betalings-webhook: idempotens skal betyde 'præcis én gang' (ADR 0029
     };
   }
 
-  function signedCancel() {
-    const body = JSON.stringify({
-      event: "subscription.cancelled",
-      team_id: 1,
-      timestamp: "2026-08-26T10:00:00Z",
-      data: { customer: { uuid: "cus-1" } },
-    });
+  function signed(event: string, data: Record<string, unknown>) {
+    const body = JSON.stringify({ event, team_uuid: "team-1", timestamp: "2026-08-26T10:00:00Z", data });
     return { body, signature: createHmac("sha256", "s3cret").update(body).digest("hex") };
+  }
+
+  function signedCancel() {
+    return signed("subscription.cancelled", { customer: { uuid: "cus-1" } });
   }
 
   function configure() {
@@ -155,13 +179,117 @@ describe("betalings-webhook: idempotens skal betyde 'præcis én gang' (ADR 0029
     expect(calls).toEqual(["insert:payment_webhook_event", "update:membership", "delete:payment_webhook_event"]);
   });
 
-  it("vellykket mutation lader idempotensrækken stå (ingen rollback)", async () => {
+  it("vellykket opsigelse sætter status OG opsigelsesdatoen (kun hvis den er tom) — idempotensrækken står", async () => {
     configure();
-    const { service, calls } = fakeService(null);
+    const { service, calls, updates } = fakeService(null);
     mocked.service = service;
 
     const { body, signature } = signedCancel();
     expect((await post(body, signature)).status).toBe(200);
-    expect(calls).toEqual(["insert:payment_webhook_event", "update:membership"]);
+    expect(calls).toEqual(["insert:payment_webhook_event", "update:membership", "update:membership"]);
+    expect(updates[0]?.values).toMatchObject({ status: "opsagt" });
+    expect(updates[1]?.values.cancelled_at).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // Datoen flyttes aldrig af en genleveret subscription.ended: kun rækker uden dato rammes.
+    expect(updates[1]?.filters).toContainEqual(["is", "cancelled_at", null]);
+  });
+
+  it("checkout.completed kobler kunde + abonnement og sætter periodeankeret ÉN gang (ADR 0056)", async () => {
+    configure();
+    const { service, updates } = fakeService(null);
+    mocked.service = service;
+
+    const { body, signature } = signed("checkout.completed", {
+      type: "subscription",
+      external_customer_id: "membership-1",
+      customer: { uuid: "cus-1" },
+      subscription: { uuid: "sub-1" },
+    });
+    expect((await post(body, signature)).status).toBe(200);
+
+    expect(updates[0]?.values).toMatchObject({
+      provider_customer_ref: "cus-1",
+      provider_subscription_ref: "sub-1",
+      card_status: "registreret",
+    });
+    expect(updates[1]?.values.billing_anchor).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // Ankeret skrives kun mens det er tomt — en genlevering må ikke forskyde alle fremtidige perioder.
+    expect(updates[1]?.filters).toContainEqual(["is", "billing_anchor", null]);
+  });
+
+  it("checkout.completed uden abonnements-uuid kobler kun kunden (synkroniseringen fejler så højlydt)", async () => {
+    configure();
+    const { service, updates } = fakeService(null);
+    mocked.service = service;
+
+    const { body, signature } = signed("checkout.completed", {
+      type: "subscription",
+      external_customer_id: "membership-1",
+      customer: { uuid: "cus-1" },
+    });
+    expect((await post(body, signature)).status).toBe(200);
+    expect(updates[0]?.values).not.toHaveProperty("provider_subscription_ref");
+  });
+});
+
+describe("Alunta-adapteren mod en falsk fetch (ADR 0056)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const request = {
+    membershipId: "membership-1",
+    customerRef: "cus-1",
+    subscriptionRef: "sub-1",
+    amountMinor: 1234,
+    currency: "DKK",
+    intervalDays: 28,
+    startsOn: "2026-10-01",
+  };
+
+  function provider() {
+    return createPaymentProvider({ FLAG_PAYMENTS: "true", ALUNTA_API_KEY: "nøgle", ALUNTA_PLAN_ID: "plan-1" });
+  }
+
+  it("upsertSubscription sætter prisen med PUT /subscriptions/{uuid}/price og Bearer-nøgle", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: { uuid: "sub-1" } }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(provider().upsertSubscription(request)).resolves.toEqual({ id: "sub-1" });
+
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://app.alunta.com/api/v1/subscriptions/sub-1/price");
+    expect(init.method).toBe("PUT");
+    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer nøgle");
+    expect(JSON.parse(init.body as string)).toEqual({ price: 1234 });
+  });
+
+  it("NEGATIV: uden koblet abonnement kaldes Alunta slet ikke — fejler højlydt", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(provider().upsertSubscription({ ...request, subscriptionRef: null })).rejects.toThrow(
+      /ikke koblet/,
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("NEGATIV: en afvist prisændring (422) kaster AluntaError med status", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response('{"message":"only flat-rate"}', { status: 422 })),
+    );
+    await expect(provider().upsertSubscription(request)).rejects.toThrow(/HTTP 422/);
+  });
+
+  it("registerCard poster en subscription-checkout og returnerer hosted URL", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ data: { uuid: "cs-1", url: "https://pay.example/cs-1" } }), { status: 201 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(provider().registerCard({ customerRef: "membership-1" })).resolves.toEqual({
+      id: "cs-1",
+      url: "https://pay.example/cs-1",
+    });
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://app.alunta.com/api/v1/checkout-sessions");
+    expect(init.method).toBe("POST");
   });
 });

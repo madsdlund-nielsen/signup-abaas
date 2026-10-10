@@ -53,7 +53,7 @@ export function PricingRuleForm({ action, nextVersion }: { action: CreateAction;
       <form className="form measure" action={formAction}>
         <div className="field">
           <label className="field__label" htmlFor="base_amount_minor">
-            Grundpris pr. møde (øre)
+            Grundpris pr. periode (øre)
           </label>
           <input
             className="field__input"
@@ -69,7 +69,7 @@ export function PricingRuleForm({ action, nextVersion }: { action: CreateAction;
         </div>
         <div className="field">
           <label className="field__label" htmlFor="per_partner_amount_minor">
-            Pris pr. partner pr. møde (øre)
+            Pris pr. partner pr. periode (øre)
           </label>
           <input
             className="field__input"

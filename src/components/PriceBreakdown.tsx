@@ -22,7 +22,7 @@ export function PriceBreakdown({
     <table className="table">
       <tbody>
         <tr className="table__row">
-          <td className="table__cell">Grundpris pr. møde</td>
+          <td className="table__cell">Grundpris pr. periode</td>
           <td className="table__cell">{formatMinor(b.baseAmountMinor, fee.currency)}</td>
         </tr>
         <tr className="table__row">
@@ -37,7 +37,7 @@ export function PriceBreakdown({
         </tr>
         <tr className="table__row">
           <td className="table__cell">
-            <strong>Meeting-fee pr. afholdt møde</strong>
+            <strong>Abonnement pr. 4. uge</strong>
           </td>
           <td className="table__cell">
             <strong>{formatMinor(fee.amountMinor, fee.currency)}</strong>

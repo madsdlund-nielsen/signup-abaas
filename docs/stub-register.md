@@ -5,7 +5,7 @@
 > Fase 6 (§6.4) gennemgår registret: hver post skal være løst eller have eksplicit
 > ejer-accept før launch.
 >
-> Sidst gennemgået: 2026-10-10 (Cal.com collective event type pr. board, ADR 0046/B-23; admin-drift og juridisk interface, ADR 0053; rolle-dashboards, ADR 0055).
+> Sidst gennemgået: 2026-10-10 (Cal.com collective event type pr. board, ADR 0046/B-23; admin-drift og juridisk interface, ADR 0053; rolle-dashboards, ADR 0055; betaling omlagt til abonnement pr. 4. uge, ADR 0056).
 
 ## Backend-stubs — kaster `NotConfiguredError`
 
@@ -16,7 +16,7 @@ udføre ægte kald, og lader være med at foregive andet.
 |---|---|---|---|
 | `src/lib/booking/` (Cal.com) | `FLAG_BOOKING` | **Adapteren er reworket til collective event type pr. board** (ADR 0046, B-23 lukket) — men aldrig kørt mod en konto. Låses op af: **(a)** Cal.com **Teams**-konto + `CALCOM_API_KEY`/`CALCOM_TEAM_ID`/`CALCOM_WEBHOOK_SECRET`, **(b)** admin: Cal.com-sæde på hver partner + "Opret Cal.com-event type" pr. board (`/admin/boards`), **(c)** liveverifikation L-1/L-3…L-10. Uden event type på boardet fejler booking højlydt. `// TODO(mads)`: ejerens tidszone/navn gemmes ikke (fast `Europe/Copenhagen`, e-mail som navn); partnerudskiftning opdaterer ikke hosts automatisk. ~~plan-/tier-STOP~~ → lukket: Teams | Mads |
 | `src/lib/video/` (Cal Video) | `FLAG_VIDEO` | ~~Cal.com-plan~~ (lukket: Teams, ADR 0046) + EU-residens (spike L-7); mødeoptagelse kræver desuden native støtte på Teams (L-8) **og** samtykkeflow | Mads + ejer |
-| `src/lib/payments/` (Alunta) | `FLAG_PAYMENTS` | **Adapteren ER skrevet mod verificeret API** (ADR 0032, `alunta.ts`), men mod den **afløste usage-model** — ADR 0034 kræver fast abonnement pr. 4 uger (`docs/backlog.md` B-19). Låses op af: rework B-19 → Alunta-UI-opsætning (**abonnement med 4-ugers interval** + webhook-secret) → `ALUNTA_API_KEY`/`ALUNTA_PLAN_ID`/`ALUNTA_WEBHOOK_SECRET` + `FLAG_PAYMENTS` → live-verifikation i test_mode. ~~Gateway-valget~~ → lukket: **QuickPay** (gateway) + **Nets** (indløser) — to selvstændige konti (ADR 0034-opdatering) | Mads |
+| `src/lib/payments/` (Alunta) | `FLAG_PAYMENTS` | **Adapteren følger nu abonnementsmodellen** (ADR 0034/0056, B-19 lukket): checkout opretter abonnementet, `upsertSubscription` sætter prisen (`PUT /subscriptions/{uuid}/price`), webhooks melder tilbage. Låses op af: Alunta-UI-opsætning (**flat-rate-plan** + webhook-secret) → `ALUNTA_API_KEY`/`ALUNTA_PLAN_ID`/`ALUNTA_WEBHOOK_SECRET`/`CRON_SECRET` + `FLAG_PAYMENTS` → live-verifikation i test_mode. 🔴 **Alunta fakturerer i måneder, ikke uger** — 4-ugers-kadencen kan ikke udtrykkes (B-35, `TODO(mads)` i `alunta.ts`). ~~Gateway-valget~~ → lukket: **QuickPay** (gateway) + **Nets** (indløser) — to selvstændige konti (ADR 0034-opdatering) | Mads |
 | `src/lib/accounting/` | `FLAG_ACCOUNTING` | Leverandørvalg: e-conomic vs. Dinero | Ejer |
 | `src/lib/llm/` (Ordbogen Odin) | `FLAG_AIFOLLOWUP` | ~~Ordbogen-DPA~~ → håndteret uden for repoet. **Konto bestilt** (2026-09-15); mangler kun `LLM_API_KEY` + flag | Mads |
 | `src/lib/transcription/` (ordbogen.ai) | `FLAG_TRANSCRIPTION` | ~~Ordbogen-DPA~~ → håndteret uden for repoet. Konto bestilt; mangler `TRANSCRIPTION_API_KEY` + flag. 🔴 **Samtykke til optagelse (ejer) består** — må aldrig stubbes | Mads + ejer |
@@ -31,7 +31,7 @@ altid. Alt de returnerer er åbenlyst falsk. **`FLAG_DEMO` skal være slået fra
 |---|---|---|
 | `src/lib/booking/` | ✅ | Bekræfter tidspunktet uændret; "Deltag" → `/moeder/rum/[uid]`. Tjekker ingen kalendere. Boards uden event type bookes med det falske `DEMO_EVENT_TYPE_ID` (gemmes aldrig); "Opret event type" i demo gemmer intet |
 | `src/lib/video/` | ✅ | Møderum → `/moeder/rum/[meetingId]` |
-| `src/lib/payments/` | ✅ | Kortregistrering → `/betaling/demo-kort/[membershipId]` (bekræftes af `confirmDemoCard`); forbrug kvitteres med `DEMO-CHARGE-…` |
+| `src/lib/payments/` | ✅ | Kortregistrering → `/betaling/demo-kort/[membershipId]` (bekræftes af `confirmDemoCard`, som også sætter periodeankeret og `DEMO-SUB-…`); abonnementet kvitteres med `DEMO-SUB-…` |
 | `src/lib/accounting/` | ✅ | Kvitterer med `DEMO-INVOICE-…` |
 | `src/lib/llm/` | ✅ | Fast `[DEMO]`-opsummering med tre handlingspunkter |
 | `src/lib/transcription/` | ✅ | Fast `[DEMO]`-transskript, `da-DK` |
@@ -87,6 +87,9 @@ deterministiske frem for plausible — se `docs/stub-politik.md`.
 | `src/server/admin/subject-access.ts` (indsigtsudtræk) | **Modtagne vurderinger af en partner er udeladt** af partnerens udtræk, og udtrækket nævner det selv (`afgraensning`). Der er ingen persistent revisionslog over hvem der har hentet et udtræk — kun én logline uden persondata | Jura: må modtagne vurderinger med (evt. uden afgiver)? Plus en revisionstabel (migration + RLS) | Ejer / Mads |
 | `docs/gdpr/sletteflow.md` | **Ingen admin-sletteaction findes.** Flowet er kun en skitse; `/admin/juridisk` henviser til det og siger at der ikke er en sletteknap. Destruktiv, kræver egen skive (ADR 0053) | Opbevaringspligt vs. sletning (bogføring, QuickPay/Nets-data), slette-SLA — ejer/jura; adaptere får `eraseDataSubject` | Ejer |
 | `src/server/charges/` | Fejlet træk registreres (status + årsag) uden konsekvens for honorar eller adgang | §5.10 udløser honorar uafhængigt af betaling; koblingen er uafklaret (afledt af §12 pkt. 13) | Ejer |
+| `src/server/charges/periods.ts`, `create.ts`, `sync.ts` | **Ingen proratering** ved op-/nedgradering midt i en 4-ugers periode: ændringen slår igennem ved næste periode, og den allerede oprettede opkrævning røres aldrig | Skal en ændring midt i perioden afregnes forholdsmæssigt? (ADR 0056; ikke besluttet) | Ejer |
+| `membership.cancelled_at` (0020), webhook `membership_cancelled` | **Opsigelsen afskærer kun nye perioder** — intet opsigelsesvarsel, ingen refusion af den igangværende periode | Opsigelsesvarsel og hvad der sker med en betalt periode (ADR 0056; ikke besluttet) | Ejer |
+| `src/server/charges/create.ts` | **Oversprungne perioder efterfaktureres ikke**: ligger kørslen stille ≥ 28 dage, oprettes kun indeværende periode | Skal en glemt periode opkræves bagud? Forretningsbeslutning — koden gætter ikke | Ejer |
 | ~~`src/server/charges/webhook.ts`~~ | ~~Provisorisk payload-form~~ → **verificeret mod spec'en (ADR 0032)**: `Signature`-header, WebhookPayload-form, afledt event-id | Lukket 2026-08-04 | — |
 
 ## Bevidst tomme — ikke stubs

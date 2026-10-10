@@ -19,7 +19,6 @@ import { getCurrentUser, requireRole, type AuthUser, type Role } from "@/server/
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServiceSupabase } from "@/server/auth/supabase-server";
 import { createBookingProvider, type BookingAttendee, type BookingProvider } from "@/lib/booking";
-import { createChargeForMeeting } from "@/server/charges/create";
 import { assertBoardAvailable, assertMeetingBoardAvailable } from "@/server/availability/guard";
 import { copenhagenLocalToIso } from "@/server/time/copenhagen";
 import { ownerAttendee, resolveEventTypeId } from "./booking-info";
@@ -319,18 +318,12 @@ export async function registerMeetingStatus(formData: FormData): Promise<void> {
   // Livscyklus-kobling (ADR 0026): en 'afholdt'-registrering bekræfter at mødet fandt sted →
   // planlagt→afholdt. Øvrige registreringer rører IKKE livscyklussen (konsekvens er ejer-uafklaret).
   if (status === "afholdt") {
-    const { data: flipped } = await service
+    await service
       .from("meeting")
       .update({ status: "afholdt", updated_at: new Date().toISOString() })
       .eq("id", meetingId)
-      .eq("status", "planlagt")
-      .select("id");
-    // Charge-grundlag KUN fra den registrering der faktisk flippede (ADR 0030) — ellers
-    // ville N partneres registreringer give N forsøg. `meeting_id unique` er andet lag.
-    // createChargeForMeeting kaster aldrig; partnerens registrering afhænger ikke af betaling.
-    if (flipped && flipped.length > 0) {
-      await createChargeForMeeting(service, meetingId);
-    }
+      .eq("status", "planlagt");
+    // Ingen opkrævning her (B-19, ADR 0056): abonnementet forfalder hver 4. uge uanset møder.
   }
 
   revalidatePath("/partner");

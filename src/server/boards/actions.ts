@@ -232,7 +232,7 @@ export async function setBoardLead(formData: FormData): Promise<void> {
 /**
  * Op-/nedgradering af boardstørrelse (Fase 3, ADR 0030): tilføj/fjern én partner med
  * fase 1-invarianten håndhævet (2-3 partnere, mindst 1 intern). Prisen følger automatisk —
- * meeting-fee beregnes af boardstørrelsen ved næste afholdelse (ingen proratering, §5.9).
+ * abonnementet beregnes af boardstørrelsen ved næste faktureringsperiode (ingen proratering, ADR 0056).
  */
 export async function addBoardPartner(formData: FormData): Promise<void> {
   const context = await requireOwnerContext();
