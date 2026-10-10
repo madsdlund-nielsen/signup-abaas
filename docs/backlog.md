@@ -51,6 +51,7 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 | ID | Punkt | Hvor | Fase | Ejer |
 |---|---|---|---|---|
 | **B-21** | **Signerede engangslinks til rating er ikke bygget.** Fase 4.2's DoD nævner dem (byggespec §8); ADR 0038 udskød dem bevidst, fordi et engangslink er en auth-fri skrivevej der først kan gennemspilles end-to-end når der findes en notifikationsmotor til at udsende den. Vurdering kræver login indtil videre — det opfylder "ingen åbne endpoints", men ikke "besvares på under et minut" fra en mail. | `src/server/ratings/actions.ts` (`TODO(mads)`) | **4.5** — bygges sammen med notifikationsmotoren. Blokeret på Resend-konto. | Mads |
+| **B-45** | **AI-resuméet genereres ved hver sidevisning og gemmes ikke.** `getMeetingSummary` kalder portene ved læsning (skærm-først, ADR 0042). Med de rigtige Ordbogen-adaptere (ADR 0058) ville hver visning af `/moeder/[id]` starte en betalt, synkron transskription + LLM-kørsel — og et 75-minutters transskript kan tage minutter. Beslutningen er truffet (fase-4.md §4.4: resumé gemmes i Supabase som mødeartefakt; ADR 0058: generering i baggrundsfunktion). Flaget må ikke tændes mod en rigtig nøgle før dette er bygget. | `src/server/summaries/index.ts`, `src/app/moeder/[id]/page.tsx` | 4 | Claude Code (efter nøgle + samtykke) |
 
 ## 4. Guardrails & sikkerhedshygiejne
 

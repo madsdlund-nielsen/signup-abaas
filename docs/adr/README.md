@@ -86,6 +86,7 @@ det gjort sådan?", så skriv en ADR.
 | 0053 | Admin-drift og juridisk interface: indsigtsudtrækkets form og integrationsstatus via factoryen | Accepteret | 5 |
 | 0055 | Rolle-dashboards: læsevejene, og lead-partnerens service-role-læsning af ejerens behov | Accepteret | 5 |
 | 0056 | Abonnementsfakturering: periodekæde i Supabase, pris sat på Alunta-abonnementet (erstatter triggeren fra 0030/0032 i kode) | Accepteret | 3 |
+| 0058 | Ordbogen/OdinCore-adaptere: fælles klient og nøgle, synkron transskription, samtykke fejler lukket | Accepteret | 4 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så

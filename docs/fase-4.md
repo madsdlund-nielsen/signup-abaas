@@ -61,6 +61,16 @@ skabelontekst er hverken skrevet eller stubbet. Udestår i 4.5: selve motoren (R
 adaptere, retry og fejllogning via PostHog, udsendelseslog) — blokeret på konti. Udestår i 4.6:
 redigering med live preview og den synlige markering af hvad der er live.
 
+**4.3/4.4 — Ordbogen-adapterne er bygget 2026-10-10 (ADR 0058)** mod OdinCores offentlige
+OpenAPI-spec (`docs/spikes/ordbogen-api.md`): `src/lib/llm/ordbogen.ts` (`/v1/chat/completions`,
+struktureret JSON-resumé) og `src/lib/transcription/ordbogen.ts` (`/v1/audio/transcriptions`,
+synkront multipart), på en fælles klient. **Adapter bygget, afventer nøgle** — DoD-punkterne
+ovenfor er derfor stadig ikke afkrydset: intet er kørt mod Ordbogen, og modelnavne, grænser og
+API'ets dataresidens er uverificerede (`TODO(mads)`). Transskription **fejler lukket** uden
+registreret samtykke til optagelse (ejerens punkt; mekanismen findes ikke —
+`src/server/consent/recording.ts`) og kræver desuden at Cal.com-optagelsen kan hentes (L-8).
+Udestår: gem resuméet som mødeartefakt og generér i baggrundsjob (B-45).
+
 ⚠ Db-testene for 0015 er **ikke kørt lokalt** — Docker mangler på maskinen (B-13). CI er eneste
 gate for denne migrations RLS.
 
