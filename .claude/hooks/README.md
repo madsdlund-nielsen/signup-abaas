@@ -1,28 +1,26 @@
-# Claude Code-hooks (opt-in)
+# Lokale gates: git-hook og Claude Code-hooks
 
-Disse scripts spejler qlim8's lokale gates, men de aktiveres **kun** hvis du selv
-tilføjer en `.claude/settings.json` der refererer dem. Claude Code skriver bevidst
-ikke sin egen `settings.json` automatisk — at ændre agentens startkonfiguration er
-din beslutning.
+Repoet har to lag af lokale gates. Begge kører typecheck + unit-tests, ikke integration eller
+db (dem dækker CI). Opsætningen er besluttet i ADR 0028.
 
-- `gate-on-push.sh` — PreToolUse(Bash): blokerer `git push` hvis typecheck + unit fejler.
-- `run-pre-pr-gate.sh` — PreToolUse(`mcp__github__create_pull_request`): samme gate før PR.
+## 1. Git-hook (husky) — for almindelig git-brug
 
-`.husky/pre-push` giver allerede push-gaten for almindelig git-brug; ovenstående er kun
-relevant for Claude Code-sessioner.
+- `.husky/pre-push` kører `npm run check && npm run test:unit` ved `git push`.
+- Wiringen sker af `npm install`: scriptet `prepare` i `package.json` kører `husky`, som
+  sætter `core.hooksPath` til `.husky/_`. Uden en `npm install` i klonen er hooket ikke aktivt.
+- `.husky/` indeholder kun `pre-push`; der er ingen `pre-commit`-hook.
 
-## Aktivér
+## 2. Claude Code-hooks — for Claude Code-sessioner
 
-Opret `.claude/settings.json` med:
+`.claude/settings.json` er checked in og registrerer to `PreToolUse`-hooks. De er aktive
+for alle sessioner i repoet uden yderligere opsætning:
 
-```json
-{
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "hooks": {
-    "PreToolUse": [
-      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/gate-on-push.sh" }] },
-      { "matcher": "mcp__github__create_pull_request", "hooks": [{ "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/run-pre-pr-gate.sh" }] }
-    ]
-  }
-}
-```
+| Matcher | Script | Hvad det gør |
+|---|---|---|
+| `Bash` | `gate-on-push.sh` | Hvis kommandoen indeholder `git push`, kører typecheck + unit. Fejler de, blokeres kaldet (exit 2). Andre Bash-kald slipper igennem. |
+| `mcp__github__create_pull_request` | `run-pre-pr-gate.sh` | Kører typecheck + unit før en PR oprettes. Fejler de, blokeres oprettelsen. |
+
+`--no-verify` omgår kun git-hooket i punkt 1. Claude-hooket kører før kommandoen og
+ser kun på kommandoteksten, så det stopper et `git push --no-verify` lige så vel.
+
+Hooks i `settings.json` peger på scripts via `$CLAUDE_PROJECT_DIR`.
