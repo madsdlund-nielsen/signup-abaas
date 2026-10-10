@@ -128,6 +128,17 @@ export default async function PartnerPortalPage() {
             </section>
 
             <section className="stack measure">
+              <h2 className="heading-3 heading--on-light">Dit honorar</h2>
+              <p className="body">
+                Opgørelse pr. måned over de møder du har deltaget i — sum, afholdte møder og
+                hvad der endnu ikke kan regnes.
+              </p>
+              <Link className="btn-secondary" href="/partner/honorar">
+                Se din opgørelse
+              </Link>
+            </section>
+
+            <section className="stack measure">
               <h2 className="heading-3 heading--on-light">Din tilgængelighed</h2>
               <p className="body">
                 Angiv hvilke tider på ugen du kan holde møder, og registrér fravær. Booking

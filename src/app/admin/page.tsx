@@ -28,7 +28,7 @@ export default function AdminHome() {
           </>
         }
         title="Administration"
-        lead="Taksonomi, quiz, katalog og priser. Alt her er autoritativt: det ejere og partnere møder, forfattes på denne flade."
+        lead="Taksonomi, quiz, katalog, priser og honorar. Alt her er autoritativt: det ejere og partnere møder, forfattes på denne flade."
       />
       <PageBody>
         <div className="panel-grid">
@@ -56,6 +56,11 @@ export default function AdminHome() {
             title="Prisregler"
             body="Versionerede satser. Uden en aktiv version kan der ikke beregnes en pris."
             href="/admin/priser"
+          />
+          <AdminEntry
+            title="Honorar"
+            body="Versioneret honorarsats og opgørelse pr. partner pr. måned, med CSV-eksport. Uden en regel beregnes intet beløb."
+            href="/admin/honorar"
           />
           <AdminEntry
             title="Vurderinger"

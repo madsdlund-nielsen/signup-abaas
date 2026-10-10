@@ -60,9 +60,10 @@ async function main() {
         (select count(*) from board           where id::text like 'd0000000-0000-4000-8000-%') as boards,
         (select count(*) from meeting         where id::text like 'd0000000-0000-4000-8000-%') as moeder,
         (select count(*) from payment_charge  where id::text like 'd0000000-0000-4000-8000-%') as opkraevninger,
-        (select count(*) from pricing_rule    where id::text like 'd0000000-0000-4000-8000-%' and is_active) as demoregler
+        (select count(*) from pricing_rule    where id::text like 'd0000000-0000-4000-8000-%' and is_active) as demoregler,
+        (select count(*) from fee_rule        where id::text like 'd0000000-0000-4000-8000-%') as honorarregler
     `);
-    const { spoergsmaal, svarmuligheder, partnere, boards, moeder, opkraevninger, demoregler } = rows[0];
+    const { spoergsmaal, svarmuligheder, partnere, boards, moeder, opkraevninger, demoregler, honorarregler } = rows[0];
     console.info(
       `[seed] færdig — demodata i basen nu: ${spoergsmaal} spørgsmål, ` +
         `${svarmuligheder} svarmuligheder, ${partnere} partnerprofiler, ` +
@@ -84,6 +85,17 @@ async function main() {
           "[seed] BEMÆRK: der er bevidst IKKE seedet prisregler — beløb er ejer-territorium\n" +
             "[seed]          (docs/stub-politik.md). Admin opretter den første version i /admin/priser.\n" +
             "[seed]          Sæt DEMO_OWNER_EMAIL=<din signup-mail> for også at seede board, medlemskab og møder.",
+        );
+      }
+      if (Number(honorarregler) > 0) {
+        console.info(
+          "[seed] BEMÆRK: en DEMO-honorarregel (1,00 kr i timen, moms og afbudsregel ikke fastlagt) er indsat —\n" +
+            "[seed]          åbenlyst falsk, fjernes af db:seed:demo:clean. Opgørelsen ses som admin på /admin/honorar.\n" +
+            "[seed]          Rigtige satser tastes af admin samme sted.",
+        );
+      } else if (ownerEmail) {
+        console.info(
+          "[seed] BEMÆRK: ingen demo-honorarregel indsat — der fandtes allerede en honorarregel, og den er ikke rørt.",
         );
       }
     }

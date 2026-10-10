@@ -12,12 +12,12 @@
 
 ## Leverancekriterier (Definition of Done for fase 5)
 
-- [ ] Honoraropgørelse pr. partner pr. afholdt møde, med **75 min som grundlag**
-      (60 min møde + 15 min betalt forberedelse).
-- [ ] Honorarsats ligger i **konfiguration/admin**, aldrig i kode.
-- [ ] Momsbehandling er en konfigurerbar regel, ikke en antagelse.
-- [ ] Afbuds-/udeblivelsesregel er konfigurerbar og kobler til mødestatus fra
-      fase 2 (`udeblevet`, `aflyst`).
+- [x] Honoraropgørelse pr. partner pr. afholdt møde, med **75 min som grundlag**
+      (60 min møde + 15 min betalt forberedelse). *(`/partner/honorar`, `/admin/honorar` — ADR 0051)*
+- [x] Honorarsats ligger i **konfiguration/admin**, aldrig i kode. *(`fee_rule`, 0017 — ingen seed, ingen default)*
+- [x] Momsbehandling er en konfigurerbar regel, ikke en antagelse. *(`fee_rule.vat_mode`, default `ikke_fastlagt`; koden beregner aldrig en momssats)*
+- [x] Afbuds-/udeblivelsesregel er konfigurerbar og kobler til mødestatus fra
+      fase 2 (`udeblevet`, `aflyst`). *(`fee_rule.absence_rule`, default `ikke_fastlagt` → linjen er `afventer_regel`)*
 - [x] Partner-tilgængelighed: partner kan angive ledige tider; det respekteres i
       booking-flowet fra fase 2. (ADR 0052: `/partner/tilgaengelighed`, vagt i
       `meetings/actions.ts`. Synk til Cal.com-schedules er IKKE bygget — TODO(mads).)
@@ -32,12 +32,14 @@
       ADR 0053): indsigtsudtræk (art. 15), dokumentoversigt og henvisning til sletteflowet.
       Interfacet er bygget, ikke indholdet: ToS/honoraraftale ikke udarbejdet (`TODO(ejer)`),
       ingen samtykkelog at eksportere, og ingen admin-sletteaction (se stub-register).
-- [ ] Fuld test suite grøn, inkl. RLS: en partner må kun se eget honorar
-      (positiv **og** negativ case).
+- [x] Fuld test suite grøn, inkl. RLS: en partner må kun se eget honorar
+      (positiv **og** negativ case). *(`tests/db/partner-fee-rls.test.ts` — medpartner på samme board er den svære negative case)*
 
 ## Arbejdspakker
 
 ### 5.1 Honorarberegning
+> **Bygget** (ADR 0051): `fee_rule` (0017), `src/server/fees/`, `/admin/honorar`. Satsen er ikke sat — admin indtaster den.
+
 - Grundlag: afholdt møde × 75 min × sats. Sats fra konfiguration.
 - ⚠ **Honorarsats er ikke fastlagt (ejer).** Byg motoren, sæt intet tal — og skriv
   aldrig et plausibelt beløb som placeholder (`docs/stub-politik.md`).
@@ -50,6 +52,8 @@
 - Feltet til honorargrundlag blev bygget i fase 2.4; her tilføjes logikken.
 
 ### 5.2 Honoraropgørelse & udbetaling
+> **Bygget** (ADR 0051): opgørelse pr. partner pr. måned + CSV-eksport (`/admin/honorar/eksport`). Ingen bogføringsintegration, og udbetaling er ikke automatiseret.
+
 - Opgørelse pr. partner pr. periode, eksporterbar.
 - ⚠ **Regnskabssystem (e-conomic vs. Dinero) er uafklaret (ejer)** → porten i
   `src/lib/accounting/` forbliver på stub; byg en ren eksportgrænseflade, ikke en
