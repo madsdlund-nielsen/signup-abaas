@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Client } from "pg";
 import { describe, expect, it } from "vitest";
+import { NOTIFICATION_TYPES, allowedVariableKeys } from "@/server/notifications/catalog";
+import { validateTemplate } from "@/server/notifications/render";
 import { asPostgres } from "./helpers";
 
 /**
@@ -363,6 +365,96 @@ describe("demo-seed — befolket tilstand for en eksisterende ejer (ADR 0043)", 
       expect(await populatedCounts(client)).toEqual(EMPTY);
       const { rows } = await client.query("select count(*) as antal from pricing_rule where id = $1", [DEMO_RULE_ID]);
       expect(Number(rows[0].antal)).toBe(0);
+    });
+  });
+});
+
+/**
+ * Demo-skabeloner til notifikationsmotoren (fase 4.6, ADR 0057). Migration 0021 starter tom;
+ * seed'et må kun indsætte åbenlyst falske `[DEMO]`-tekster, og de skal være skrevet mod
+ * kataloget — ellers ville en demo-udsendelse fejle på «ukendt variabel».
+ */
+describe("demo-seed: notifikationsskabeloner", () => {
+  async function templates(client: Client) {
+    const { rows } = await client.query(
+      `select id, type_key, channel, status, subject, body from notification_template
+        where id::text like $1 order by type_key, channel`,
+      [DEMO_PREFIX],
+    );
+    return rows as Array<{
+      id: string;
+      type_key: string;
+      channel: "email" | "sms";
+      status: string;
+      subject: string | null;
+      body: string;
+    }>;
+  }
+
+  it("indsætter én live demo-skabelon pr. beskedtype og kanal i kataloget", async () => {
+    await asPostgres(async (client) => {
+      await client.query(SEED);
+      const rows = await templates(client);
+      expect(rows).toHaveLength(6);
+      expect(rows.every((row) => row.status === "live")).toBe(true);
+      const pairs = rows.map((row) => `${row.type_key}:${row.channel}`);
+      for (const type of NOTIFICATION_TYPES) {
+        for (const channel of type.channels) expect(pairs, type.key).toContain(`${type.key}:${channel}`);
+      }
+    });
+  });
+
+  it("tekster og emner er åbenlyst falske ([DEMO])", async () => {
+    await asPostgres(async (client) => {
+      await client.query(SEED);
+      for (const row of await templates(client)) {
+        expect(row.body.startsWith("[DEMO]"), row.id).toBe(true);
+        if (row.channel === "email") expect(row.subject?.startsWith("[DEMO]"), row.id).toBe(true);
+      }
+    });
+  });
+
+  it("hver demo-skabelon er gyldig mod kataloget — ingen ukendte variabler eller syntaksfejl", async () => {
+    await asPostgres(async (client) => {
+      await client.query(SEED);
+      for (const row of await templates(client)) {
+        const type = NOTIFICATION_TYPES.find((t) => t.key === row.type_key)!;
+        const problems = validateTemplate(
+          { channel: row.channel, subject: row.subject, body: row.body },
+          allowedVariableKeys(type),
+        );
+        expect(problems, `${row.type_key}:${row.channel}`).toEqual([]);
+      }
+    });
+  });
+
+  it("kan køres to gange uden dubletter, og overskriver aldrig en eksisterende skabelon", async () => {
+    await asPostgres(async (client) => {
+      await client.query(
+        `insert into notification_template (type_key, channel, version, status, subject, body, published_at)
+         values ('meeting-changed', 'email', 1, 'live', 'Rigtigt emne', 'Rigtig tekst', now())`,
+      );
+      await client.query(SEED);
+      await client.query(SEED);
+      const rows = await templates(client);
+      expect(rows).toHaveLength(5); // alle undtagen meeting-changed:email, som allerede havde en live
+      expect(rows.some((row) => row.type_key === "meeting-changed")).toBe(false);
+    });
+  });
+
+  it("demo-clean fjerner dem — også de publicerede, som ellers er uforanderlige", async () => {
+    await asPostgres(async (client) => {
+      await client.query(SEED);
+      await client.query(CLEAN);
+      expect(await templates(client)).toEqual([]);
+      // Vagten er tændt igen: en publiceret version kan stadig ikke slettes bagefter.
+      await client.query(
+        `insert into notification_template (id, type_key, channel, version, status, subject, body, published_at)
+         values ('d0000000-0000-4000-8000-000000001999', 'payment-failed', 'email', 1, 'live', 's', 'b', now())`,
+      );
+      await expect(
+        client.query("delete from notification_template where id = 'd0000000-0000-4000-8000-000000001999'"),
+      ).rejects.toThrow(/kan ikke slettes/);
     });
   });
 });

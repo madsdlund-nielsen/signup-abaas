@@ -1,7 +1,9 @@
-import { isEnabled } from "@/server/flags";
-import type { EmailMessage, EmailSender } from "./port";
+import { isDemoMode, isEnabled } from "@/server/flags";
+import { DemoEmailSender } from "./demo";
+import type { EmailMessage, EmailSender, SendReceipt } from "./port";
+import { ResendEmailSender } from "./resend";
 
-export type { EmailMessage, EmailSender } from "./port";
+export type { EmailMessage, EmailSender, SendReceipt } from "./port";
 
 interface EmailConfig {
   apiKey: string | undefined;
@@ -19,16 +21,18 @@ function isConfigured(c: EmailConfig): boolean {
 /** Stub: virker uden nøgler — logger i stedet for at sende. */
 class StubEmailSender implements EmailSender {
   readonly name = "stub";
-  async send(message: EmailMessage): Promise<void> {
+  async send(message: EmailMessage): Promise<SendReceipt> {
     console.info(`[email:stub] ville sende til ${message.to}: "${message.subject}"`);
+    return { reference: null };
   }
 }
 
-// TODO: rigtig ResendEmailSender (EU, Dublin) når RESEND_API_KEY lander.
 export function createEmailSender(env: Record<string, string | undefined> = process.env): EmailSender {
   const config = readConfig(env);
-  if (isEnabled("email", env) && isConfigured(config)) {
-    // return new ResendEmailSender(config);
+  if (isEnabled("email", env) && config.apiKey && config.fromAddress) {
+    return new ResendEmailSender({ apiKey: config.apiKey, fromAddress: config.fromAddress });
   }
+  // Demo (ADR 0041): kun når rigtig config mangler — rigtige nøgler vinder altid.
+  if (isDemoMode(env) && !isConfigured(config)) return new DemoEmailSender();
   return new StubEmailSender();
 }

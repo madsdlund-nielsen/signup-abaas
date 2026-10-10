@@ -5,7 +5,7 @@
 > Fase 6 (§6.4) gennemgår registret: hver post skal være løst eller have eksplicit
 > ejer-accept før launch.
 >
-> Sidst gennemgået: 2026-10-10 (Cal.com collective event type pr. board, ADR 0046/B-23; admin-drift og juridisk interface, ADR 0053; rolle-dashboards, ADR 0055).
+> Sidst gennemgået: 2026-10-10 (Cal.com collective event type pr. board, ADR 0046/B-23; admin-drift og juridisk interface, ADR 0053; rolle-dashboards, ADR 0055; notifikationsmotor + skabeloner, ADR 0057).
 
 ## Backend-stubs — kaster `NotConfiguredError`
 
@@ -35,7 +35,9 @@ altid. Alt de returnerer er åbenlyst falsk. **`FLAG_DEMO` skal være slået fra
 | `src/lib/accounting/` | ✅ | Kvitterer med `DEMO-INVOICE-…` |
 | `src/lib/llm/` | ✅ | Fast `[DEMO]`-opsummering med tre handlingspunkter |
 | `src/lib/transcription/` | ✅ | Fast `[DEMO]`-transskript, `da-DK` |
-| `email`, `sms`, `analytics` | — | Fire-and-forget-stubs logger og resolver allerede |
+| `src/lib/email/` | ✅ | Logger `[DEMO]` (uden adresse) og kvitterer `DEMO-MSG-…`; intet forlader processen. Udsendelser logges som `demo` i `notification_delivery` (ADR 0057) |
+| `src/lib/sms/` | ✅ | Som e-mail-demoen — logger `[DEMO]` uden nummer eller tekst, kvitterer `DEMO-MSG-…` |
+| `analytics` | — | Fire-and-forget-stub logger og resolver allerede |
 
 ## Fire-and-forget-stubs — logger og resolver
 
@@ -44,8 +46,8 @@ have gjort.
 
 | Modul | Flag | Låses op af | Skylder svar |
 |---|---|---|---|
-| `src/lib/email/` (Resend) | `FLAG_EMAIL` | Konto + nøgle + DPA. Bruges også til Supabase-SMTP (fase 1-opfølgning) | Mads |
-| `src/lib/sms/` (inMobile) | `FLAG_SMS` | Konto + nøgle + DPA | Mads |
+| `src/lib/email/` (Resend) | `FLAG_EMAIL` | **Adapteren ER skrevet** (rå fetch mod `POST /emails`, ADR 0057) men aldrig kørt mod en konto. Låses op af: Resend-konto, afsenderdomæne oprettet i regionen **`eu-west-1`** (Irland/Dublin — vælges i Resend-UI'et, ikke i API-kaldet), `RESEND_API_KEY` + `RESEND_FROM_ADDRESS` + `FLAG_EMAIL`, DPA. Bruges også til Supabase-SMTP (fase 1-opfølgning). TODO(mads): bekræft domænets region | Mads |
+| `src/lib/sms/` (inMobile) | `FLAG_SMS` | **Adapteren er skrevet mod bedste forståelse af inMobile API v4 og aldrig verificeret** — endpoint, Basic-auth og feltnavne er markeret `TODO(mads): verificér mod inMobile live` i `inmobile.ts`. Låses op af: konto + `INMOBILE_API_KEY` + `INMOBILE_SENDER` + `FLAG_SMS`, DPA, **og telefonnumre (se Beslutnings-pladsholdere)** | Mads |
 | `src/lib/analytics/` (PostHog EU) | `FLAG_ANALYTICS` | Live projektnøgle | Mads |
 
 ## Auth
@@ -73,7 +75,12 @@ deterministiske frem for plausible — se `docs/stub-politik.md`.
 | `supabase/migrations/0012_meeting.sql` (meeting_note-RLS) | Note-synlighed: restriktiv default (forfatter + board-ejer) | Hvem må se møde-noter (§12 pkt. 16)? Udvidelse er én policy | Ejer |
 | `src/app/moeder/[id]/page.tsx` (AI-opsummering) | Opsummeringen vises **kun for ejeren** — restriktiv default håndhævet i siden, da der endnu ikke findes en tabel at lægge RLS på (skærm-først, fase 4.4) | Note-synlighed (§12 pkt. 16) gælder også resuméer. Når resuméet får en tabel, flytter reglen til RLS | Ejer |
 | `pricing_rule` (0013) | **Ingen aktiv prisregel findes** — beregning og charge-grundlag er slået fra indtil admin aktiverer en version. Demo-seed'et (ADR 0043) kan indsætte en åbenlyst falsk 1-kr-regel sammen med en demo-ejer, kun hvor ingen aktiv findes — demodata, ikke en pladsholder i kode | Startpris/meeting-fee + frekvensfaktorer (§12 pkt. 2). Tal indtastes af admin, aldrig af kode | Ejer |
-| `src/server/notifications/index.ts` (`NOTIFICATION_TYPES`) | **Udsendelsestidspunkt for mødepåmindelse og ratinganmodning er `null`** — skærmen viser "Ikke fastlagt" frem for et tal. De to øvrige typer udløses direkte af en hændelse og har derfor et tidspunkt uden at nogen har valgt det | Hvor længe før mødet påmindes der, og hvor hurtigt efter et møde bedes om rating? Påmindelsen hænger sammen med ændre-/aflyse-vinduet (§12 pkt. 4): en påmindelse efter fristen for at flytte er værdiløs. Skabelonteksten mangler også, og forudsætter ToS/samtykke (ADR 0048) | Ejer |
+| `src/server/notifications/catalog.ts` (`NOTIFICATION_TYPES`) | **Udsendelsestidspunkt for mødepåmindelse og ratinganmodning er `null`** (både `timing` og `schedule`) — skærmen viser "Ikke fastlagt" frem for et tal, og `sendMeetingReminders`/`sendRatingRequests` svarer `ikke-fastlagt` og sender intet. De to øvrige typer udløses direkte af en hændelse og har derfor et tidspunkt uden at nogen har valgt det | Hvor længe før mødet påmindes der, og hvor hurtigt efter et møde bedes om rating (og hvor langt tilbage må en kørsel indhente — `catchUpMinutes`)? Påmindelsen hænger sammen med ændre-/aflyse-vinduet (§12 pkt. 4): en påmindelse efter fristen for at flytte er værdiløs | Ejer |
+| `src/app/api/cron/notifications/route.ts` | **Ruten er beskyttet (`x-cron-secret`/`CRON_SECRET`) men IKKE planlagt** — ingen scheduled function kalder den, og selv hvis den blev kaldt, svarer begge kørsler `ikke-fastlagt` (ovenfor). Ingen planlagte beskeder udsendes derfor | Samme svar som ovenfor; derefter en Netlify scheduled function (som `charge-periods`) og `CRON_SECRET` i Netlify | Ejer |
+| `notification_template` (0021) | **Ingen skabelontekst findes** — tabellen starter tom, og motoren logger `fejlet: ingen live skabelon` frem for at sende en opfundet tekst. Demo-seed'et (ADR 0043/0057) kan indsætte åbenlyst falske `[DEMO]`-skabeloner — demodata, ikke en pladsholder i kode | Skabelonteksten (emne + brødtekst pr. type og kanal) — forudsætter ToS/samtykke (ADR 0048). Admin skriver og publicerer den i `/admin/notifikationer/[type]` | Ejer |
+| `src/server/notifications/store.ts` (`resolveRecipient`, SMS) | **Der findes ingen telefonnumre i datamodellen** (`app_user` har kun e-mail). Enhver SMS logges `fejlet: intet telefonnummer registreret` — kanalen kan ikke sende, selv med inMobile-nøgler og en live SMS-skabelon | Hvor indsamles telefonnumre (profil/onboarding), og med hvilket samtykke/hvilken privatlivstekst? Derefter en kolonne + RLS + sletteflow | Ejer |
+| `src/server/notifications/meetings.ts` (`notifyMeetingChanged`) | Aflysning/flytning giver **kun boardets partnere** besked — ikke ejeren, som selv foretog ændringen. Katalogets `recipients` siger «ejer og boardets partnere» | Skal ejeren også have en bekræftelse? (TODO(ejer)). Ændringer lavet direkte i Cal.com udløser endnu ingen besked (backlog B-40) | Ejer |
+| `src/server/notifications/meetings.ts` (`notifyPaymentFailed`) | **Afsendelsen er bygget, men ikke koblet** på det fejlede træk — `src/server/charges/` ejes af betalingsomlægningen (B-19) og er ikke rørt. «Fejlet betaling» sendes derfor aldrig i dag | Kobling hvor et fejlet træk registreres, når B-19 lander (backlog B-41). TODO(mads) | Mads |
 | `fee_rule` (0017) + `src/server/fees/` | **Ingen honorarregel findes** — ingen partner-linje får et beløb; `/partner/honorar` siger "Honorarsatsen er ikke fastlagt endnu", og `/admin/honorar` viser linjer som "ingen sats". Demo-seed'et (ADR 0043/0051) kan indsætte en åbenlyst falsk regel på 1 kr i timen, kun hvor ingen regel findes — demodata, ikke en pladsholder i kode | Honorarsats pr. partner pr. møde (§12 pkt. 1). Admin indtaster satsen i `/admin/honorar`; grundlaget er 75 min (60 + 15) | Ejer |
 | `fee_rule.vat_mode` (0017), `src/server/fees/algorithm.ts` | Moms på honorar er `ikke_fastlagt` (default). Beløbet vises uden momsbehandling, og **koden beregner aldrig en momssats** — også når admin sætter `ekskl_moms`/`inkl_moms`, videregives kun måden, så bogholderen ikke får en antagelse serveret som et tal | Moms på partner-honorar (§12 pkt. 14). Om og hvordan moms lægges til/trækkes fra er ejerens/bogholderens anvendelse af reglen | Ejer |
 | `fee_rule.absence_rule` (0017), `src/server/fees/algorithm.ts` | Forsinket afbud/udeblivelse er `ikke_fastlagt` (default): linjen får status `afventer_regel` — grundlaget er registreret, intet beløb er medregnet, og opgørelsen siger det | Honorar ved udeblivelse/sent afbud (§12 pkt. 13). Værdierne `intet_honorar`/`fuldt_honorar` er klar; en mellemting (fx delvist honorar) er et nyt enum-valg og dermed en ejerbeslutning | Ejer |

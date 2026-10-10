@@ -254,4 +254,36 @@ begin
   end if;
 end $$;
 
+-- --- Notifikationsskabeloner (fase 4.6, ADR 0057) ----------------------------------------
+-- Migration 0021 starter TOM: skabelontekst er ejerens (ToS/samtykke, ADR 0048), og en opfundet
+-- tekst er et plausibelt svar, ikke et synligt hul. Til design og demo seedes derfor én LIVE
+-- version pr. (beskedtype, kanal) — med tekster der åbenlyst er falske ([DEMO]) og som kun bruger
+-- variabler kataloget tillader. Kun hvor der endnu ingen skabelon findes for (type, kanal), så
+-- rigtige skabeloner aldrig overskrives eller blandes. Fjernes af demo-clean.
+insert into notification_template (id, type_key, channel, version, status, subject, body, published_at)
+select v.id::uuid, v.type_key, v.channel::notification_channel, 1, 'live', v.subject, v.body, now()
+from (values
+  ('d0000000-0000-4000-8000-000000001001', 'meeting-reminder', 'email',
+   '[DEMO] Demo-påmindelse — {{board_navn}}',
+   E'[DEMO] Dette er en demo-skabelon, ikke en rigtig tekst.\n\nBoard: {{board_navn}}\nTidspunkt: {{moede_tidspunkt}}\nLink: {{link}}'),
+  ('d0000000-0000-4000-8000-000000001002', 'meeting-reminder', 'sms', null,
+   '[DEMO] Demo-SMS: {{board_navn}}, {{moede_tidspunkt}}. {{link}}'),
+  ('d0000000-0000-4000-8000-000000001003', 'meeting-changed', 'email',
+   '[DEMO] Demo: mødet er {{aendring}} — {{board_navn}}',
+   E'[DEMO] Dette er en demo-skabelon, ikke en rigtig tekst.\n\nMødet i {{board_navn}} er {{aendring}}.\nTidspunkt: {{moede_tidspunkt}}\nLink: {{link}}'),
+  ('d0000000-0000-4000-8000-000000001004', 'rating-request', 'email',
+   '[DEMO] Demo-ratinganmodning — {{board_navn}}',
+   E'[DEMO] Dette er en demo-skabelon, ikke en rigtig tekst.\n\nMødet {{moede_tidspunkt}} i {{board_navn}} er afholdt.\nLink: {{link}}'),
+  ('d0000000-0000-4000-8000-000000001005', 'rating-request', 'sms', null,
+   '[DEMO] Demo-SMS: vurdér mødet i {{board_navn}}. {{link}}'),
+  ('d0000000-0000-4000-8000-000000001006', 'payment-failed', 'email',
+   '[DEMO] Demo: betalingen fejlede — {{board_navn}}',
+   E'[DEMO] Dette er en demo-skabelon, ikke en rigtig tekst.\n\nEt træk for {{board_navn}} fejlede.\nLink: {{link}}')
+) as v(id, type_key, channel, subject, body)
+where not exists (
+  select 1 from notification_template t
+  where t.type_key = v.type_key and t.channel = v.channel::notification_channel
+)
+on conflict (id) do nothing;
+
 commit;

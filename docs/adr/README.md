@@ -85,6 +85,7 @@ det gjort sådan?", så skriv en ADR.
 | 0051 | Partner-honorar: regel med gyldighedstidspunkt og en view der kun viser egne linjer | Accepteret | 5 |
 | 0052 | Partner-tilgængelighed: lokal vægurstid i Supabase, ingen ejer-læsning, "ikke angivet" = ubegrænset | Accepteret | 5 |
 | 0053 | Admin-drift og juridisk interface: indsigtsudtrækkets form og integrationsstatus via factoryen | Accepteret | 5 |
+| 0057 | Notifikationsskabeloner som versioneret data, motor med idempotensnøgle, og en log uden persondata | Accepteret | 4 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så

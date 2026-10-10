@@ -5,6 +5,11 @@
 - **Fase:** 4 (4.5/4.6)
 - **Berører uafklaret punkt:** ja — udsendelsestidspunkter (afledt af §12 pkt. 4,
   ændre-/aflyse-vinduet) og skabelonteksten, der hænger sammen med ToS/samtykke
+- **Opdateret 2026-10-10 (ADR 0057):** skabelonerne har nu deres tabel (migration 0021). Kataloget
+  **blev i kode** — det flyttede *ikke* med ind i tabellen, som afsnittet «Konsekvenser» nedenfor
+  forventede: det er bundet til de udløsere og variabler koden leverer, og tabellen holder kun
+  teksten, nøglet på `type_key`. Kataloget fik `variables` og `schedule`. Resten af denne ADR
+  (valg C, kanaltilstand via adapteren, intet nyt flag) står uændret.
 
 ## Kontekst
 

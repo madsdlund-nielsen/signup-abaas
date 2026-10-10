@@ -22,13 +22,22 @@
 - [ ] Transskription via **Ordbogen (ordbogen.ai)** bag `FLAG_TRANSCRIPTION` — flaget
       tændes når DPA og samtykkeflow er på plads.
 - [ ] Auto-resumé af møde via **Ordbogen (Odin-LLM)** bag `FLAG_AIFOLLOWUP`.
-- [ ] Notifikationsmotor: e-mail via **Resend (EU)**, SMS via **inMobile** — begge
-      porte findes allerede i `src/lib/email/` og `src/lib/sms/`. **(Oversigtsskærmen er
-      bygget 2026-09-21, ADR 0048; selve motoren udestår og er blokeret på konti.)**
-- [ ] Admin kan redigere notifikationsskabeloner **med live preview**.
-- [ ] Visuel markering i admin når en ændring er live.
+- [x] Notifikationsmotor: e-mail via **Resend (EU)**, SMS via **inMobile** — begge
+      porte findes allerede i `src/lib/email/` og `src/lib/sms/`. **(Oversigtsskærmen
+      2026-09-21, ADR 0048; motor, adaptere, idempotent udsendelseslog, retry og fejlrapportering
+      2026-10-10, ADR 0057.)** ⚠ Forbehold for nøgler: Resend-adapteren og inMobile-adapteren er
+      skrevet men aldrig kørt mod en konto (inMobile desuden mod bedste forståelse af API'et,
+      `TODO(mads)`); begge er stubs/demo indtil konti, nøgler og flag lander.
+- [x] Admin kan redigere notifikationsskabeloner **med live preview**.
+      **(2026-10-10, `/admin/notifikationer/[type]`, ADR 0057.)**
+- [x] Visuel markering i admin når en ændring er live. **(2026-10-10: LIVE/UDKAST-mærker,
+      advarsel når udkast afviger fra live, to-trins publicering, versionshistorik.)**
 - [ ] Notifikationer dækker minimum: mødepåmindelse, aflysning/flytning,
-      ratinganmodning, fejlet betaling (fra fase 3).
+      ratinganmodning, fejlet betaling (fra fase 3). **(Delvist: aflysning/flytning er koblet
+      på `rescheduleMeeting`/`cancelMeeting`. Påmindelse og ratinganmodning er bygget som
+      «find de skyldige + send», men sender intet før ejeren har fastsat tidspunkterne og ruten
+      `/api/cron/notifications` er planlagt. Fejlet betaling har sin afsendelsesfunktion, men er
+      ikke koblet på trækket — betalingsskiven ejer det, B-41. Ingen skabelontekst er skrevet.)**
 - [ ] Fuld test suite grøn, inkl. RLS på ratings, resuméer og forberedelsesnoter
       (positive **og** negative cases).
 
@@ -57,9 +66,17 @@ udestår.
 (`src/server/notifications/`, `NotificationOverview`) viser de fire påkrævede beskedtyper og
 den faktiske tilstand pr. kanal — e-mail og SMS er begge stubs i dag, og skærmen siger det
 frem for at love noget. Kataloget står i kode indtil skabelonerne får en tabel (**ADR 0048**);
-skabelontekst er hverken skrevet eller stubbet. Udestår i 4.5: selve motoren (Resend-/inMobile-
-adaptere, retry og fejllogning via PostHog, udsendelseslog) — blokeret på konti. Udestår i 4.6:
-redigering med live preview og den synlige markering af hvad der er live.
+skabelontekst er hverken skrevet eller stubbet.
+
+**4.5/4.6 er bygget 2026-10-10 (ADR 0057):** migration `0021_notification_template.sql`
+(versionerede skabeloner med atomisk publicering + udsendelseslog uden persondata), ren rendering
+(`src/server/notifications/render.ts`), admin-editoren `/admin/notifikationer/[type]` med live
+preview og LIVE/UDKAST-markering, motoren (`engine.ts`: reservér → live skabelon → render → send
+med retry → log → analytics), Resend- og inMobile-adaptere og e-mail/SMS-demo. Aflysning/flytning
+er koblet på møde-handlingerne. **Udestår:** konti og nøgler (adaptere aldrig kørt live — inMobile
+er desuden uverificeret), ejerens udsendelsestidspunkter (så planlagte beskeder ikke sendes og
+ruten ikke er planlagt), skabelonteksten, telefonnumre (SMS kan ikke sendes), og koblingen af
+«fejlet betaling» på trækket (B-41). Signerede engangslinks til rating (B-21) er stadig ikke bygget.
 
 ⚠ Db-testene for 0015 er **ikke kørt lokalt** — Docker mangler på maskinen (B-13). CI er eneste
 gate for denne migrations RLS.
