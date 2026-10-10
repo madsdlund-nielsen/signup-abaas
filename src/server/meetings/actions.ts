@@ -21,7 +21,10 @@ import { createServiceSupabase } from "@/server/auth/supabase-server";
 import { createBookingProvider, type BookingAttendee, type BookingProvider } from "@/lib/booking";
 import { assertBoardAvailable, assertMeetingBoardAvailable } from "@/server/availability/guard";
 import { copenhagenLocalToIso } from "@/server/time/copenhagen";
-import { scheduleMeetingChangedNotification } from "@/server/notifications/meetings";
+import {
+  meetingChangeDiscriminator,
+  scheduleMeetingChangedNotification,
+} from "@/server/notifications/meetings";
 import { ownerAttendee, resolveEventTypeId } from "./booking-info";
 import type { MeetingRegisteredStatus } from "./index";
 
@@ -222,7 +225,12 @@ export async function rescheduleMeeting(
       .eq("id", meetingId);
     if (error) return { error: `Kunne ikke flytte mødet: ${error.message}` };
     // Besked til partnerne (fase 4.5) — efter svaret, og aldrig en fejlkilde for handlingen.
-    scheduleMeetingChangedNotification(service, meetingId, "flyttet", changedAt);
+    scheduleMeetingChangedNotification(
+      service,
+      meetingId,
+      "flyttet",
+      meetingChangeDiscriminator("flyttet", confirmed),
+    );
     revalidatePath("/moeder");
     return {};
   } catch (e) {
@@ -249,7 +257,7 @@ export async function cancelMeeting(_prev: AuthFormState, formData: FormData): P
       .eq("id", meetingId);
     if (error) return { error: `Kunne ikke aflyse mødet: ${error.message}` };
     // Besked til partnerne (fase 4.5) — efter svaret, og aldrig en fejlkilde for handlingen.
-    scheduleMeetingChangedNotification(service, meetingId, "aflyst", changedAt);
+    scheduleMeetingChangedNotification(service, meetingId, "aflyst", meetingChangeDiscriminator("aflyst"));
     revalidatePath("/moeder");
     return {};
   } catch (e) {

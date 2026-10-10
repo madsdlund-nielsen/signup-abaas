@@ -154,14 +154,14 @@ export type MeetingChange = "aflyst" | "flyttet";
  * (Kataloget nævner «ejer og boardets partnere»; en bekræftelse til ejeren er en
  * tilføjelse hun ikke har bedt om. TODO(ejer): skal ejeren også have en bekræftelse?)
  *
- * `changedAt` skelner to flytninger af samme møde — den indgår i idempotensnøglen, så en
- * senere, ægte ændring aldrig forveksles med den første.
+ * `discriminator` indgår i idempotensnøglen — byg den med `meetingChangeDiscriminator`, så
+ * appens handling og Cal.com-webhookens ekko af SAMME ændring giver samme nøgle (B-40).
  */
 export async function notifyMeetingChanged(
   service: SupabaseClient,
   meetingId: string,
   change: MeetingChange,
-  changedAt: string,
+  discriminator: string,
   deps: EngineDeps = createEngineDeps(),
 ): Promise<DispatchSummary> {
   const context = await loadMeetingContext(service, meetingId);
@@ -171,9 +171,28 @@ export async function notifyMeetingChanged(
     context,
     context.partnerUserIds,
     meetingVariables(context, { aendring: change }),
-    `${change}:${changedAt}`,
+    `${change}:${discriminator}`,
     deps,
   );
+}
+
+/**
+ * Idempotens-diskriminatoren for en mødeændring, afledt af TILSTANDEN frem for af hvornår den
+ * blev registreret (B-40). Når ejeren aflyser i appen, aflyser appen også hos Cal.com, og Cal.com
+ * sender så selv en BOOKING_CANCELLED-webhook — med en tidsbaseret nøgle ville partnerne få to
+ * beskeder. Med en tilstandsbaseret nøgle er appens besked og webhookens ekko samme besked:
+ *   - aflyst: et møde aflyses kun én gang → fast diskriminator.
+ *   - flyttet: det nye starttidspunkt (normaliseret ISO) → en senere flytning til et ANDET
+ *     tidspunkt er en ny besked; en genlevering eller et ekko er ikke.
+ * Kant: flyttes et møde frem og tilbage til et tidspunkt der allerede er meldt, meldes det ikke
+ * igen. Det er prisen for at et ekko aldrig giver dobbeltbesked.
+ */
+export function meetingChangeDiscriminator(change: MeetingChange, startsAt?: string): string {
+  if (change === "aflyst") return "endelig";
+  if (!startsAt) throw new Error("En flytning kræver det nye starttidspunkt.");
+  const at = new Date(startsAt);
+  if (Number.isNaN(at.getTime())) throw new Error("Ugyldigt starttidspunkt for flytningen.");
+  return at.toISOString();
 }
 
 /**
@@ -185,11 +204,11 @@ export function scheduleMeetingChangedNotification(
   service: SupabaseClient,
   meetingId: string,
   change: MeetingChange,
-  changedAt: string,
+  discriminator: string,
 ): void {
   const run = async () => {
     try {
-      await notifyMeetingChanged(service, meetingId, change, changedAt);
+      await notifyMeetingChanged(service, meetingId, change, discriminator);
     } catch (error) {
       console.error(`[notifications] meeting-changed fejlede for møde ${meetingId}: ${scrubError(error)}`);
     }

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { getNotificationType } from "@/server/notifications/catalog";
 import {
   meetingVariables,
+  meetingChangeDiscriminator,
   notifyMeetingChanged,
   notifyPaymentFailed,
   ratingWindow,
@@ -287,5 +288,21 @@ describe("notifyPaymentFailed — afsendelsen er bygget, koblingen ejes af betal
     expect(outcomes).toEqual([expect.objectContaining({ channel: "email", status: "sendt" })]);
     expect(email.sent[0]?.to).toBe("a-test@example.invalid");
     expect(email.sent[0]?.body).toContain("https://app.example.invalid/betaling");
+  });
+});
+
+describe("meetingChangeDiscriminator — tilstandsbaseret nøgle, så et Cal.com-ekko ikke giver dobbeltbesked (B-40)", () => {
+  it("aflysning har én fast nøgle", () => {
+    expect(meetingChangeDiscriminator("aflyst")).toBe("endelig");
+  });
+
+  it("flytning nøgles på det normaliserede nye tidspunkt — samme instant, samme nøgle", () => {
+    expect(meetingChangeDiscriminator("flyttet", "2026-11-02T10:00:00+01:00")).toBe("2026-11-02T09:00:00.000Z");
+    expect(meetingChangeDiscriminator("flyttet", "2026-11-02T09:00:00.000Z")).toBe("2026-11-02T09:00:00.000Z");
+  });
+
+  it("flytning uden gyldigt tidspunkt kaster", () => {
+    expect(() => meetingChangeDiscriminator("flyttet")).toThrow();
+    expect(() => meetingChangeDiscriminator("flyttet", "ikke en dato")).toThrow();
   });
 });

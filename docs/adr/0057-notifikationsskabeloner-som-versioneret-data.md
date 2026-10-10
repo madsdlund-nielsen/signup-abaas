@@ -138,6 +138,6 @@ katalogets `schedule` er `null` — og det er den, til ejeren beslutter. En besk
   - TODO(ejer): telefonnumre — hvor indsamles de, og med hvilket samtykke.
   - TODO(mads): verificér inMobile-adapteren live; bekræft Resend-domænets region (`eu-west-1`).
   - ~~Kobl `notifyPaymentFailed` på det fejlede træk~~ → koblet i Alunta-webhookens `invoice.payment_failed` (B-41, 2026-10-10).
-  - Backlog B-40: Cal.com-webhookens aflysning/flytning sender ingen besked.
+  - ~~Backlog B-40: Cal.com-webhookens aflysning/flytning sender ingen besked.~~ → koblet med tilstandsbaseret idempotensnøgle (2026-10-10).
   - Signerede engangslinks til rating (B-21) er stadig ikke bygget; ratinganmodningen linker
     til `/moeder/[id]`, hvor ejeren er logget ind.
