@@ -17,6 +17,7 @@
 import { getCurrentUser } from "@/server/auth";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServiceSupabase } from "@/server/auth/supabase-server";
+import { readOwnerTagIds } from "@/server/matching/owner-needs";
 import {
   listFeeRules,
   listMyFeeLines,
@@ -92,27 +93,9 @@ export async function getLeadBoardNeeds(
   }
   const ownerId = (board.data as { owner_id: string }).owner_id;
 
-  const answers = await service.from("quiz_answer").select("quiz_option_id").eq("owner_id", ownerId);
-  if (answers.error) {
-    console.error(`[dashboard] behovslæsning fejlede: ${answers.error.message}`);
-    return null;
-  }
-  const optionIds = ((answers.data ?? []) as Array<{ quiz_option_id: string }>).map(
-    (row) => row.quiz_option_id,
-  );
-  if (optionIds.length === 0) return { boardId, ownerTagIds: [] };
-
-  const tags = await service
-    .from("quiz_option_competence_tag")
-    .select("competence_tag_id")
-    .in("quiz_option_id", optionIds);
-  if (tags.error) {
-    console.error(`[dashboard] tag-læsning fejlede: ${tags.error.message}`);
-    return null;
-  }
-  const ownerTagIds = [
-    ...new Set(((tags.data ?? []) as Array<{ competence_tag_id: string }>).map((r) => r.competence_tag_id)),
-  ];
+  // Samme læsning som admins board-editor (ADR 0062): fælles hjælper, kun tag-id'er forlader den.
+  const ownerTagIds = await readOwnerTagIds(service, ownerId);
+  if (ownerTagIds === null) return null;
   return { boardId, ownerTagIds };
 }
 

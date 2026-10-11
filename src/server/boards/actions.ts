@@ -7,9 +7,11 @@
  * VIGTIGT: service-role bypasser RLS, så ejerskab verificeres EKSPLICIT her (board.owner_id mod den
  * nuværende bruger). Uden det ville en ejer kunne mutere et fremmed board via et gættet board-id.
  *
- * Byggespec §3/§5.6 ("altid mindst 1 intern partner", "flag valideret ved board-oprettelse") og §5.2
- * (2-3 partnere) håndhæves her — de er invarianter på tværs af rækker og hører derfor til ved
- * board-oprettelse, ikke som DB-constraint.
+ * Invarianterne (byggespec §3/§5.6 "altid mindst 1 intern partner", §5.2 2-3 partnere) og de
+ * skrivende trin bor i ./composition og deles med admins vej (./admin-actions, ADR 0062) — her er
+ * kun auth, ejerskab og navigation. Efter hver ændring opdateres boardets Cal.com-hosts og
+ * ændringen logges; en Cal.com-fejl vises ikke for ejeren (hun kan intet stille op med den) men
+ * står på admins revisionsspor, som viser at hosts hænger efter.
  */
 
 import { revalidatePath } from "next/cache";
@@ -20,7 +22,7 @@ import { getCurrentUser, requireRole, type AuthUser } from "@/server/auth";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServiceSupabase } from "@/server/auth/supabase-server";
 import { isEnabled } from "@/server/flags";
-import { MAX_BOARD_SIZE, MIN_BOARD_SIZE } from "@/server/matching/algorithm";
+import { applyBoardChange, assertBoardShape, readInternalFlags, type BoardChange } from "./composition";
 
 interface OwnerContext {
   service: SupabaseClient;
@@ -45,31 +47,6 @@ async function requireOwnedBoard(context: OwnerContext, boardId: string): Promis
   if (error || !data) throw new Error("Board ikke fundet.");
 }
 
-/** is_internal for et sæt katalogposter. Bruges til at håndhæve "mindst 1 intern". */
-async function readInternalFlags(
-  context: OwnerContext,
-  partnerIds: string[],
-): Promise<Map<string, boolean>> {
-  const { data, error } = await context.service
-    .from("partner_profile")
-    .select("id, is_internal")
-    .in("id", partnerIds);
-  if (error) throw new Error(`Kunne ikke læse partner-profiler: ${error.message}`);
-
-  const rows = (data ?? []) as Array<{ id: string; is_internal: boolean }>;
-  if (rows.length !== partnerIds.length) throw new Error("Ukendt partner i boardet.");
-  return new Map(rows.map((row) => [row.id, row.is_internal]));
-}
-
-function assertBoardShape(partnerIds: string[], internalById: Map<string, boolean>): void {
-  if (partnerIds.length < MIN_BOARD_SIZE || partnerIds.length > MAX_BOARD_SIZE) {
-    throw new Error(`Et board skal bestå af ${MIN_BOARD_SIZE}-${MAX_BOARD_SIZE} partnere.`);
-  }
-  if (!partnerIds.some((id) => internalById.get(id))) {
-    throw new Error("Et board skal have mindst én intern partner.");
-  }
-}
-
 function readPartnerIds(formData: FormData): string[] {
   return [
     ...new Set(
@@ -79,6 +56,12 @@ function readPartnerIds(formData: FormData): string[] {
         .filter((value) => value.length > 0),
     ),
   ];
+}
+
+/** Ejerskabstjek + den fælles ændring (invarianter, hosts, log). */
+async function changeOwnBoard(context: OwnerContext, boardId: string, change: BoardChange): Promise<void> {
+  await requireOwnedBoard(context, boardId);
+  await applyBoardChange(context.service, { id: context.user.id, role: "ejer" }, boardId, change);
 }
 
 /**
@@ -91,7 +74,7 @@ function readPartnerIds(formData: FormData): string[] {
 export async function approveBoard(formData: FormData): Promise<void> {
   const context = await requireOwnerContext();
   const partnerIds = readPartnerIds(formData);
-  const internalById = await readInternalFlags(context, partnerIds);
+  const internalById = await readInternalFlags(context.service, partnerIds);
   assertBoardShape(partnerIds, internalById);
 
   const { data: board, error: boardError } = await context.service
@@ -132,58 +115,9 @@ export async function swapBoardPartner(formData: FormData): Promise<void> {
   if (!boardId || !outgoingId || !incomingId) throw new Error("Manglende felter til udskiftning.");
   if (outgoingId === incomingId) redirect("/board");
 
-  await requireOwnedBoard(context, boardId);
-
-  const { data: current, error: currentError } = await context.service
-    .from("board_partner")
-    .select("partner_id, is_lead")
-    .eq("board_id", boardId);
-  if (currentError) throw new Error(`Kunne ikke læse boardet: ${currentError.message}`);
-
-  const rows = (current ?? []) as Array<{ partner_id: string; is_lead: boolean }>;
-  const outgoing = rows.find((row) => row.partner_id === outgoingId);
-  if (!outgoing) throw new Error("Partneren sidder ikke på boardet.");
-  if (rows.some((row) => row.partner_id === incomingId)) {
-    throw new Error("Partneren sidder allerede på boardet.");
-  }
-
-  const nextIds = rows.map((row) => (row.partner_id === outgoingId ? incomingId : row.partner_id));
-  const internalById = await readInternalFlags(context, nextIds);
-  assertBoardShape(nextIds, internalById);
-
-  const { error: deleteError } = await context.service
-    .from("board_partner")
-    .delete()
-    .eq("board_id", boardId)
-    .eq("partner_id", outgoingId);
-  if (deleteError) throw new Error(`Kunne ikke fjerne partneren: ${deleteError.message}`);
-
-  // Mister boardet sin lead ved udskiftningen, udpeges den første interne igen (samme pladsholder
-  // som ved oprettelse). TODO(ejer): lead-partner regler.
-  const keepsLead = rows.some((row) => row.is_lead && row.partner_id !== outgoingId);
-  const { data: inserted, error: insertError } = await context.service
-    .from("board_partner")
-    .insert({
-      board_id: boardId,
-      partner_id: incomingId,
-      is_lead: !keepsLead && (internalById.get(incomingId) ?? false),
-    })
-    .select("partner_id")
-    .single();
-  if (insertError || !inserted) {
-    throw new Error(`Kunne ikke indsætte partneren: ${insertError?.message ?? "ingen række skrevet"}`);
-  }
-
-  if (!keepsLead && !internalById.get(incomingId)) {
-    const fallbackLead = nextIds.find((id) => internalById.get(id));
-    if (fallbackLead) {
-      await context.service
-        .from("board_partner")
-        .update({ is_lead: true })
-        .eq("board_id", boardId)
-        .eq("partner_id", fallbackLead);
-    }
-  }
+  // Mister boardet sin lead ved udskiftningen, går den til den indkommende hvis hun er intern,
+  // ellers den første interne (./composition). TODO(ejer): lead-partner regler.
+  await changeOwnBoard(context, boardId, { kind: "udskift", outgoingId, incomingId });
 
   revalidatePath("/board");
   redirect(`/board?udskiftet=${outgoingId}&til=${incomingId}`);
@@ -202,29 +136,7 @@ export async function setBoardLead(formData: FormData): Promise<void> {
   const partnerId = String(formData.get("partner") ?? "");
   if (!boardId || !partnerId) throw new Error("Manglende felter til lead-markering.");
 
-  await requireOwnedBoard(context, boardId);
-
-  const internalById = await readInternalFlags(context, [partnerId]);
-  if (!internalById.get(partnerId)) {
-    throw new Error("Kun en intern partner kan være lead.");
-  }
-
-  const { error: clearError } = await context.service
-    .from("board_partner")
-    .update({ is_lead: false })
-    .eq("board_id", boardId);
-  if (clearError) throw new Error(`Kunne ikke rydde lead: ${clearError.message}`);
-
-  const { data, error } = await context.service
-    .from("board_partner")
-    .update({ is_lead: true })
-    .eq("board_id", boardId)
-    .eq("partner_id", partnerId)
-    .select("partner_id")
-    .single();
-  if (error || !data) {
-    throw new Error(`Kunne ikke sætte lead: ${error?.message ?? "ingen række ramt"}`);
-  }
+  await changeOwnBoard(context, boardId, { kind: "saet_lead", partnerId });
 
   revalidatePath("/board");
 }
@@ -239,28 +151,9 @@ export async function addBoardPartner(formData: FormData): Promise<void> {
   const boardId = String(formData.get("board_id") ?? "");
   const partnerId = String(formData.get("partner") ?? "");
   if (!boardId || !partnerId) throw new Error("Board og partner er påkrævet.");
-  await requireOwnedBoard(context, boardId);
 
-  const { data: current, error: currentError } = await context.service
-    .from("board_partner")
-    .select("partner_id")
-    .eq("board_id", boardId);
-  if (currentError) throw new Error(`Kunne ikke læse boardet: ${currentError.message}`);
-  const currentIds = ((current ?? []) as Array<{ partner_id: string }>).map((r) => r.partner_id);
-  if (currentIds.includes(partnerId)) throw new Error("Partneren sidder allerede på boardet.");
+  await changeOwnBoard(context, boardId, { kind: "tilfoej", partnerId });
 
-  const nextIds = [...currentIds, partnerId];
-  const internalById = await readInternalFlags(context, nextIds);
-  assertBoardShape(nextIds, internalById);
-
-  const { data, error } = await context.service
-    .from("board_partner")
-    .insert({ board_id: boardId, partner_id: partnerId, is_lead: false })
-    .select("partner_id")
-    .single();
-  if (error || !data) {
-    throw new Error(`Kunne ikke tilføje partneren: ${error?.message ?? "ingen række skrevet"}`);
-  }
   revalidatePath("/board");
   revalidatePath("/betaling");
 }
@@ -270,42 +163,11 @@ export async function removeBoardPartner(formData: FormData): Promise<void> {
   const boardId = String(formData.get("board_id") ?? "");
   const partnerId = String(formData.get("partner") ?? "");
   if (!boardId || !partnerId) throw new Error("Board og partner er påkrævet.");
-  await requireOwnedBoard(context, boardId);
-
-  const { data: current, error: currentError } = await context.service
-    .from("board_partner")
-    .select("partner_id, is_lead")
-    .eq("board_id", boardId);
-  if (currentError) throw new Error(`Kunne ikke læse boardet: ${currentError.message}`);
-  const rows = (current ?? []) as Array<{ partner_id: string; is_lead: boolean }>;
-  if (!rows.some((r) => r.partner_id === partnerId)) {
-    throw new Error("Partneren sidder ikke på boardet.");
-  }
-
-  const nextIds = rows.map((r) => r.partner_id).filter((id) => id !== partnerId);
-  const internalById = await readInternalFlags(context, nextIds);
-  assertBoardShape(nextIds, internalById);
-
-  const { error } = await context.service
-    .from("board_partner")
-    .delete()
-    .eq("board_id", boardId)
-    .eq("partner_id", partnerId);
-  if (error) throw new Error(`Kunne ikke fjerne partneren: ${error.message}`);
 
   // Fjernede vi lead'en, udpeges den første interne igen (samme pladsholder som ved
   // oprettelse/udskift). TODO(ejer): lead-partner regler.
-  const removedWasLead = rows.some((r) => r.partner_id === partnerId && r.is_lead);
-  if (removedWasLead) {
-    const fallbackLead = nextIds.find((id) => internalById.get(id));
-    if (fallbackLead) {
-      await context.service
-        .from("board_partner")
-        .update({ is_lead: true })
-        .eq("board_id", boardId)
-        .eq("partner_id", fallbackLead);
-    }
-  }
+  await changeOwnBoard(context, boardId, { kind: "fjern", partnerId });
+
   revalidatePath("/board");
   revalidatePath("/betaling");
 }

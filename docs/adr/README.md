@@ -92,6 +92,7 @@ det gjort sådan?", så skriv en ADR.
 | 0059 | Mødeopsummering som gemt artefakt (`meeting_summary`), genereret i baggrunden; RLS ejer + admin | Accepteret | 4 |
 | 0060 | Signerede engangslinks til rating: HMAC over rækken, engangsbrug afgjort i databasen, ingen orakel | Accepteret | 4 |
 | 0061 | Kontoprofil: navn, telefon, tidszone og SMS-samtykke som kolonner på `app_user` (lukker hullerne fra 0046 og 0057) | Accepteret | 2 + 4 |
+| 0062 | Admin styrer board-sammensætning: fælles invarianter, revisionsspor (`board_change`) og Cal.com-hosts efter hver ændring | Accepteret | 1 + 2 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så

@@ -134,6 +134,8 @@ bygget mod API v2's dokumenterede form og afventer liveverifikation (L-1, L-3, L
 - **Admin:** `/admin/boards` (opret/opdatér event type; idempotent pr. eksisterende id) og et
   Cal.com-sæde-felt på `/admin/partners/[id]`. En partner uden `calcom_user_id` blokerer
   oprettelsen højlydt frem for at give et board med færre værter end partnere.
-- **Åbent:** partnerudskiftning på et board opdaterer ikke event typens `hosts` automatisk
-  (`TODO(mads)` i `createBoardEventType`) — admin genkører handlingen indtil board-livscyklus
-  er afklaret. Webhook-stien (`provider_booking_uid`) afhang aldrig af `hosts` og er uændret.
+- **Lukket (ADR 0062):** en sammensætningsændring — ejerens eller admins — opdaterer event typens
+  `hosts` automatisk, hvis boardet har et event type. Fejler det, ruller ændringen ikke tilbage;
+  admin ser en advarsel og kører "Opdatér hosts". **Stadig åbent (B-67):** en ændret
+  `partner_profile.calcom_user_id` opdaterer ikke de boards partneren sidder på. Webhook-stien
+  (`provider_booking_uid`) afhang aldrig af `hosts` og er uændret.
