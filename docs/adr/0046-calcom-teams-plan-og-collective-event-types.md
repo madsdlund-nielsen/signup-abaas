@@ -130,6 +130,7 @@ bygget mod API v2's dokumenterede form og afventer liveverifikation (L-1, L-3, L
   **aldrig** gemmes på boardet (et demo-id i databasen ville nå en rigtig Cal.com).
 - **Ejer som attendee:** e-mail fra `app_user`; vi indsamler intet ejernavn, så e-mailen bruges
   som navn, og tidszonen er fast `Europe/Copenhagen`. Begge er `TODO(mads)`.
+  *Lukket (ADR 0061):* navn og tidszone kommer nu fra kontoprofilen; e-mailen er kun fallback.
 - **Admin:** `/admin/boards` (opret/opdatér event type; idempotent pr. eksisterende id) og et
   Cal.com-sæde-felt på `/admin/partners/[id]`. En partner uden `calcom_user_id` blokerer
   oprettelsen højlydt frem for at give et board med færre værter end partnere.

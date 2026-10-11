@@ -270,6 +270,8 @@ describe("meetingVariables", () => {
     const variables = meetingVariables(context, { aendring: "aflyst" }, { NEXT_PUBLIC_APP_URL: "https://app.example.invalid" });
     for (const key of ["meeting-reminder", "meeting-changed", "rating-request"]) {
       for (const variable of getNotificationType(key)!.variables) {
+        // modtager_navn leveres af motoren pr. modtager (kontoens navn, ADR 0061), ikke af kalderen.
+        if (variable.key === "modtager_navn") continue;
         expect(variables[variable.key], `${key}.${variable.key}`).toBeDefined();
       }
     }

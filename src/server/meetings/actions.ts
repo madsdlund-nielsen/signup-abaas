@@ -67,12 +67,20 @@ async function readBoardBookingInfo(
 
   const { data: owner, error: ownerError } = await service
     .from("app_user")
-    .select("email")
+    .select("email, display_name, time_zone")
     .eq("id", row.owner_id)
     .maybeSingle();
   if (ownerError || !owner) throw new Error("Ejerens kontaktoplysninger kunne ikke læses.");
 
-  return { eventTypeId, attendee: ownerAttendee((owner as { email: string }).email) };
+  const account = owner as { email: string; display_name: string | null; time_zone: string | null };
+  return {
+    eventTypeId,
+    attendee: ownerAttendee({
+      email: account.email,
+      displayName: account.display_name,
+      timeZone: account.time_zone,
+    }),
+  };
 }
 
 /** Opret møde + deltagere i Supabase, book hos provider, hægt referencen på. */

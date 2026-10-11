@@ -42,6 +42,10 @@ export class MemoryStore implements NotificationStore {
   templates: LiveTemplate[] = [];
   /** userId → adresser pr. kanal. Mangler en kanal, har modtageren ingen adresse dér. */
   addresses = new Map<string, Partial<Record<NotificationChannelKey, string>>>();
+  /** userId → kontoens visningsnavn (`app_user.display_name`). Mangler den, har kontoen intet navn. */
+  names = new Map<string, string>();
+  /** Hvor mange gange navnet er slået op (motoren skal kun spørge når skabelonen bruger det). */
+  nameLookups = 0;
   private nextId = 1;
 
   setLive(
@@ -113,6 +117,11 @@ export class MemoryStore implements NotificationStore {
   async resolveRecipient(userId: string, channel: NotificationChannelKey): Promise<RecipientAddress> {
     const address = this.addresses.get(userId)?.[channel];
     return address ? { address } : { address: null, reason: `ingen ${channel}-adresse (test)` };
+  }
+
+  async resolveRecipientName(userId: string): Promise<string | null> {
+    this.nameLookups += 1;
+    return this.names.get(userId) ?? null;
   }
 }
 

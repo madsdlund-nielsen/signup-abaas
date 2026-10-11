@@ -33,8 +33,26 @@ function memoryFetcher(tables: Record<string, Row[]>): { fetch: RowFetcher; quer
 
 const tables: Record<string, Row[]> = {
   app_user: [
-    { id: "u1", email: "ejer@example.invalid", created_at: "2026-01-01T00:00:00Z" },
-    { id: "u2", email: "fremmed@example.invalid", created_at: "2026-01-02T00:00:00Z" },
+    {
+      id: "u1",
+      email: "ejer@example.invalid",
+      created_at: "2026-01-01T00:00:00Z",
+      display_name: "[DEMO] Eva Ejer",
+      phone_e164: "+4500000000",
+      time_zone: "Europe/Copenhagen",
+      sms_opt_in: true,
+      sms_opt_in_at: "2026-02-01T10:00:00Z",
+    },
+    {
+      id: "u2",
+      email: "fremmed@example.invalid",
+      created_at: "2026-01-02T00:00:00Z",
+      display_name: "[DEMO] Fremmed",
+      phone_e164: "+4511111111",
+      time_zone: "UTC",
+      sms_opt_in: false,
+      sms_opt_in_at: null,
+    },
   ],
   user_role_assignment: [
     { user_id: "u1", role: "ejer" },
@@ -100,6 +118,19 @@ describe("collectSubjectData — scoping til én person", () => {
     expect(raw?.meetingNotes.map((n) => n.id)).toEqual(["n1"]);
     expect(raw?.quizAnswers).toHaveLength(1);
     expect(JSON.stringify(raw)).not.toMatch(/Anden|fremmed/);
+  });
+
+  it("henter personens egen kontoprofil (navn, telefon, tidszone, SMS-samtykke) — ikke den fremmedes", async () => {
+    const { fetch } = memoryFetcher(tables);
+    const raw = await collectSubjectData(fetch, "ejer@example.invalid");
+    expect(raw?.user).toMatchObject({
+      display_name: "[DEMO] Eva Ejer",
+      phone_e164: "+4500000000",
+      time_zone: "Europe/Copenhagen",
+      sms_opt_in: true,
+      sms_opt_in_at: "2026-02-01T10:00:00Z",
+    });
+    expect(JSON.stringify(raw)).not.toContain("+4511111111");
   });
 
   it("slår rådgivernes navne op, men kun for dem der optræder hos personen", async () => {

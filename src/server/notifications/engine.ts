@@ -36,7 +36,12 @@ import {
 } from "./catalog";
 import { renderTemplate, type VariableValues } from "./render";
 import { scrubError, scrubPii } from "./scrub";
-import { createSupabaseNotificationStore, type DeliveryStatus, type NotificationStore } from "./store";
+import {
+  createSupabaseNotificationStore,
+  type DeliveryStatus,
+  type LiveTemplate,
+  type NotificationStore,
+} from "./store";
 
 /** Forsøg pr. kald (1 første + 2 gentagelser). Teknisk grænse, ikke en forretningsregel. */
 export const MAX_ATTEMPTS = 3;
@@ -131,6 +136,25 @@ export async function sendNotification(
   return outcomes;
 }
 
+/**
+ * Fyld `modtager_navn` fra modtagerens konto (ADR 0061) — men kun hvis skabelonen bruger den
+ * (ellers er opslaget spildt), kalderen ikke selv har leveret den, og kontoen HAR et navn. Har
+ * den ikke, udelades værdien, og renderen melder «mangler værdi»: aldrig et tomt felt og aldrig
+ * et opfundet navn (ADR 0057 pkt. 3).
+ */
+async function withRecipientName(
+  input: SendNotificationInput,
+  template: LiveTemplate,
+  store: NotificationStore,
+): Promise<VariableValues> {
+  if (input.variables.modtager_navn !== undefined) return input.variables;
+  if (!`${template.subject ?? ""}\n${template.body}`.includes(RECIPIENT_NAME_MARKER)) return input.variables;
+  const name = await store.resolveRecipientName(input.recipientUserId);
+  return name ? { ...input.variables, modtager_navn: name } : input.variables;
+}
+
+const RECIPIENT_NAME_MARKER = "modtager_navn";
+
 async function sendOnChannel(
   input: SendNotificationInput,
   channel: NotificationChannelKey,
@@ -167,7 +191,8 @@ async function sendOnChannel(
   if (!template) return fail("ingen live skabelon", 0, null);
 
   // 3. Render. Et problem er en fejlet udsendelse, aldrig en halvt udfyldt besked.
-  const rendered = renderTemplate(template, input.variables, allowedVariableKeys(type));
+  const variables = await withRecipientName(input, template, deps.store);
+  const rendered = renderTemplate(template, variables, allowedVariableKeys(type));
   if (!rendered.ok) {
     const problems = rendered.problems.map((problem) => problem.message).join(" ");
     return fail(`skabelon v${template.version} kan ikke renderes: ${problems}`, 0, template.id);

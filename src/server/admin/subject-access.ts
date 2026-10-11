@@ -13,13 +13,20 @@
  *     indsigtsretten er en jura-afvejning, ikke et teknisk valg. TODO(ejer): jura.
  *   - Partnernes private forberedelsesnoter er kun med for forfatteren selv.
  *   - Honorar findes endnu ikke som data (fase 5.1).
- *   - Samtykke: der findes ingen samtykketabel — kun en cookie i browseren.
+ *   - Samtykke: der findes ingen samtykketabel — kun en cookie i browseren. SMS-samtykket er
+ *     undtagelsen: det er en kolonne på brugeren (0024) og står under `person`.
  */
 
 export interface AppUserRow {
   id: string;
   email: string;
   created_at: string;
+  /** Kontoprofilen (0024, ADR 0061). Valgfrie i typen, så ældre rækkeformer stadig kan sammensættes. */
+  display_name?: string | null;
+  phone_e164?: string | null;
+  time_zone?: string | null;
+  sms_opt_in?: boolean | null;
+  sms_opt_in_at?: string | null;
 }
 
 export interface RoleRow {
@@ -204,7 +211,7 @@ export const NOT_INCLUDED: readonly string[] = [
   "Andre partneres private forberedelsesnoter.",
   "Honorar — er endnu ikke bygget som data (fase 5.1).",
   "AI-resuméer og transskripter — er endnu ikke gemt som data.",
-  "Samtykkelog — der findes ingen samtykketabel; samtykke registreres i dag kun som en cookie i personens egen browser.",
+  "Samtykkelog — der findes ingen samtykketabel; cookie-samtykke registreres kun i personens egen browser. SMS-samtykket (tilstand + tidspunkt) er med under `person`, men uden historik over tidligere valg.",
 ];
 
 export interface SubjectAccessMeta {
@@ -389,13 +396,21 @@ export function composeSubjectAccessExport(raw: RawSubjectData, meta: SubjectAcc
       id: raw.user.id,
       email: raw.user.email,
       oprettet: raw.user.created_at,
+      // Kontoprofilen (`/konto`, ADR 0061). SMS-samtykket er personens eget valg og hører med.
+      navn: raw.user.display_name ?? null,
+      telefon: raw.user.phone_e164 ?? null,
+      tidszone: raw.user.time_zone ?? null,
+      sms_samtykke: {
+        givet: raw.user.sms_opt_in ?? false,
+        tidspunkt: raw.user.sms_opt_in_at ?? null,
+      },
     },
     roller: raw.roles.map((r) => r.role).sort(),
     ejer: hasOwnerData ? ownerSection(raw) : null,
     partner: partnerSection(raw),
     samtykke: {
       registreret: false,
-      note: "Der findes ingen samtykketabel. Samtykke gemmes kun som en cookie i personens egen browser og kan ikke udtrækkes herfra.",
+      note: "Der findes ingen samtykketabel. Samtykke til cookies gemmes kun som en cookie i personens egen browser og kan ikke udtrækkes herfra. SMS-samtykket står under `person.sms_samtykke`.",
     },
     afgraensning: { ikke_inkluderet: [...NOT_INCLUDED] },
   };

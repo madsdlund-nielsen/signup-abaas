@@ -11,6 +11,7 @@
 import { DEMO_TEXT_PREFIX } from "@/lib/demo";
 
 export const PREVIEW_EXAMPLES: Readonly<Record<string, string>> = {
+  modtager_navn: `${DEMO_TEXT_PREFIX} Eksempel Modtager`,
   board_navn: `${DEMO_TEXT_PREFIX} Eksempel-board`,
   moede_tidspunkt: `${DEMO_TEXT_PREFIX} 1. januar 2000 kl. 00.00`,
   aendring: `${DEMO_TEXT_PREFIX} flyttet`,

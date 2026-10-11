@@ -41,6 +41,16 @@ function emptyRaw(overrides: Partial<RawSubjectData> = {}): RawSubjectData {
 }
 
 const ownerRaw = emptyRaw({
+  user: {
+    id: "u1",
+    email: "test@example.invalid",
+    created_at: "2026-01-01T00:00:00Z",
+    display_name: "[DEMO] Eva Ejer",
+    phone_e164: "+4500000000",
+    time_zone: "America/Nuuk",
+    sms_opt_in: true,
+    sms_opt_in_at: "2026-02-01T10:00:00Z",
+  },
   roles: [{ role: "ejer" }],
   ownedBoards: [{ id: "b1", owner_id: "u1", name: "Testboard", created_at: "2026-02-01T00:00:00Z" }],
   boardPartners: [{ board_id: "b1", partner_id: "p1", is_lead: true }],
@@ -117,8 +127,30 @@ describe("composeSubjectAccessExport — ejer", () => {
 
   it("mærker udtrækket og identificerer personen", () => {
     expect(doc.udtraek).toMatchObject({ genereret: META.generatedAt, version: 1 });
-    expect(doc.person).toEqual({ id: "u1", email: "test@example.invalid", oprettet: "2026-01-01T00:00:00Z" });
+    expect(doc.person).toMatchObject({ id: "u1", email: "test@example.invalid", oprettet: "2026-01-01T00:00:00Z" });
     expect(doc.roller).toEqual(["ejer"]);
+  });
+
+  it("tager kontoprofilen med: navn, telefon, tidszone og SMS-samtykke med tidspunkt (ADR 0061)", () => {
+    expect(doc.person).toEqual({
+      id: "u1",
+      email: "test@example.invalid",
+      oprettet: "2026-01-01T00:00:00Z",
+      navn: "[DEMO] Eva Ejer",
+      telefon: "+4500000000",
+      tidszone: "America/Nuuk",
+      sms_samtykke: { givet: true, tidspunkt: "2026-02-01T10:00:00Z" },
+    });
+  });
+
+  it("en konto uden profil viser tomme felter og intet samtykke — nøglerne findes, så det ses at der er spurgt", () => {
+    const bare = composeSubjectAccessExport(emptyRaw(), META) as Record<string, any>;
+    expect(bare.person).toMatchObject({
+      navn: null,
+      telefon: null,
+      tidszone: null,
+      sms_samtykke: { givet: false, tidspunkt: null },
+    });
   });
 
   it("samler board, rådgivere, medlemskab, træk og møder ét sted", () => {

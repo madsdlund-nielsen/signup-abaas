@@ -24,6 +24,7 @@ export function SiteNavLinks({ user }: { user: AuthUser | null }) {
       {user.roles.includes("ejer") ? <Link href="/moeder">Møder</Link> : null}
       {user.roles.includes("partner") ? <Link href="/partner">Partner</Link> : null}
       {user.roles.includes("admin") ? <Link href="/admin">Admin</Link> : null}
+      <Link href="/konto">Konto</Link>
     </>
   );
 }

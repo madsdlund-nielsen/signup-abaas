@@ -62,6 +62,17 @@ export interface NotificationType {
 }
 
 const BOARD_NAVN: NotificationVariable = { key: "board_navn", label: "Boardets navn" };
+/**
+ * Modtagerens navn = kontoens visningsnavn (`app_user.display_name`, `/konto`, ADR 0061). Motoren
+ * leverer den selv pr. modtager — kalderne sender den ikke. Har modtageren intet navn, findes
+ * værdien ikke, og en skabelon der bruger den bliver en `fejlet` udsendelse (ADR 0057 pkt. 3:
+ * aldrig et stille tomt felt, aldrig et opfundet navn). Partnernes katalognavn
+ * (`partner_profile.name`) er et andet felt og bruges ikke her.
+ */
+const MODTAGER_NAVN: NotificationVariable = {
+  key: "modtager_navn",
+  label: "Modtagerens navn (kontoens navn) — mangler modtageren et, fejler udsendelsen",
+};
 const MOEDE_TIDSPUNKT: NotificationVariable = {
   key: "moede_tidspunkt",
   label: "Mødets tidspunkt (dansk tid)",
@@ -72,9 +83,9 @@ const MOEDE_TIDSPUNKT: NotificationVariable = {
  * CLAUDE.md: Resend bærer transaktionsmails, inMobile bruges til "rating/påmindelser" —
  * derfor SMS netop på påmindelse og ratinganmodning, ikke på de øvrige.
  *
- * Der er bevidst ingen modtagerens-navn-variabel: ejere har ikke et navn i datamodellen
- * (`app_user` har kun e-mail), og en variabel koden ikke kan levere til alle modtagere ville
- * give en fejlet udsendelse for halvdelen af dem.
+ * `modtager_navn` kom med kontoprofilen (ADR 0061): navnet findes kun hos dem der har angivet et
+ * på `/konto`, så en skabelon der bruger det fejler for de øvrige — den afvejning er admins,
+ * og editoren siger det på variablen.
  *
  * TODO(ejer): udsendelsestidspunkter for påmindelse og ratinganmodning (`timing` + `schedule`).
  * Påmindelsen hænger desuden sammen med ændre-/aflyse-vinduet (byggespec §12 pkt. 4), som er
@@ -90,6 +101,7 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
     timing: null,
     schedule: null,
     variables: [
+      MODTAGER_NAVN,
       MOEDE_TIDSPUNKT,
       BOARD_NAVN,
       { key: "link", label: "Link til mødet i platformen" },
@@ -104,6 +116,7 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
     timing: "Straks ved ændringen",
     schedule: null,
     variables: [
+      MODTAGER_NAVN,
       { key: "aendring", label: "Hvad der skete: «aflyst» eller «flyttet»" },
       { ...MOEDE_TIDSPUNKT, label: "Mødets tidspunkt (dansk tid) — det nye ved flytning" },
       BOARD_NAVN,
@@ -119,6 +132,7 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
     timing: null,
     schedule: null,
     variables: [
+      MODTAGER_NAVN,
       MOEDE_TIDSPUNKT,
       BOARD_NAVN,
       { key: "link", label: "Link til mødet, hvor vurderingen afgives" },
@@ -132,7 +146,7 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
     channels: ["email"],
     timing: "Straks ved fejlet træk",
     schedule: null,
-    variables: [BOARD_NAVN, { key: "link", label: "Link til betalingssiden" }],
+    variables: [MODTAGER_NAVN, BOARD_NAVN, { key: "link", label: "Link til betalingssiden" }],
   },
 ] as const;
 
