@@ -15,7 +15,8 @@ import { getCurrentUser, requireRole, type AuthUser } from "@/server/auth";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServiceSupabase } from "@/server/auth/supabase-server";
 import { recordBoardChange } from "@/server/boards/audit";
-import { syncBoardHosts } from "./board-hosts";
+import { HOSTS_WARNING } from "@/server/boards/composition";
+import { syncBoardHosts, syncHostsForPartner } from "./board-hosts";
 
 async function requireAdminContext(): Promise<{ service: SupabaseClient; user: AuthUser }> {
   const config = readSupabaseAuthConfig();
@@ -42,16 +43,31 @@ function isUniqueViolation(error: { code?: string } | null): boolean {
   return error?.code === "23505";
 }
 
-/** Admin kobler en katalogpartner til sit Cal.com-sæde (tom = fjern koblingen). */
+/**
+ * Admin kobler en katalogpartner til sit Cal.com-sæde (tom = fjern koblingen). Ændres sædet, køres
+ * hosts-synkroniseringen bagefter for hvert board partneren sidder på (B-67, ADR 0064): sædet er
+ * gemt i Supabase og står, også hvis Cal.com afviser — fejlen vises som advarsel, aldrig som
+ * rollback (samme regel som sammensætningsændringer, ADR 0062).
+ */
 export async function setPartnerCalcomUserId(
   _prev: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
   try {
-    const { service } = await requireAdminContext();
+    const { service, user } = await requireAdminContext();
     const partnerId = String(formData.get("partner_id") ?? "");
     if (!partnerId) return { error: "Partner-id er påkrævet." };
     const calcomUserId = parseCalcomId(formData.get("calcom_user_id"), "Cal.com-bruger-id");
+
+    // Kun en faktisk ændring skal røre Cal.com. Kan det gamle sæde ikke læses, synkroniseres der
+    // hellere en gang for meget (idempotent) end en gang for lidt.
+    const { data: before } = await service
+      .from("partner_profile")
+      .select("calcom_user_id")
+      .eq("id", partnerId)
+      .maybeSingle();
+    const unchanged =
+      before != null && (before as { calcom_user_id: number | null }).calcom_user_id === calcomUserId;
 
     const { data, error } = await service
       .from("partner_profile")
@@ -65,9 +81,19 @@ export async function setPartnerCalcomUserId(
     if (error || !data) {
       return { error: `Kunne ikke gemme Cal.com-bruger: ${error?.message ?? "partner ikke fundet"}` };
     }
+
+    const hosts = unchanged
+      ? { boards: 0, updated: 0, failures: [] as string[] }
+      : await syncHostsForPartner(service, { id: user.id, role: "admin" }, partnerId);
+
     revalidatePath(`/admin/partners/${partnerId}`);
     revalidatePath("/admin/boards");
-    return {};
+    if (hosts.failures.length > 0) {
+      return { notice: "Cal.com-bruger gemt.", warning: `${HOSTS_WARNING} ${hosts.failures.join(" ")}` };
+    }
+    return hosts.updated > 0
+      ? { notice: `Cal.com-bruger gemt — hosts opdateret på ${hosts.updated} board(s).` }
+      : {};
   } catch (e) {
     return toError(e);
   }

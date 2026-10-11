@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { composeSubjectAccessExport } from "@/server/admin/subject-access";
 import {
   SubjectExportTooLargeError,
   collectSubjectData,
@@ -43,6 +44,7 @@ const tables: Record<string, Row[]> = {
       sms_opt_in: true,
       sms_opt_in_at: "2026-02-01T10:00:00Z",
     },
+    { id: "a1", email: "admin@example.invalid", created_at: "2026-01-01T00:00:00Z" },
     {
       id: "u2",
       email: "fremmed@example.invalid",
@@ -57,6 +59,7 @@ const tables: Record<string, Row[]> = {
   user_role_assignment: [
     { user_id: "u1", role: "ejer" },
     { user_id: "u2", role: "ejer" },
+    { user_id: "a1", role: "admin" },
   ],
   board: [
     { id: "b1", owner_id: "u1", name: "Mit board", created_at: "2026-02-01T00:00:00Z" },
@@ -95,6 +98,27 @@ const tables: Record<string, Row[]> = {
     { id: "o2", quiz_question_id: "q1", label: "Andens svar" },
   ],
   quiz_question: [{ id: "q1", prompt: "Spørgsmål" }],
+  // Revisionssporet: ejeren har selv tilføjet p1 (bc1), admin har sat lead på ejerens board (bc2),
+  // og en ANDEN ejer + admin har rørt et fremmed board (bc3, bc4) — de må aldrig komme med.
+  board_change: [
+    { id: "bc1", board_id: "b1", actor_id: "u1", actor_role: "ejer", action: "tilfoej", partner_id: "p1", replaced_partner_id: null, calcom_sync: "opdateret", created_at: "2026-02-03T00:00:00Z" },
+    { id: "bc2", board_id: "b1", actor_id: "a1", actor_role: "admin", action: "saet_lead", partner_id: "p1", replaced_partner_id: null, calcom_sync: "sprunget_over", created_at: "2026-02-04T00:00:00Z" },
+    { id: "bc3", board_id: "b2", actor_id: "u2", actor_role: "ejer", action: "tilfoej", partner_id: "p2", replaced_partner_id: null, calcom_sync: "opdateret", created_at: "2026-02-03T00:00:00Z" },
+    { id: "bc4", board_id: "b2", actor_id: "a1", actor_role: "admin", action: "fjern", partner_id: "p2", replaced_partner_id: null, calcom_sync: "fejlet", created_at: "2026-02-05T00:00:00Z" },
+  ],
+  meeting_summary: [
+    { id: "s1", meeting_id: "m1", status: "klar", summary: "Resumé af mit møde", action_items: ["Ring"], provider: "demo", model: "m", generated_at: "2026-03-02T00:00:00Z", created_at: "2026-03-02T00:00:00Z" },
+    { id: "s2", meeting_id: "m2", status: "klar", summary: "Resumé af andens møde", action_items: [], provider: "demo", model: "m", generated_at: "2026-03-02T00:00:00Z", created_at: "2026-03-02T00:00:00Z" },
+  ],
+  notification_delivery: [
+    { id: "nd1", type_key: "moede-bekraeftet", channel: "email", recipient_user_id: "u1", related_id: "m1", status: "sendt", provider_ref: "DEMO-1", created_at: "2026-02-21T00:00:00Z" },
+    { id: "nd2", type_key: "moede-bekraeftet", channel: "email", recipient_user_id: "u2", related_id: "m2", status: "sendt", provider_ref: "DEMO-2", created_at: "2026-02-21T00:00:00Z" },
+  ],
+  rating_link: [
+    { id: "rl1", meeting_id: "m1", rater_user_id: "u1", rater_partner_profile_id: null, expires_at: "2026-03-10T00:00:00Z", used_at: null, created_at: "2026-03-02T00:00:00Z" },
+    { id: "rl2", meeting_id: "m2", rater_user_id: "u2", rater_partner_profile_id: null, expires_at: "2026-03-10T00:00:00Z", used_at: null, created_at: "2026-03-02T00:00:00Z" },
+    { id: "rl3", meeting_id: "m1", rater_user_id: null, rater_partner_profile_id: "p1", expires_at: "2026-03-10T00:00:00Z", used_at: "2026-03-03T00:00:00Z", created_at: "2026-03-02T00:00:00Z" },
+  ],
   payment_charge: [
     { id: "c1", meeting_id: "m1", membership_id: "ms1", amount_minor: 1, currency: "DKK", status: "gennemfoert", failure_reason: null, provider_charge_ref: null, provider_invoice_ref: null, created_at: "2026-03-03T00:00:00Z" },
     { id: "c2", meeting_id: "m2", membership_id: "ms2", amount_minor: 1, currency: "DKK", status: "gennemfoert", failure_reason: null, provider_charge_ref: null, provider_invoice_ref: null, created_at: "2026-03-03T00:00:00Z" },
@@ -118,6 +142,32 @@ describe("collectSubjectData — scoping til én person", () => {
     expect(raw?.meetingNotes.map((n) => n.id)).toEqual(["n1"]);
     expect(raw?.quizAnswers).toHaveLength(1);
     expect(JSON.stringify(raw)).not.toMatch(/Anden|fremmed/);
+  });
+
+  it("tager revisionssporet med: ændringer ejeren selv har udført OG dem admin har udført på ejerens board — aldrig et fremmed boards (B-65)", async () => {
+    const { fetch } = memoryFetcher(tables);
+    const raw = await collectSubjectData(fetch, "ejer@example.invalid");
+    expect(raw?.boardChanges.map((c) => c.id).sort()).toEqual(["bc1", "bc2"]);
+    expect(raw?.partnerNames.map((p) => p.id)).toEqual(["p1"]);
+  });
+
+  it("en admin får de ændringer vedkommende har udført (aktør-id) — uden en ejer- eller partnerprofil (B-65)", async () => {
+    const { fetch } = memoryFetcher(tables);
+    const raw = await collectSubjectData(fetch, "admin@example.invalid");
+    expect(raw?.ownedBoards).toEqual([]);
+    expect(raw?.boardChanges.map((c) => c.id).sort()).toEqual(["bc2", "bc4"]);
+    const doc = composeSubjectAccessExport(raw!, { generatedAt: "2026-10-11T00:00:00Z" }) as Record<string, any>;
+    expect(doc.board_aendringer_udfoert.map((c: { handling: string }) => c.handling)).toEqual(["saet_lead", "fjern"]);
+    expect(doc.board_aendringer_udfoert.every((c: { udfoert_af_dig: boolean }) => c.udfoert_af_dig)).toBe(true);
+  });
+
+  it("henter kun personens egne resuméer, udsendelser og vurderingslinks", async () => {
+    const { fetch } = memoryFetcher(tables);
+    const raw = await collectSubjectData(fetch, "ejer@example.invalid");
+    expect(raw?.meetingSummaries.map((s) => s.id)).toEqual(["s1"]);
+    expect(raw?.notificationDeliveries.map((n) => n.id)).toEqual(["nd1"]);
+    expect(raw?.ratingLinks.map((l) => l.id)).toEqual(["rl1"]);
+    expect(JSON.stringify(raw)).not.toMatch(/andens møde|DEMO-2/);
   });
 
   it("henter personens egen kontoprofil (navn, telefon, tidszone, SMS-samtykke) — ikke den fremmedes", async () => {
@@ -158,6 +208,9 @@ describe("collectSubjectData — scoping til én person", () => {
     expect(raw?.memberBoards.map((b) => b.id)).toEqual(["b1"]);
     expect(raw?.meetingPartners.map((mp) => mp.meeting_id)).toEqual(["m1"]);
     expect(raw?.meetingNotes.map((n) => n.id)).toEqual(["n1"]);
+    // Ændringer der handler om partneren (partner_id), og vedkommendes eget vurderingslink:
+    expect(raw?.boardChanges.map((c) => c.id).sort()).toEqual(["bc1", "bc2"]);
+    expect(raw?.ratingLinks.map((l) => l.id)).toEqual(["rl3"]);
   });
 });
 

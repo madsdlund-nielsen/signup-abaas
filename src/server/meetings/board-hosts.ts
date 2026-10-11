@@ -13,6 +13,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createBookingProvider } from "@/lib/booking";
 import type { BookingProvider } from "@/lib/booking/port";
+import { recordBoardChange, type BoardActor } from "@/server/boards/audit";
 import { MEETING_LENGTH_MINUTES } from "./booking-info";
 
 export type HostsSync =
@@ -122,4 +123,55 @@ export async function syncBoardHosts(
   } catch (e) {
     return { status: "fejlet", message: e instanceof Error ? e.message : String(e) };
   }
+}
+
+export interface PartnerHostsSync {
+  /** Boards partneren sidder på. */
+  boards: number;
+  /** Heraf boards hvor event typens hosts blev skrevet. (Et board uden event type springes over.) */
+  updated: number;
+  /** Én dansk besked pr. board hvor hosts ikke kunne skrives (eller boards ikke kunne læses). */
+  failures: string[];
+}
+
+/**
+ * Efter at en partners Cal.com-sæde er ændret (B-67, ADR 0064): skriv hosts på hvert board
+ * partneren sidder på, så event typerne ikke peger på det gamle sæde. Kører EFTER skrivningen af
+ * sædet, og en fejl ruller den ikke tilbage — samme kontrakt som `syncBoardHosts` (som aldrig
+ * kaster): fejlene kommer tilbage som værdi og vises som advarsel. Hvert board der blev rørt
+ * logges som `opdater_hosts` på revisionssporet, så "Hosts hænger efter" på /admin/boards også
+ * dækker denne vej; et board uden event type logges ikke (intet at opdatere endnu).
+ */
+export async function syncHostsForPartner(
+  service: SupabaseClient,
+  actor: BoardActor,
+  partnerId: string,
+  booking: BookingProvider = createBookingProvider(),
+): Promise<PartnerHostsSync> {
+  const { data, error } = await service.from("board_partner").select("board_id").eq("partner_id", partnerId);
+  if (error) {
+    return { boards: 0, updated: 0, failures: [`Kunne ikke læse partnerens boards: ${error.message}`] };
+  }
+  const boardIds = [...new Set(((data ?? []) as Array<{ board_id: string }>).map((row) => row.board_id))];
+
+  let updated = 0;
+  const failures: string[] = [];
+  for (const boardId of boardIds) {
+    const result = await syncBoardHosts(service, boardId, { createIfMissing: false }, booking);
+    if (result.status === "opdateret") updated += 1;
+    if (result.status === "fejlet") {
+      failures.push(result.message);
+      console.error(`[boards] Cal.com-hosts ikke opdateret for board ${boardId}: ${result.message}`);
+    }
+    if (result.status !== "sprunget_over") {
+      await recordBoardChange(service, {
+        boardId,
+        actor,
+        action: "opdater_hosts",
+        partnerId,
+        calcomSync: result.status,
+      });
+    }
+  }
+  return { boards: boardIds.length, updated, failures: [...new Set(failures)] };
 }

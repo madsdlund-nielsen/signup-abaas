@@ -114,3 +114,5 @@ præcis det. En admin-policy på `app_user` er en migration og kan komme når ta
   Indsigtsudtrækket (`person`) har siden ADR 0061 også navn, telefon, tidszone og SMS-samtykke.
   - ~~Honorar kobles på driftsskærmen, når honorarskiven lander.~~ → koblet på (ADR 0055).
   - Sletteaction: egen skive efter ejer/jura-afklaring af opbevaringspligt.
+  - ~~Revisionssporet `board_change`, `meeting_summary`, `rating_link` og `notification_delivery` er
+    ikke med i udtrækket~~ → med siden ADR 0064 (B-65). Afgrænsningen (`afgraensning`) er opdateret.
