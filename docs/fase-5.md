@@ -24,7 +24,7 @@
 - [x] Ejer-dashboard: kommende møder, board, betalingsstatus. *(`/dashboard`, ADR 0055: næste møde
       med deltagere/forberedelse/Deltag, op til tre møder derefter, boardets sammensætning med lead,
       abonnement/kort/frekvens med CTA hvis kort mangler; tomtilstand → "Start onboarding")*
-- [x] Partner-dashboard: kommende møder, honoraroverblik, egne ratings. *(`/dashboard`: møder,
+- [ ] Partner-dashboard: kommende møder, honoraroverblik, egne ratings. *(`/dashboard`: møder,
       månedens honorar via `src/server/fees/` med "ingen sats"/"afventer regel"-tilstande,
       tilgængelighed. **Ratings:** RLS tillader ikke en partner at læse sine egne vurderinger
       (0015), så panelet siger at de ikke vises endnu — TODO(ejer), ingen ny læsevej bygget.)*
@@ -32,7 +32,7 @@
       boardets dækning pr. tag via `computeBoardCoverage`; "Initiér næste møde" fremhæves når intet er
       aftalt. Ejerens behov læses via service-role bag lead-tjek — ADR 0055. Lead-tildeling er
       stadig uafklaret, TODO(ejer).)*
-- [x] Admin-dashboard: boards, partnere, betalinger, honorar, driftstatus. *(Resumé på `/dashboard`
+- [ ] Admin-dashboard: boards, partnere, betalinger, honorar, driftstatus. *(Resumé på `/dashboard`
       og honorar for indeværende måned på `/admin/drift` (ADR 0053/0055). **Rest:** PostHog-
       driftstatus — TODO(mads): live nøgle.)*
 - [x] Juridisk download-interface til admin (jf. §11-krav) er tilgængeligt (`/admin/juridisk`,

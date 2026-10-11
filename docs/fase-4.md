@@ -22,7 +22,7 @@
 - [ ] Transskription via **Ordbogen (ordbogen.ai)** bag `FLAG_TRANSCRIPTION` — flaget
       tændes når DPA og samtykkeflow er på plads.
 - [ ] Auto-resumé af møde via **Ordbogen (Odin-LLM)** bag `FLAG_AIFOLLOWUP`.
-- [x] Notifikationsmotor: e-mail via **Resend (EU)**, SMS via **inMobile** — begge
+- [ ] Notifikationsmotor: e-mail via **Resend (EU)**, SMS via **inMobile** — begge
       porte findes allerede i `src/lib/email/` og `src/lib/sms/`. **(Oversigtsskærmen
       2026-09-21, ADR 0048; motor, adaptere, idempotent udsendelseslog, retry og fejlrapportering
       2026-10-10, ADR 0057.)** ⚠ Forbehold for nøgler: Resend-adapteren og inMobile-adapteren er
