@@ -2,7 +2,8 @@
  * Business-data-access for ejerens board (Fase 1.5, ADR 0021). Læsning via den authed server-klient:
  * `board_select_owner` scoper til auth.uid(), og `partner_profile_select_board_owner` (0010) giver
  * ejeren adgang til præcis de katalogposter der sidder på hendes eget board — ikke hele puljen.
- * Writes ligger i ./actions (service-role bag requireRole('ejer')).
+ * Writes ligger i ./actions (service-role bag requireRole('ejer')); admins overblik og editor bor i ./admin
+(ADR 0062).
  *
  * Board-livscyklus er et uafklaret punkt (CLAUDE.md), så modellen holdes livscyklus-agnostisk:
  * ét board pr. ejer i praksis (det ældste), ingen status/afslutning.
@@ -106,47 +107,4 @@ export async function getMyBoard(
     .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, "da"));
 
   return { id: row.id, name: row.name, members };
-}
-
-export interface AdminBoardRow {
-  id: string;
-  name: string;
-  /** Boardets collective event type hos Cal.com (0019). Null = ikke oprettet endnu. */
-  calcomEventTypeId: number | null;
-  partners: Array<{ name: string; hasCalcomUser: boolean }>;
-}
-
-/** Alle boards med Cal.com-status til admin (RLS: board_select_admin + partner_profile_select_admin). */
-export async function listAdminBoards(
-  env: Record<string, string | undefined> = process.env,
-): Promise<AdminBoardRow[]> {
-  const config = readSupabaseAuthConfig(env);
-  if (!isSupabaseAuthConfigured(config)) return [];
-
-  const supabase = await createServerSupabase(config);
-  const { data, error } = await supabase
-    .from("board")
-    .select("id, name, calcom_event_type_id, board_partner(partner_profile(name, calcom_user_id))")
-    .order("created_at");
-  if (error) {
-    console.error(`[boards] listAdminBoards fejlede: ${error.message}`);
-    return [];
-  }
-
-  type Profile = { name: string; calcom_user_id: number | null };
-  const rows = (data ?? []) as unknown as Array<{
-    id: string;
-    name: string;
-    calcom_event_type_id: number | null;
-    board_partner: Array<{ partner_profile: Profile | Profile[] | null }> | null;
-  }>;
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    calcomEventTypeId: row.calcom_event_type_id,
-    partners: (row.board_partner ?? [])
-      .map((bp) => (Array.isArray(bp.partner_profile) ? bp.partner_profile[0] : bp.partner_profile))
-      .filter((p): p is Profile => p != null)
-      .map((p) => ({ name: p.name, hasCalcomUser: p.calcom_user_id != null })),
-  }));
 }

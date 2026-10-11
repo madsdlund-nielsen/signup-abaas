@@ -11,17 +11,17 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { AuthFormState } from "@/components/AuthForm";
-import { getCurrentUser, requireRole } from "@/server/auth";
+import { getCurrentUser, requireRole, type AuthUser } from "@/server/auth";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServiceSupabase } from "@/server/auth/supabase-server";
-import { createBookingProvider } from "@/lib/booking";
-import { MEETING_LENGTH_MINUTES } from "./booking-info";
+import { recordBoardChange } from "@/server/boards/audit";
+import { syncBoardHosts } from "./board-hosts";
 
-async function requireAdminService(): Promise<SupabaseClient> {
+async function requireAdminContext(): Promise<{ service: SupabaseClient; user: AuthUser }> {
   const config = readSupabaseAuthConfig();
   if (!isSupabaseAuthConfigured(config)) throw new Error("Supabase er ikke konfigureret.");
-  requireRole(await getCurrentUser(), "admin");
-  return createServiceSupabase(config);
+  const user = requireRole(await getCurrentUser(), "admin");
+  return { service: createServiceSupabase(config), user };
 }
 
 function toError(e: unknown): AuthFormState {
@@ -48,7 +48,7 @@ export async function setPartnerCalcomUserId(
   formData: FormData,
 ): Promise<AuthFormState> {
   try {
-    const service = await requireAdminService();
+    const { service } = await requireAdminContext();
     const partnerId = String(formData.get("partner_id") ?? "");
     if (!partnerId) return { error: "Partner-id er påkrævet." };
     const calcomUserId = parseCalcomId(formData.get("calcom_user_id"), "Cal.com-bruger-id");
@@ -75,67 +75,24 @@ export async function setPartnerCalcomUserId(
 
 /**
  * Admin opretter (eller genskriver hosts på) boardets collective event type hos Cal.com og
- * gemmer id'et på boardet. Hosts = boardets partnere via `partner_profile.calcom_user_id`; en
- * partner uden Cal.com-bruger gør handlingen til en højlydt fejl frem for et board med færre
- * værter end partnere (stub-politik: plausibelt, men forkert).
- *
- * TODO(mads): board-livscyklus — en partnerudskiftning skal opdatere event typens hosts. Indtil
- * da genkøres denne handling manuelt (den er idempotent: eksisterende id → opdatér).
+ * gemmer id'et på boardet. Selve arbejdet ligger i `syncBoardHosts` (./board-hosts), som også kører
+ * automatisk efter en sammensætningsændring (ADR 0062) — her er det knappen "Opret/Opdatér", der
+ * bruges første gang og når den automatiske opdatering fejlede. Idempotent: eksisterende id →
+ * opdatér. Resultatet logges på boardets revisionsspor, så en fejlet automatisk opdatering
+ * ophæves af en vellykket manuel.
  */
 export async function createBoardEventType(
   _prev: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
   try {
-    const service = await requireAdminService();
+    const { service, user } = await requireAdminContext();
     const boardId = String(formData.get("board_id") ?? "");
     if (!boardId) return { error: "Board-id er påkrævet." };
 
-    const { data: board, error: boardError } = await service
-      .from("board")
-      .select("id, name, calcom_event_type_id")
-      .eq("id", boardId)
-      .maybeSingle();
-    if (boardError || !board) return { error: "Board ikke fundet." };
-    const boardRow = board as { id: string; name: string; calcom_event_type_id: number | null };
-
-    const { data: members, error: membersError } = await service
-      .from("board_partner")
-      .select("partner_profile(name, calcom_user_id)")
-      .eq("board_id", boardId);
-    if (membersError) return { error: `Kunne ikke læse boardets partnere: ${membersError.message}` };
-
-    const profiles = ((members ?? []) as unknown as Array<{
-      partner_profile:
-        | { name: string; calcom_user_id: number | null }
-        | Array<{ name: string; calcom_user_id: number | null }>
-        | null;
-    }>)
-      .map((m) => (Array.isArray(m.partner_profile) ? m.partner_profile[0] : m.partner_profile))
-      .filter((p): p is { name: string; calcom_user_id: number | null } => p != null);
-
-    if (profiles.length === 0) return { error: "Boardet har ingen partnere at gøre til værter." };
-    const missing = profiles.filter((p) => p.calcom_user_id == null).map((p) => p.name);
-    if (missing.length > 0) {
-      return {
-        error:
-          `Disse partnere mangler et Cal.com-bruger-id og kan ikke være værter: ${missing.join(", ")}. ` +
-          `Indtast det på partnerens side først (admin → partner-katalog).`,
-      };
-    }
-
-    const booking = createBookingProvider();
-    const { eventTypeId } = await booking.upsertBoardEventType({
-      eventTypeId: boardRow.calcom_event_type_id,
-      title: boardRow.name,
-      // Stabil og unik pr. board uden at lække navne i URL'en.
-      slug: `abaas-board-${boardRow.id}`,
-      lengthInMinutes: MEETING_LENGTH_MINUTES,
-      hostUserIds: profiles.map((p) => p.calcom_user_id as number),
-    });
-
-    // Demo-id'et ville ellers blive sendt til en rigtig Cal.com den dag nøglerne lander.
-    if (booking.name === "demo") {
+    const result = await syncBoardHosts(service, boardId, { createIfMissing: true });
+    if (result.status === "sprunget_over") {
+      // Kun demo når hertil (createIfMissing udelukker "ikke koblet"): intet er oprettet eller gemt.
       return {
         error:
           "[DEMO] Demo-tilstand: der er ikke oprettet noget event type hos Cal.com, og det falske id er " +
@@ -143,24 +100,16 @@ export async function createBoardEventType(
       };
     }
 
-    const { data: saved, error: saveError } = await service
-      .from("board")
-      .update({ calcom_event_type_id: eventTypeId })
-      .eq("id", boardId)
-      .select("id")
-      .maybeSingle();
-    if (isUniqueViolation(saveError)) {
-      return { error: "Det Cal.com event type er allerede knyttet til et andet board." };
-    }
-    if (saveError || !saved) {
-      return {
-        error:
-          `Event typen blev oprettet hos Cal.com (id ${eventTypeId}), men kunne ikke gemmes på boardet: ` +
-          `${saveError?.message ?? "board ikke fundet"}. Genkør handlingen eller indtast id'et manuelt.`,
-      };
-    }
+    await recordBoardChange(service, {
+      boardId,
+      actor: { id: user.id, role: "admin" },
+      action: "opdater_hosts",
+      calcomSync: result.status,
+    });
+    if (result.status === "fejlet") return { error: result.message };
 
     revalidatePath("/admin/boards");
+    revalidatePath(`/admin/boards/${boardId}`);
     return {};
   } catch (e) {
     return toError(e);

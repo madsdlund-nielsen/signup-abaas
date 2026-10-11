@@ -49,7 +49,7 @@ export default function AdminHome() {
           />
           <AdminEntry
             title="Boards"
-            body="Cal.com-koblingen: ét collective event type pr. board, med partnernes sæder som værter."
+            body="Sammensætning (tilføj, fjern, udskift, lead) og Cal.com-koblingen: ét collective event type pr. board."
             href="/admin/boards"
           />
           <AdminEntry
