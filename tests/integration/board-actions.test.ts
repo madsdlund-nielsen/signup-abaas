@@ -97,11 +97,12 @@ describe("admin: tilføj, fjern, udskift", () => {
   });
 
   it("udskifter en partner; lead går til den indkommende interne", async () => {
-    const state = await adminSwapBoardPartner(
-      {},
-      form({ board_id: IDS.board, outgoing: IDS.anna, incoming: IDS.dorte }),
-    );
-    expect(state.notice).toBe("Partneren er udskiftet.");
+    // Succes redirecter til boardet med en statuslinje (B-71) — sektionen formularen står i er væk.
+    await expect(
+      adminSwapBoardPartner({}, form({ board_id: IDS.board, outgoing: IDS.anna, incoming: IDS.dorte })),
+    ).rejects.toMatchObject({
+      to: `/admin/boards/${IDS.board}?skiftet=${IDS.dorte}&fra=${IDS.anna}`,
+    });
     expect(memberIds()).toEqual([IDS.bo, IDS.dorte]);
     expect(leadIds()).toEqual([IDS.dorte]);
   });

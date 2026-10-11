@@ -45,3 +45,14 @@ export function verifyLink(message: MailMessage): string {
   if (!match) throw new Error(`Mailen "${message.Subject}" indeholder intet verify-link.`);
   return match[0].replaceAll("&amp;", "&");
 }
+
+/**
+ * Det første link i mailen der peger på appens egen bekræftelsesrute `/auth/confirm` (invitation
+ * og nulstilling, B-70). Signup-bekræftelsen bruger stadig Supabases verify-endpoint (`verifyLink`).
+ */
+export function confirmLink(message: MailMessage): string {
+  const haystack = `${message.HTML}\n${message.Text}`;
+  const match = /https?:\/\/[^\s"'<>]*\/auth\/confirm\?[^\s"'<>]+/.exec(haystack);
+  if (!match) throw new Error(`Mailen "${message.Subject}" indeholder intet /auth/confirm-link.`);
+  return match[0].replaceAll("&amp;", "&");
+}

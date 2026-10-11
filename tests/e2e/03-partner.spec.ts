@@ -1,19 +1,18 @@
 /**
- * Partnerens rejse (fase 6.1): invitation → login → portal (profil, registrér afholdt, note) →
- * honorar → tilgængelighed (og at booking respekterer den).
+ * Partnerens rejse (fase 6.1): invitation → vælg adgangskode → login → portal (profil, registrér
+ * afholdt, note) → honorar → tilgængelighed (og at booking respekterer den).
  *
  * Forudsætter 02-admin: admin har inviteret katalogposten «Astrid Nørgaard» som partner@e2e.test.
  *
- * ⚠ Fund (backlog B-70): der findes ingen vej fra invitationsmailen til en adgangskode — appen har
- * hverken en bekræftelsesrute (`/auth/...`) eller en «sæt adgangskode»-side. Testen af selve
- * invitationslinket er derfor markeret som forventet fejl (`test.fail`), og partneren får sin
- * adgangskode via admin-API'et i opsætningen i stedet. Når B-70 er lukket, fjernes `test.fail`.
+ * Invitationslinket gennemspilles for alvor (B-70, ADR 0073): mail → /auth/confirm → «Vælg
+ * adgangskode» → /partner. Partnerens adgangskode er den hun selv vælger her, ikke en der er
+ * sat via admin-API'et — de senere tests logger ind med den.
  */
 
 import { expect, test } from "@playwright/test";
 
 import { E2E_PASSWORD, futureBookingSlot, serviceClient, userIdByEmail, USERS } from "./support/data";
-import { verifyLink, waitForMail } from "./support/mail";
+import { confirmLink, waitForMail } from "./support/mail";
 import { login, shot } from "./support/ui";
 
 const ASTRID = "d0000000-0000-4000-8000-000000000301";
@@ -23,27 +22,40 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Partner", () => {
   test("invitationslinket giver partneren en session og en vej til en adgangskode", async ({ page }) => {
-    test.fail(true, "B-70: invitationsflowet mangler bekræftelsesrute og «sæt adgangskode»-side");
-
     const mail = await waitForMail(USERS.partner, "invite");
-    await page.goto(verifyLink(mail));
-    // Forventet: partneren lander logget ind, med mulighed for at vælge en adgangskode.
-    await page.goto("/dashboard");
-    await expect(page).toHaveURL(/\/dashboard$/);
-    await expect(page.getByRole("heading", { name: "Velkommen" })).toBeVisible();
+    await page.goto(confirmLink(mail));
+
+    // Bekræftelsesruten har indløst tokenet og sat sessionen: partneren står på «Vælg adgangskode».
+    await expect(page).toHaveURL(/\/konto\/adgangskode$/);
+    await expect(page.getByRole("heading", { name: "Vælg adgangskode" })).toBeVisible();
+    await shot(page, "partner", "00-vaelg-adgangskode");
+
+    // Reglerne gælder også her: de to felter skal være ens (for kort stoppes allerede af browseren).
+    await page.getByLabel("Ny adgangskode").fill(E2E_PASSWORD);
+    await page.getByLabel("Gentag adgangskode").fill(`${E2E_PASSWORD}-forkert`);
+    await page.getByRole("button", { name: "Gem adgangskode" }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "ikke ens" })).toBeVisible();
+
+    await page.getByLabel("Ny adgangskode").fill(E2E_PASSWORD);
+    await page.getByLabel("Gentag adgangskode").fill(E2E_PASSWORD);
+    await page.getByRole("button", { name: "Gem adgangskode" }).click();
+
+    // En partner sendes til portalen.
+    await expect(page).toHaveURL(/\/partner$/);
+    await expect(page.getByRole("heading", { name: "Din partnerportal" })).toBeVisible();
   });
 
-  test("katalogposten er koblet, og partneren får adgangskode (omgår B-70)", async () => {
+  test("katalogposten er koblet, og et brugt invitationslink fejler roligt", async ({ page }) => {
     const userId = await userIdByEmail(USERS.partner);
     expect(userId, "admin-specen skal have inviteret partneren").not.toBeNull();
     const { data } = await serviceClient().from("partner_profile").select("app_user_id").eq("id", ASTRID).single();
     expect((data as { app_user_id: string }).app_user_id).toBe(userId);
 
-    const update = await serviceClient().auth.admin.updateUserById(userId as string, {
-      password: E2E_PASSWORD,
-      email_confirm: true,
-    });
-    expect(update.error).toBeNull();
+    // Tokenet er engangs: samme link igen giver ingen session, men en rolig besked på loginsiden.
+    const mail = await waitForMail(USERS.partner, "invite");
+    await page.goto(confirmLink(mail));
+    await expect(page).toHaveURL(/\/login\?fejl=ugyldigt-link$/);
+    await expect(page.getByText("Linket er ugyldigt eller udløbet")).toBeVisible();
   });
 
   test("dashboard og portal: profil kan redigeres, tags kan ikke", async ({ page }) => {

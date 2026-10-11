@@ -108,10 +108,11 @@ test.describe("Admin", () => {
       .filter({ hasText: "Peter Lundgaard" })
       .getByRole("button", { name: "Udskift med denne" })
       .click();
-    // Bemærk: den grønne bekræftelse når ikke at blive set — «Udskift Camilla»-sektionen (og dermed
-    // formularen der bærer beskeden) forsvinder i samme øjeblik Camilla ikke længere sidder på
-    // boardet (backlog B-71). Vi venter derfor på at sektionen er væk og kontrollerer sandheden.
+    // «Udskift Camilla»-sektionen forsvinder i samme øjeblik skiftet lykkes — bekræftelsen bor derfor
+    // på siden selv (B-71), ikke i formularen.
     await expect(page.getByRole("heading", { name: "Udskift Camilla Riis" })).toHaveCount(0);
+    await expect(page.getByRole("status").filter({ hasText: "Camilla Riis er erstattet af Peter Lundgaard" })).toBeVisible();
+    await shot(page, "admin", "10b-board-udskift-bekraeftet");
 
     // Sandhedskilden følger: Peter sidder på boardet, Camilla gør ikke — og ændringen er logget.
     const { data: members } = await serviceClient()

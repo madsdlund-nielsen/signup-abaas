@@ -102,6 +102,7 @@ det gjort sådan?", så skriv en ADR.
 | 0069 | Go-live-tjekliste (`/admin/klar`, `npm run launch:check`) og kodegenereret reference: én datafil, to læsere, ingen CI-gate endnu | Accepteret | 6 |
 | 0070 | Sikkerhedsheadere, nonce-CSP (håndhævet), fejlsider og tilgængelighedsgate (axe + kontrast mod tokens) | Accepteret | 6 |
 | 0071 | E2E-verifikation: Playwright mod en lokal Supabase-stak (`tests/e2e/supabase`), demo-adaptere, manuel/natlig CI | Accepteret | 6 |
+| 0073 | Bekræftelsesrute (`/auth/confirm`, server-side `verifyOtp`) og adgangskodeflows: invitation, glemt adgangskode, «sæt adgangskode» — lukker B-70/B-71 | Accepteret | 6 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så
