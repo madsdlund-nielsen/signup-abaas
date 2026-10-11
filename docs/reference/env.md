@@ -2,7 +2,7 @@
 
 > Genereret af `scripts/gen-reference.mjs` (`npm run docs:reference`). Redigér ikke i hånden — ret koden eller migrationerne og generér igen.
 
-Udledt af `.env.example` (46 variabler) og `src/server/admin/launch-data.json`. Variabler med `NEXT_PUBLIC_` er offentlige by design (de bundles ind i klienten); alt andet er server-only. Ingen værdier her er hemmelige: eksemplet er tomt eller en offentlig standard. Produktionsværdier sættes i Netlify (Site configuration → Environment variables).
+Udledt af `.env.example` (47 variabler) og `src/server/admin/launch-data.json`. Variabler med `NEXT_PUBLIC_` er offentlige by design (de bundles ind i klienten); alt andet er server-only. Ingen værdier her er hemmelige: eksemplet er tomt eller en offentlig standard. Produktionsværdier sættes i Netlify (Site configuration → Environment variables).
 
 **Krav ved launch** er de variabler `/admin/klar` og `npm run launch:check` kræver sat.
 
@@ -128,6 +128,12 @@ Udledt af `.env.example` (46 variabler) og `src/server/admin/launch-data.json`. 
 |---|---|---|---|---|
 | `POSTHOG_KEY` | server | port analytics |  |  |
 | `POSTHOG_HOST` | server | port analytics | `https://eu.posthog.com` |  |
+
+## PostHog i BROWSEREN + cookie-banner (ADR 0072) — offentlig skrivenøgle
+
+| Variabel | Synlighed | Krav ved launch | Eksempel/standard | Beskrivelse |
+|---|---|---|---|---|
+| `NEXT_PUBLIC_POSTHOG_KEY` | offentlig |  |  | Projektets ingest-nøgle (phc_…), som er offentlig by design (kan kun skrive). Sammen med FLAG_ANALYTICS=true tænder den cookie-banneret og samtykke-gatet browser-PostHog; uden en af dem renderes intet banner og der hentes ingen SDK-kode. Værten er fast EU (eu.i.posthog.com) — der er bevidst ingen host-variabel. Sættes som Netlify env var. |
 
 ## PostHog LÆSNING (driftsstatus på /admin/drift, ADR 0066) — SERVER-ONLY
 

@@ -18,7 +18,7 @@
 - [ ] Sikkerhedsgennemgang: ingen secrets i repo, RLS aktiv på **alle**
       forretningstabeller, webhooks signaturverificerede og idempotente.
 - [ ] GDPR-verifikation: EU-residens bekræftet pr. leverandør, DPA'er på plads,
-      sletteflow testet ende-til-ende, cookie-samtykkeflow aktivt (optagelse/AI/SMS er kontraktens, ADR 0065).
+      sletteflow testet ende-til-ende, cookie-samtykkeflow aktivt — banneret er bygget (ADR 0072), teksten afventer ejer (optagelse/AI/SMS er kontraktens, ADR 0065).
 - [ ] Alle feature-flags gennemgået: hvert flag er enten bevidst tændt til launch
       eller dokumenteret som bevidst slukket.
 - [ ] **Stub-registret er tomt eller hver tilbageværende stub er eksplicit accepteret**
@@ -66,7 +66,7 @@
         indhold», global fokusmarkering, slate-tekst under AA.
   - [ ] Åbent: guld-kontrasten (B-80, Mads), Google Fonts (B-81), `img-src https:` (B-82),
         `style-src-attr` (B-83), verifikation på Netlify + checkout-redirect (B-84),
-        cookie-banner/PostHog i CSP og manuel skærmlæsertest (B-85).
+        manuel skærmlæsertest (B-85; cookie-banner og PostHog i CSP er bygget, ADR 0072).
 
 ### 6.3 GDPR-verifikation
 - Gennemgå leverandør→region→status-tabellen i `docs/gdpr/leverandoer-register.md`;
@@ -77,7 +77,7 @@
   netværk samt mod Postgres — ADR 0068, `docs/gdpr/sletteflow.md`. Tilbage: kør det mod rigtige PostHog/Resend/
   Cal.com/Supabase Auth, afklar opbevaringspligt og slette-SLA (ejer/jura), og slet manuelt det der ingen API har:
   Cal.com-sæde/attendee-data, inMobile, Ordbogen.)*
-- Verificér cookie-samtykket. Samtykke til optagelse, AI og SMS er en del af kontrakten (ADR 0065): verificér at ToS + honoraraftale dækker det og at kontrakten indgås før første møde.
+- Verificér cookie-samtykket: banneret findes kun med `FLAG_ANALYTICS` + `NEXT_PUBLIC_POSTHOG_KEY` (ADR 0072, `docs/gdpr/cookies.md`) — tænd dem i en preview, og gennemgå forløbet (ingen PostHog-requests før «Tillad analyse»). Samtykke til optagelse, AI og SMS er en del af kontrakten (ADR 0065): verificér at ToS + honoraraftale dækker det og at kontrakten indgås før første møde.
 - Bekræft at Netlify Functions-region er sat til EU (Frankfurt, `fra`) — åbent siden fase 0
   (`netlify.toml`).
 

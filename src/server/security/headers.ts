@@ -6,20 +6,33 @@
  * proxyen kan køre uden for Node, så nonce'n laves med Web Crypto + `btoa`.
  *
  * Domænelisten nedenfor er ikke et skøn: den er det appen FAKTISK kalder fra browseren, målt
- * ved at gennemgå koden (ADR 0070). Browseren taler i dag kun med appens egen oprindelse —
- * Supabase, Alunta, Cal.com, Ordbogen, Resend, inMobile og PostHog-læsning kaldes alle
- * server-side. Kommer der et browser-SDK til, SKAL dets domæne tilføjes her i samme PR.
+ * ved at gennemgå koden (ADR 0070). Browseren taler som udgangspunkt kun med appens egen
+ * oprindelse — Supabase, Alunta, Cal.com, Ordbogen, Resend, inMobile og PostHog-læsning kaldes
+ * alle server-side. Eneste undtagelse er browser-PostHog (ADR 0072): dets EU-domæner åbnes KUN
+ * når `posthog` er sat (analytics slået til + browser-nøgle), og SDK'et initialiseres først
+ * efter samtykke. Kommer der endnu et browser-SDK til, SKAL dets domæne tilføjes her i samme PR.
  */
 
 /** Google Fonts (CSS + filer). TODO(mads): selv-host Open Sans og fjern begge — se backlog B-81. */
 const GOOGLE_FONTS_CSS = "https://fonts.googleapis.com";
 const GOOGLE_FONTS_FILES = "https://fonts.gstatic.com";
 
+/**
+ * PostHog EU (ADR 0072): ingest (`connect-src`) og statiske filer/konfiguration (`script-src`
+ * som fallback; med `strict-dynamic` ignorerer moderne browsere værtslisten). Spejler
+ * POSTHOG_BROWSER_HOST/POSTHOG_ASSETS_HOST i `src/lib/analytics/browser-config.ts` — dette
+ * modul har bevidst ingen imports, så værdierne gentages og en test låser dem sammen.
+ */
+export const POSTHOG_INGEST_ORIGIN = "https://eu.i.posthog.com";
+export const POSTHOG_ASSETS_ORIGIN = "https://eu-assets.i.posthog.com";
+
 export interface CspOptions {
   /** Base64-nonce, unik pr. request. */
   nonce: string;
   /** `next dev` kræver `unsafe-eval` (React-fejlsporing) og inline-styles til HMR. */
   isDev?: boolean;
+  /** Åbn PostHog EU for browseren (ADR 0072). Sæt kun når browser-analytics er slået til. */
+  posthog?: boolean;
   /** Kun når forbindelsen er https — ellers ville `next start` på localhost brydes. */
   upgradeInsecure?: boolean;
 }
@@ -41,15 +54,26 @@ export function generateNonce(): string {
  *    og attributter kan ikke bære nonce. Det åbner ikke for inline <style>-elementer.
  *  - img-src: `https:` fordi partnerportrætter er en fri URL i `partner_profile.photo_url`
  *    (værten er ikke kendt på forhånd) — B-82.
- *  - connect-src 'self': se modulkommentaren.
+ *  - connect-src 'self': se modulkommentaren. Med `posthog` desuden PostHog EU (ADR 0072).
  *  - frame-src 'none': Cal Video åbnes som eget vindue/fane via et link, ikke som iframe.
  */
-export function buildCsp({ nonce, isDev = false, upgradeInsecure = false }: CspOptions): string {
+export function buildCsp({
+  nonce,
+  isDev = false,
+  upgradeInsecure = false,
+  posthog = false,
+}: CspOptions): string {
   const directives: Array<[string, string[]]> = [
     ["default-src", ["'self'"]],
     [
       "script-src",
-      ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'", ...(isDev ? ["'unsafe-eval'"] : [])],
+      [
+        "'self'",
+        `'nonce-${nonce}'`,
+        "'strict-dynamic'",
+        ...(isDev ? ["'unsafe-eval'"] : []),
+        ...(posthog ? [POSTHOG_ASSETS_ORIGIN] : []),
+      ],
     ],
     [
       "style-src",
@@ -58,7 +82,7 @@ export function buildCsp({ nonce, isDev = false, upgradeInsecure = false }: CspO
     ["style-src-attr", ["'unsafe-inline'"]],
     ["img-src", ["'self'", "data:", "blob:", "https:"]],
     ["font-src", ["'self'", GOOGLE_FONTS_FILES]],
-    ["connect-src", ["'self'"]],
+    ["connect-src", ["'self'", ...(posthog ? [POSTHOG_INGEST_ORIGIN, POSTHOG_ASSETS_ORIGIN] : [])]],
     ["frame-src", ["'none'"]],
     ["media-src", ["'self'"]],
     ["worker-src", ["'self'", "blob:"]],

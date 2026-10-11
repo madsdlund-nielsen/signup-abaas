@@ -1,9 +1,10 @@
 import axe, { type AxeResults, type Result } from "axe-core";
 import { describe, expect, it, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 
 import { AuthForm } from "@/components/AuthForm";
+import { CookieBanner } from "@/components/CookieBanner";
 import {
   AdminDashboard,
   OwnerDashboard,
@@ -306,6 +307,36 @@ describe("tilgængelighed — site-chrome og sider", () => {
       </>,
     );
     const violations = await scan(container);
+    expect(violations, describeViolations(violations)).toEqual([]);
+  });
+
+  it("cookie-banner: første besøg, med indstillinger åbne, og genåbnet fra footeren (ADR 0072)", async () => {
+    const layout = (initial: Parameters<typeof CookieBanner>[0]["initial"]) => (
+      <>
+        <a href="#main">Spring til indhold</a>
+        <CookieBanner initial={initial} />
+        <TopBar>
+          <a href="mailto:info@signupacademy.com">info@signupacademy.com</a>
+        </TopBar>
+        <SiteHeader />
+        <main id="main">
+          <h1>Side</h1>
+        </main>
+        <SiteFooter cookieSettings />
+      </>
+    );
+    const first = render(layout(null));
+    let violations = await scan(first.container);
+    expect(violations, describeViolations(violations)).toEqual([]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Indstillinger" }));
+    violations = await scan(first.container);
+    expect(violations, describeViolations(violations)).toEqual([]);
+    first.unmount();
+
+    const reopened = render(layout({ necessary: true, functional: false, analytics: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Cookie-indstillinger" }));
+    violations = await scan(reopened.container);
     expect(violations, describeViolations(violations)).toEqual([]);
   });
 

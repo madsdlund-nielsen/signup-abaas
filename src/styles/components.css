@@ -596,13 +596,111 @@
 .sitefooter__base {
   border-top: 1px solid var(--divider-light);
 }
-.sitefooter__colophon {
+.sitefooter__bar {
   max-width: var(--container-max);
   margin: 0 auto;
   padding: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.sitefooter__colophon {
+  margin: 0;
   font-size: var(--fs-label);
   letter-spacing: var(--letter-spacing-ui);
   text-transform: uppercase;
+}
+/* «Cookie-indstillinger»: en knap i fodens tone — samme skrift som kolofonen, understreget
+   så den læses som noget man kan trykke på. */
+.sitefooter__link {
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  color: var(--text-on-dark-soft);
+  font: inherit;
+  font-size: var(--fs-label);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.sitefooter__link:hover {
+  color: var(--color-white);
+}
+
+/* =============================================================
+   Cookie-banner (ADR 0072). Fast nederst, men ikke en modal: siden bag er stadig
+   brugbar. Hvid flade med tynd navy kant — de to valg er ens knapper (.btn-secondary),
+   så intet valg er pyntet frem. Ingen guld: guld er brandets accent, ikke et skub.
+   ============================================================= */
+.cookiebanner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: var(--color-white);
+  color: var(--color-text);
+  border-top: 1px solid var(--color-navy);
+}
+.cookiebanner__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-4);
+}
+.cookiebanner__title {
+  margin: 0 0 var(--space-2);
+  color: var(--color-navy);
+  font-size: var(--fs-lead);
+  font-weight: var(--fw-light);
+  line-height: var(--lh-lead);
+}
+.cookiebanner__text {
+  margin: 0;
+  max-width: 70ch;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+.cookiebanner__settings {
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  border: 0;
+}
+.cookiebanner__legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  color: var(--color-navy);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+}
+.cookiebanner__option + .cookiebanner__option {
+  margin-top: var(--space-3);
+}
+.cookiebanner__desc {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-4);
+  max-width: 70ch;
+  color: var(--color-text-muted);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+.cookiebanner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+@media (max-width: 767px) {
+  .cookiebanner__actions > * {
+    flex: 1 1 100%;
+  }
 }
 
 /* Eyebrow på mørk flade: dæmpet hvid frem for guld. To guld-eyebrows i en fod ville

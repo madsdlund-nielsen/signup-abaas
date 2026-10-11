@@ -101,6 +101,7 @@ det gjort sådan?", så skriv en ADR.
 | 0068 | GDPR-sletning (art. 17): plan, én transaktion (`erase_data_subject`), eksterne behandlere via porte, kvittering uden persondata; fail-closed på opbevaringspligt (lukker B-68) | Accepteret | 5 + 6 |
 | 0069 | Go-live-tjekliste (`/admin/klar`, `npm run launch:check`) og kodegenereret reference: én datafil, to læsere, ingen CI-gate endnu | Accepteret | 6 |
 | 0070 | Sikkerhedsheadere, nonce-CSP (håndhævet), fejlsider og tilgængelighedsgate (axe + kontrast mod tokens) | Accepteret | 6 |
+| 0072 | Cookie-banner og samtykke-gatet browser-PostHog: intet før samtykke, EU-host, ingen autocapture, rensede adresser, CSP kun med analytics (lukker B-85's bannerdel) | Accepteret | 6 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så
