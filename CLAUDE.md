@@ -264,8 +264,14 @@ de gater ikke længere. Status pr. fase:
 - **Fase 3 — Betaling:** prisberegner, prisregler i admin, Alunta-checkout
   (kortregistrering + MobilePay), webhook → `membership`, varierende
   betalingsfrekvenser, op/nedgradering.
-- **Fase 4 — Forberedelse, rating, AI & notifikationer.**
-- **Fase 5 — Honorar + tilgængelighed + dashboard.**
+- **Fase 4 — Forberedelse, rating, AI & notifikationer: BYGGET, IKKE LUKKET (skærm-først).**
+  Forberedelse, signerede rating-links, notifikationsmotor + skabeloner, Ordbogen-adaptere og
+  gemt resumé er bygget; afventer leverandørnøgler, samtykke til optagelse og ejerbeslutninger.
+  Rapport: `docs/fase-4-rapport.md`.
+- **Fase 5 — Honorar + tilgængelighed + dashboard: BYGGET, IKKE LUKKET (skærm-først).**
+  Honorarmotor (sats og moms som konfiguration), tilgængelighed, rolle-dashboards og juridisk
+  interface er bygget; afventer ejerbeslutninger (sats, moms, regnskabssystem, ToS) og
+  Cal.com-synk af tilgængelighed. Rapport: `docs/fase-5-rapport.md`.
 - **Fase 6 — Verifikation & dokumentation.**
 - **Senere (flag):** branded RealtimeKit-videolag (kun hvis Cal Video underleverer),
   valgbar mødelængde.
