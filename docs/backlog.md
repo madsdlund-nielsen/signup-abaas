@@ -50,7 +50,6 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 
 | ID | Punkt | Hvor | Fase | Ejer |
 |---|---|---|---|---|
-| **B-21** | **Signerede engangslinks til rating er ikke bygget.** Fase 4.2's DoD nævner dem (byggespec §8); ADR 0038 udskød dem bevidst, fordi et engangslink er en auth-fri skrivevej der først kan gennemspilles end-to-end når der findes en notifikationsmotor til at udsende den. Vurdering kræver login indtil videre — det opfylder "ingen åbne endpoints", men ikke "besvares på under et minut" fra en mail. | `src/server/ratings/actions.ts` (`TODO(mads)`) | **4.5** — bygges sammen med notifikationsmotoren. Blokeret på Resend-konto. | Mads |
 
 ## 4. Guardrails & sikkerhedshygiejne
 
@@ -94,3 +93,4 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 | B-41 | «Fejlet betaling» blev aldrig sendt — `notifyPaymentFailed` havde ingen kalder | 2026-10-10 | Alunta-webhookens `invoice.payment_failed` sender til ejeren for hvert træk der skifter til `fejlet`, via `after()` efter svaret (3-sekunders-fristen holder, en notifikationsfejl gør aldrig webhooken rød). Integrationstest |
 | B-45 | AI-resuméet blev genereret ved hver sidevisning og aldrig gemt | 2026-10-10 | Gemt som mødeartefakt: migration `0022` (`meeting_summary`, RLS ejer + admin), baggrundsgenerering `generatePendingSummaries` + `/api/cron/summaries` + Netlify scheduled function `summaries` (hvert 15. min), `/moeder/[id]` læser den gemte række: **ADR 0059**. Rest: samtykke (ejer) og Cal.com-optagelse (L-8) gør at rigtige møder endnu ender som `mangler_samtykke` |
 | B-40 | Aflysning/flytning direkte i Cal.com gav ingen besked | 2026-10-10 | Cal.com-webhooken sender nu samme besked som app-handlingerne. Idempotensnøglen er gjort tilstandsbaseret (`meetingChangeDiscriminator`: aflyst = fast, flyttet = nyt tidspunkt), så appens handling og Cal.coms ekko af den er én besked. Liveverifikation kræver Cal.com-konto |
+| B-21 | Signerede engangslinks til rating var ikke bygget | 2026-10-11 | `rating_link` (migration 0023) + `/vurdering/[token]`: HMAC over rækken, engangsbrug afgjort atomisk i databasen (`redeem_rating_link`), ingen orakel, kun POST indløser — ADR 0060. Levetid er TODO(ejer); `RATING_LINK_SECRET` skal sættes i Netlify |

@@ -12,7 +12,9 @@ import {
   sendMeetingReminders,
   sendRatingRequests,
 } from "@/server/notifications/meetings";
+import { parseRatingToken, verifyRatingSignature } from "@/server/ratings/link";
 import { makeDeps } from "./support/notification-fakes";
+import { MemoryRatingLinkStore } from "./support/rating-link-fakes";
 
 /**
  * Mødenotifikationerne (fase 4.5, ADR 0057): hvem der får besked, hvilke møder der skylder en
@@ -267,6 +269,7 @@ describe("meetingVariables", () => {
       status: "planlagt",
       ownerUserId: OWNER,
       partnerUserIds: [],
+      partnerProfileIdByUserId: {},
     };
     const variables = meetingVariables(context, { aendring: "aflyst" }, { NEXT_PUBLIC_APP_URL: "https://app.example.invalid" });
     for (const key of ["meeting-reminder", "meeting-changed", "rating-request"]) {
@@ -276,6 +279,138 @@ describe("meetingVariables", () => {
         expect(variables[variable.key], `${key}.${variable.key}`).toBeDefined();
       }
     }
+  });
+});
+
+describe("sendRatingRequests — personlige signerede engangslinks (B-21, ADR 0060)", () => {
+  const NOW = new Date("2026-10-14T12:00:00Z");
+  const schedule = { offsetMinutes: 60, catchUpMinutes: 240 };
+  const SECRET = "test-secret-test-secret-test-secret-0001";
+  const PROFILE_B = "00000000-0000-0000-0000-0000000e0001";
+  const PROFILE_C = "00000000-0000-0000-0000-0000000e0002";
+
+  function heldMeeting() {
+    return row({
+      status: "afholdt",
+      starts_at: "2026-10-14T08:30:00Z",
+      meeting_partner: [
+        { partner_profile: { id: PROFILE_B, app_user_id: PARTNER_B } as never },
+        { partner_profile: { id: PROFILE_C, app_user_id: PARTNER_C } as never },
+      ],
+    });
+  }
+
+  function linkSetup() {
+    const ctx = setup();
+    const clock = { now: NOW };
+    const links = new MemoryRatingLinkStore(clock);
+    const ratingLinks = { store: links, secret: SECRET as string | null, now: () => clock.now };
+    return { ...ctx, links, ratingLinks };
+  }
+
+  function tokenIn(body: string): string {
+    const match = body.match(/\/vurdering\/([0-9a-f]{32}\.[0-9a-f]{64})/);
+    if (!match) throw new Error(`intet rating-link i: ${body}`);
+    return match[1] as string;
+  }
+
+  it("giver hver modtager sit EGET link, signeret og knyttet til modtagerens identitet", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.example.invalid");
+    const { deps, email, links, ratingLinks } = linkSetup();
+
+    await sendRatingRequests(NOW, fakeService([heldMeeting()]).service, { deps, schedule, ratingLinks });
+
+    expect(email.sent).toHaveLength(3);
+    const tokens = email.sent.map((m) => tokenIn(m.body));
+    expect(new Set(tokens).size).toBe(3);
+
+    expect(links.links).toHaveLength(3);
+    const byRater = links.links.map((l) => l.rater);
+    expect(byRater).toContainEqual({ kind: "user", userId: OWNER });
+    expect(byRater).toContainEqual({ kind: "partner", partnerProfileId: PROFILE_B });
+    expect(byRater).toContainEqual({ kind: "partner", partnerProfileId: PROFILE_C });
+
+    for (const token of tokens) {
+      const parsed = parseRatingToken(token)!;
+      const record = links.links.find((l) => l.id === parsed.id)!;
+      expect(verifyRatingSignature(SECRET, record, parsed.signature)).toBe(true);
+      // Intet i mailen/URL'en afslører mødet eller modtageren ud over det opake token.
+      expect(token).not.toContain(MEETING.replaceAll("-", ""));
+    }
+  });
+
+  it("mailen går til den rigtige modtager med det rigtige link (ejer ↔ bruger, partner ↔ profil)", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.example.invalid");
+    const { deps, email, links, ratingLinks } = linkSetup();
+    await sendRatingRequests(NOW, fakeService([heldMeeting()]).service, { deps, schedule, ratingLinks });
+
+    const ownerMail = email.sent.find((m) => m.to === "a-test@example.invalid")!;
+    const ownerLink = links.links.find((l) => l.id === parseRatingToken(tokenIn(ownerMail.body))!.id)!;
+    expect(ownerLink.rater).toEqual({ kind: "user", userId: OWNER });
+
+    const partnerMail = email.sent.find((m) => m.to === "b-test@example.invalid")!;
+    const partnerLink = links.links.find((l) => l.id === parseRatingToken(tokenIn(partnerMail.body))!.id)!;
+    expect(partnerLink.rater).toEqual({ kind: "partner", partnerProfileId: PROFILE_B });
+  });
+
+  it("en gentagen kørsel sender ikke igen og hober ikke link-rækker op", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.example.invalid");
+    const { deps, email, links, ratingLinks } = linkSetup();
+    await sendRatingRequests(NOW, fakeService([heldMeeting()]).service, { deps, schedule, ratingLinks });
+    await sendRatingRequests(NOW, fakeService([heldMeeting()]).service, { deps, schedule, ratingLinks });
+    expect(email.sent).toHaveLength(3);
+    expect(links.links).toHaveLength(3);
+  });
+
+  it("uden RATING_LINK_SECRET falder linket tilbage til det loginbeskyttede — aldrig usigneret", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.example.invalid");
+    const { deps, email, links, ratingLinks } = linkSetup();
+    ratingLinks.secret = null;
+    await sendRatingRequests(NOW, fakeService([heldMeeting()]).service, { deps, schedule, ratingLinks });
+
+    expect(email.sent).toHaveLength(3);
+    for (const message of email.sent) {
+      expect(message.body).toContain(`https://app.example.invalid/moeder/${MEETING}`);
+      expect(message.body).not.toContain("/vurdering/");
+    }
+    expect(links.links).toHaveLength(0);
+  });
+
+  it("uden appens URL udstedes ingen række (intet link kan gøres absolut)", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "");
+    const { deps, links, ratingLinks } = linkSetup();
+    await sendRatingRequests(NOW, fakeService([heldMeeting()]).service, { deps, schedule, ratingLinks });
+    expect(links.links).toHaveLength(0);
+  });
+
+  it("en partner uden katalog-id kan ikke få et link og får det loginbeskyttede", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.example.invalid");
+    const { deps, email, links, ratingLinks } = linkSetup();
+    // `row()`'s standardpartnere har ingen `id` i partner_profile.
+    const meeting = row({ status: "afholdt", starts_at: "2026-10-14T08:30:00Z" });
+    await sendRatingRequests(NOW, fakeService([meeting]).service, { deps, schedule, ratingLinks });
+
+    expect(links.links.map((l) => l.rater)).toEqual([{ kind: "user", userId: OWNER }]);
+    const partnerMail = email.sent.find((m) => m.to === "b-test@example.invalid")!;
+    expect(partnerMail.body).toContain(`/moeder/${MEETING}`);
+    expect(partnerMail.body).not.toContain("/vurdering/");
+  });
+
+  it("en fejl ved udstedelsen fejler ikke udsendelsen — den falder tilbage til login-linket", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.example.invalid");
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const { deps, email, links, ratingLinks } = linkSetup();
+    links.getOrCreate = async () => {
+      throw new Error("basen er nede");
+    };
+    await sendRatingRequests(NOW, fakeService([heldMeeting()]).service, { deps, schedule, ratingLinks });
+    expect(email.sent).toHaveLength(3);
+    expect(email.sent[0]?.body).toContain(`/moeder/${MEETING}`);
+    expect(error).toHaveBeenCalled();
+  });
+
+  it("katalogets ratinganmodning tillader {{link}}", () => {
+    expect(getNotificationType("rating-request")?.variables.map((v) => v.key)).toContain("link");
   });
 });
 

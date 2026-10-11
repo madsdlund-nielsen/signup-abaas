@@ -21,6 +21,9 @@ Flowet skal være **idempotent** og efterlade en kvittering/log.
    Partnerens tilgængelighed (`partner_availability`, `partner_absence`, 0018) hænger på
    `partner_profile` med `on delete cascade` og forsvinder, når katalogposten slettes.
    Fraværsnoten kan indeholde helbredsoplysninger og er derfor privat (ADR 0052).
+   Rating-linkene (`rating_link`, 0023, ADR 0060) hænger på mødet, ejeren og partnerens katalogpost
+   med `on delete cascade` og forsvinder med dem; rækken holder kun referencer (aldrig tokenet,
+   som genskabes af id + `RATING_LINK_SECRET`) og er testet i `tests/db/rating-link-rls.test.ts`.
    Udsendelseslogget (`notification_delivery`, 0021) hænger på `app_user` med `on delete cascade`
    og forsvinder med brugeren; det indeholder alligevel ingen adresser (ADR 0057).
    Kontoprofilen (navn, telefonnummer, tidszone, SMS-samtykke og tidspunkt, 0024/ADR 0061) er

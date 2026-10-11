@@ -14,6 +14,10 @@
 import { after } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { readRatingLinkSecret, type LinkRater } from "@/server/ratings/link";
+import { createSupabaseRatingLinkStore } from "@/server/ratings/link-store";
+import { issueRatingLink, type RatingLinkDeps } from "@/server/ratings/link-service";
+
 import { getNotificationType, type NotificationSchedule } from "./catalog";
 import { createEngineDeps, sendNotification, type EngineDeps, type SendOutcome } from "./engine";
 import { appLink, formatMeetingTime } from "./format";
@@ -33,6 +37,11 @@ export interface MeetingContext {
   ownerUserId: string;
   /** Boardets deltagende partnere der HAR et login. Partnere uden konto kan ikke nås. */
   partnerUserIds: string[];
+  /**
+   * Login-bruger → partnerens katalogpost, for de partnere hvis række bar et id. Bruges til at
+   * udstede rating-linket (B-21), som vurderer SOM katalogposten (ADR 0021/0060).
+   */
+  partnerProfileIdByUserId: Record<string, string>;
 }
 
 interface MeetingRow {
@@ -43,14 +52,14 @@ interface MeetingRow {
   board: { name: string; owner_id: string } | Array<{ name: string; owner_id: string }> | null;
   meeting_partner: Array<{
     partner_profile:
-      | { app_user_id: string | null }
-      | Array<{ app_user_id: string | null }>
+      | { id?: string; app_user_id: string | null }
+      | Array<{ id?: string; app_user_id: string | null }>
       | null;
   }> | null;
 }
 
 const MEETING_SELECT =
-  "id, starts_at, duration_minutes, status, board(name, owner_id), meeting_partner(partner_profile(app_user_id))";
+  "id, starts_at, duration_minutes, status, board(name, owner_id), meeting_partner(partner_profile(id, app_user_id))";
 
 function one<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
@@ -60,9 +69,14 @@ function toContext(row: MeetingRow): MeetingContext | null {
   // PostgREST to-one-embeds er objekter i praksis, men typeudledningen gætter array.
   const board = one(row.board);
   if (!board) return null;
-  const partnerUserIds = (row.meeting_partner ?? [])
-    .map((participant) => one(participant.partner_profile)?.app_user_id ?? null)
+  const profiles = (row.meeting_partner ?? []).map((participant) => one(participant.partner_profile));
+  const partnerUserIds = profiles
+    .map((profile) => profile?.app_user_id ?? null)
     .filter((id): id is string => Boolean(id));
+  const partnerProfileIdByUserId: Record<string, string> = {};
+  for (const profile of profiles) {
+    if (profile?.app_user_id && profile.id) partnerProfileIdByUserId[profile.app_user_id] = profile.id;
+  }
   return {
     meetingId: row.id,
     boardName: board.name,
@@ -71,6 +85,7 @@ function toContext(row: MeetingRow): MeetingContext | null {
     status: row.status,
     ownerUserId: board.owner_id,
     partnerUserIds: [...new Set(partnerUserIds)],
+    partnerProfileIdByUserId,
   };
 }
 
@@ -122,18 +137,27 @@ function tally(summary: DispatchSummary, outcomes: readonly SendOutcome[]): void
   for (const outcome of outcomes) summary[outcome.status] += 1;
 }
 
+/** Variabler for alle modtagere, eller en funktion når de er personlige (rating-linket). */
+type VariablesFor = VariableValues | ((recipientUserId: string) => Promise<VariableValues>);
+
 async function dispatch(
   type: string,
   context: MeetingContext,
   recipients: readonly string[],
-  variables: VariableValues,
+  variables: VariablesFor,
   discriminator: string | undefined,
   deps: EngineDeps,
 ): Promise<DispatchSummary> {
   const summary = emptySummary();
   for (const recipientUserId of recipients) {
     const outcomes = await sendNotification(
-      { type, recipientUserId, relatedId: context.meetingId, variables, discriminator },
+      {
+        type,
+        recipientUserId,
+        relatedId: context.meetingId,
+        variables: typeof variables === "function" ? await variables(recipientUserId) : variables,
+        discriminator,
+      },
       deps,
     );
     tally(summary, outcomes);
@@ -234,6 +258,8 @@ export interface ScheduledRunOptions {
   schedule?: NotificationSchedule | null;
   deps?: EngineDeps;
   env?: Record<string, string | undefined>;
+  /** Overstyr rating-linkenes lager/hemmelighed (tests). Produktionskald udelader den. */
+  ratingLinks?: RatingLinkDeps;
 }
 
 function resolveSchedule(typeKey: string, options: ScheduledRunOptions): NotificationSchedule | null {
@@ -310,6 +336,42 @@ export function ratingWindow(
   return { endedAfter, endedBefore };
 }
 
+/** Hvem modtageren vurderer SOM: ejeren som sig selv, en partner som sin katalogpost. */
+function raterFor(context: MeetingContext, recipientUserId: string): LinkRater | null {
+  if (recipientUserId === context.ownerUserId) return { kind: "user", userId: recipientUserId };
+  const partnerProfileId = context.partnerProfileIdByUserId[recipientUserId];
+  return partnerProfileId ? { kind: "partner", partnerProfileId } : null;
+}
+
+/**
+ * Variablerne til én modtagers ratinganmodning. `link` er modtagerens PERSONLIGE signerede
+ * engangslink (B-21, ADR 0060), så vurderingen kan afgives fra mailen uden login.
+ *
+ * Kan der ikke udstedes et — `RATING_LINK_SECRET` er ikke sat, appens URL er ukendt, modtageren
+ * kan ikke knyttes til mødet, eller udstedelsen fejler — falder `link` tilbage til det
+ * loginbeskyttede link til `/moeder/[id]`. Det er aldrig en usigneret genvej: fallbacken kræver
+ * login, som før linkene fandtes. En fejl logges (skrubbet) men fejler ikke udsendelsen.
+ */
+async function ratingRequestVariables(
+  context: MeetingContext,
+  recipientUserId: string,
+  linkDeps: RatingLinkDeps,
+  env: Record<string, string | undefined> | undefined,
+): Promise<VariableValues> {
+  const base = meetingVariables(context, {}, env);
+  const url = appUrl(env);
+  const rater = raterFor(context, recipientUserId);
+  // Uden appens URL kan et link ikke gøres absolut — og så udstedes der heller ingen række.
+  if (!url || !rater) return base;
+  try {
+    const issued = await issueRatingLink(linkDeps, { meetingId: context.meetingId, rater });
+    return issued ? { ...base, link: appLink(issued.path, url) } : base;
+  } catch (error) {
+    console.error(`[notifications] rating-link kunne ikke udstedes for møde ${context.meetingId}: ${scrubError(error)}`);
+    return base;
+  }
+}
+
 /**
  * Send ratinganmodninger for afholdte møder. Et møde skylder en anmodning når det er sluttet
  * for mindst `offsetMinutes` siden, men ikke længere tilbage end `catchUpMinutes` ud over det.
@@ -344,6 +406,12 @@ export async function sendRatingRequests(
       return end > endedAfter.getTime() && end <= endedBefore.getTime();
     });
 
+  const linkDeps: RatingLinkDeps = options.ratingLinks ?? {
+    store: createSupabaseRatingLinkStore(service),
+    secret: readRatingLinkSecret(options.env),
+    now: () => now,
+  };
+
   const summary = emptySummary();
   for (const context of contexts) {
     const recipients = [context.ownerUserId, ...context.partnerUserIds];
@@ -351,7 +419,7 @@ export async function sendRatingRequests(
       "rating-request",
       context,
       recipients,
-      meetingVariables(context, {}, options.env),
+      (recipientUserId) => ratingRequestVariables(context, recipientUserId, linkDeps, options.env),
       undefined,
       deps,
     );

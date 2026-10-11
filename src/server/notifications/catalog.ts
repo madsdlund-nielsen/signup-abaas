@@ -135,7 +135,7 @@ export const NOTIFICATION_TYPES: readonly NotificationType[] = [
       MODTAGER_NAVN,
       MOEDE_TIDSPUNKT,
       BOARD_NAVN,
-      { key: "link", label: "Link til mødet, hvor vurderingen afgives" },
+      { key: "link", label: "Personligt engangslink til at vurdere mødet uden login (ellers link til mødet)" },
     ],
   },
   {
