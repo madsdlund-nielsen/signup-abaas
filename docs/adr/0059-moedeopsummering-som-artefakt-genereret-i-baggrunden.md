@@ -132,3 +132,9 @@ tager den, med samme samtykke-gate.
   ikke kørt mod en rigtig PostgREST.
 - Cal.com-optagelsen (`loadMeetingRecording`, spike L-8) er stadig et hul; indtil den er klar ender
   rigtige møder i `mangler_optagelse` (efter samtykke).
+
+## Opdatering (2026-10-11) — sikkerhedsreview
+
+"Generér igen" kan kun nulstille en `fejlet` række der har ligget i mindst 15 minutter
+(`RETRY_COOLDOWN_MS`). Hvert gennemløb kan koste op til `MAX_ATTEMPTS` betalte leverandørkald, så
+uden bremsen kunne en ejer nulstille i en løkke. Bremsen er teknisk, ikke en forretningsregel.

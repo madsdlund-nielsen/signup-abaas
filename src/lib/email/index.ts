@@ -18,11 +18,14 @@ function isConfigured(c: EmailConfig): boolean {
   return Boolean(c.apiKey && c.fromAddress);
 }
 
-/** Stub: virker uden nøgler — logger i stedet for at sende. */
+/**
+ * Stub: virker uden nøgler — logger i stedet for at sende. Logger ALDRIG modtager, emne eller
+ * indhold: adressen er persondata, og indholdet kan bære et auth-frit rating-link (ADR 0057/0060).
+ */
 class StubEmailSender implements EmailSender {
   readonly name = "stub";
-  async send(message: EmailMessage): Promise<SendReceipt> {
-    console.info(`[email:stub] ville sende til ${message.to}: "${message.subject}"`);
+  async send(_message: EmailMessage): Promise<SendReceipt> {
+    console.info("[email:stub] ville sende én e-mail");
     return { reference: null };
   }
 }

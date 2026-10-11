@@ -122,3 +122,11 @@ have til at svare er ejerens beslutning: `TODO(ejer): linkets levetid`.
   - TODO(mads): sæt `RATING_LINK_SECRET` (≥ 32 tilfældige tegn) i Netlify; verificér ved første
     rigtige mail at tokenet overlever en evt. link-tracking hos Resend (hold click-tracking FRA for beskeder med
     `{{link}}`, ellers kan URL'en blive omskrevet).
+
+## Opdatering (2026-10-11) — sikkerhedsreview
+
+Indløsning via linket opdaterer en eksisterende vurdering (som login-vejen gør), men en tom
+kommentar via linket sletter aldrig en eksisterende kommentar (`coalesce`). Linket er et
+bearer-link: videresendes mailen, må den der holder linket ikke kunne slette ejerens skrevne
+kommentar. Desuden logger e-mail- og SMS-stubbene ikke længere modtager eller indhold — en
+stub-SMS med et rating-link ville ellers lægge et gyldigt link i funktionsloggen.

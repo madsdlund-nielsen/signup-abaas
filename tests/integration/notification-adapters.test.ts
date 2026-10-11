@@ -192,3 +192,27 @@ describe("inMobile-adapteren", () => {
     expect(body.messages[0]?.messageId).toHaveLength(50);
   });
 });
+
+describe("stub-afsenderne logger aldrig modtager eller indhold (sikkerhedsreview)", () => {
+  it("SMS- og e-mail-stub skriver hverken nummer, adresse, emne eller tekst i loggen", async () => {
+    const logs: string[] = [];
+    const spy = vi.spyOn(console, "info").mockImplementation((...args: unknown[]) => {
+      logs.push(args.map(String).join(" "));
+    });
+    const secretLink = "https://example.test/vurdering/abc.def";
+    await createSmsSender({}).send({ to: "+4512345678", message: `Vurdér mødet: ${secretLink}` });
+    await createEmailSender({}).send({
+      to: "ejer@example.test",
+      subject: "Fortroligt emne",
+      html: `<a href="${secretLink}">link</a>`,
+      body: secretLink,
+    });
+    spy.mockRestore();
+
+    const joined = logs.join("\n");
+    expect(joined).toContain("stub");
+    for (const leak of ["+4512345678", "ejer@example.test", "Fortroligt emne", secretLink]) {
+      expect(joined).not.toContain(leak);
+    }
+  });
+});

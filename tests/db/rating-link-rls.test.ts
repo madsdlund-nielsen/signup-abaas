@@ -185,6 +185,22 @@ describe("redeem_rating_link (0023) — atomisk engangsbrug", () => {
     });
   });
 
+  it("en tom kommentar via linket sletter ALDRIG en eksisterende login-kommentar — kun scoren opdateres", async () => {
+    await asPostgres(async (c) => {
+      await c.query("delete from meeting_rating where meeting_id = $1", [MEETING_HELD]);
+      await c.query(
+        `insert into meeting_rating (meeting_id, rater_user_id, subject_partner_profile_id, score, comment)
+         values ($1, $2, null, 2, 'Skrevet ved login')`,
+        [MEETING_HELD, USER.ejerA],
+      );
+      await addLink(c, { id: LINK_A, user: USER.ejerA });
+
+      const ratingId = await redeem(c, LINK_A, 5, "   ");
+      const rating = (await c.query("select score, comment from meeting_rating where id = $1", [ratingId])).rows[0];
+      expect(rating).toEqual({ score: 5, comment: "Skrevet ved login" });
+    });
+  });
+
   it("en partner-rater gemmes som katalogpost, ikke som bruger", async () => {
     await asPostgres(async (c) => {
       await c.query("delete from meeting_rating where meeting_id = $1", [MEETING_HELD]);

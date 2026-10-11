@@ -17,6 +17,8 @@ import { getCurrentUser, requireRole } from "@/server/auth";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServiceSupabase } from "@/server/auth/supabase-server";
 
+import { RETRY_COOLDOWN_MS } from "./status";
+
 export async function retryMeetingSummary(
   _prev: AuthFormState,
   formData: FormData,
@@ -39,15 +41,22 @@ export async function retryMeetingSummary(
       .maybeSingle();
     if (!owned) return { error: "Møde ikke fundet." };
 
-    // Kun en opgivet række kan prøves igen — betinget, så en kørsel i gang ikke forstyrres.
+    // Kun en opgivet række kan prøves igen — betinget, så en kørsel i gang ikke forstyrres. Og
+    // kun når den har ligget opgivet i RETRY_COOLDOWN_MS: hvert gennemløb kan koste op til
+    // MAX_ATTEMPTS betalte leverandørkald, så en ejer må ikke kunne nulstille i en løkke
+    // (sikkerhedsreview). Afkølingen er en teknisk bremse, ikke en forretningsregel.
+    const now = new Date();
     const { data, error } = await service
       .from("meeting_summary")
-      .update({ status: "afventer", attempts: 0, error: null, updated_at: new Date().toISOString() })
+      .update({ status: "afventer", attempts: 0, error: null, updated_at: now.toISOString() })
       .eq("meeting_id", meetingId)
       .eq("status", "fejlet")
+      .lte("updated_at", new Date(now.getTime() - RETRY_COOLDOWN_MS).toISOString())
       .select("id");
     if (error) return { error: `Kunne ikke sætte opsummeringen i gang: ${error.message}` };
-    if ((data ?? []).length === 0) return { error: "Opsummeringen kan ikke genereres igen lige nu." };
+    if ((data ?? []).length === 0) {
+      return { error: "Opsummeringen kan ikke genereres igen lige nu — prøv igen om lidt." };
+    }
 
     revalidatePath(`/moeder/${meetingId}`);
     return {};

@@ -117,9 +117,12 @@ begin
     p_score, nullif(btrim(p_comment), '')
   )
   -- Samme upsert som den indloggede vurdering (submitRating): en vurdering afgivet via login
-  -- opdateres frem for at give en dublet.
+  -- opdateres frem for at give en dublet. Men linket er et bearer-link: en tom kommentar via
+  -- linket sletter ALDRIG en eksisterende kommentar (sikkerhedsreview) — kun scoren opdateres.
   on conflict on constraint meeting_rating_unique_per_subject
-  do update set score = excluded.score, comment = excluded.comment, updated_at = now()
+  do update set score = excluded.score,
+                comment = coalesce(excluded.comment, meeting_rating.comment),
+                updated_at = now()
   returning id into v_rating_id;
 
   return v_rating_id;

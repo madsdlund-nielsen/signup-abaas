@@ -41,6 +41,10 @@ function fakeClient(tables: Record<string, Row[]>): SupabaseClient {
           });
           return query;
         },
+        lte(column: string, value: string) {
+          filters.push((row) => String(row[column] ?? "") <= value);
+          return query;
+        },
         update(values: Row) {
           patch = values;
           return query;
@@ -125,6 +129,8 @@ describe("getMeetingSummary — læser den gemte række", () => {
   });
 });
 
+const LONG_AGO = "2026-01-01T00:00:00.000Z";
+
 describe("retryMeetingSummary — Generér igen", () => {
   const OWNER = { id: "owner-1", email: "o@example.test", roles: ["ejer" as const] };
 
@@ -146,8 +152,8 @@ describe("retryMeetingSummary — Generér igen", () => {
         { id: "m-2", board_id: "b-2" },
       ],
       meeting_summary: [
-        { id: "s-1", meeting_id: "m-1", status: "fejlet", attempts: 3, error: "TypeError" },
-        { id: "s-2", meeting_id: "m-2", status: "fejlet", attempts: 3, error: "TypeError" },
+        { id: "s-1", meeting_id: "m-1", status: "fejlet", attempts: 3, error: "TypeError", updated_at: LONG_AGO },
+        { id: "s-2", meeting_id: "m-2", status: "fejlet", attempts: 3, error: "TypeError", updated_at: LONG_AGO },
       ],
     };
     mocked.client = fakeClient(mocked.tables);
@@ -174,6 +180,13 @@ describe("retryMeetingSummary — Generér igen", () => {
     mocked.user = null;
     expect((await retryMeetingSummary({}, form("m-1"))).error).toMatch(/Adgang nægtet/);
     expect(mocked.tables.meeting_summary?.[0]).toMatchObject({ status: "fejlet" });
+  });
+
+  it("afkøling: en netop opgivet række kan ikke nulstilles i en løkke (hvert gennemløb koster betalte kald)", async () => {
+    (mocked.tables.meeting_summary?.[0] as Row).updated_at = new Date().toISOString();
+    const result = await retryMeetingSummary({}, form("m-1"));
+    expect(result.error).toMatch(/prøv igen om lidt/);
+    expect(mocked.tables.meeting_summary?.[0]).toMatchObject({ status: "fejlet", attempts: 3 });
   });
 
   it("kun en opgivet række kan prøves igen — en række i gang røres ikke", async () => {

@@ -18,11 +18,14 @@ function isConfigured(c: SmsConfig): boolean {
   return Boolean(c.apiKey && c.sender);
 }
 
-/** Stub: virker uden nøgler — logger i stedet for at sende. */
+/**
+ * Stub: virker uden nøgler — logger i stedet for at sende. Logger ALDRIG modtager eller tekst:
+ * nummeret er persondata, og teksten kan bære et auth-frit rating-link (ADR 0057/0060).
+ */
 class StubSmsSender implements SmsSender {
   readonly name = "stub";
   async send(message: SmsMessage): Promise<SmsReceipt> {
-    console.info(`[sms:stub] ville sende til ${message.to}: "${message.message}"`);
+    console.info(`[sms:stub] ville sende én SMS (${message.message.length} tegn)`);
     return { reference: null };
   }
 }

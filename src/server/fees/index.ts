@@ -110,6 +110,28 @@ export async function listFeeRules(
   return ((data ?? []) as unknown as RuleRow[]).map(rowToRule);
 }
 
+/**
+ * Øvre grænse for linjer i én opgørelse. PostgREST afkorter stille ved sin egen grænse (1000); en
+ * opgørelse eller eksport der mangler linjer uden at sige det, er værre end en fejl.
+ */
+export const FEE_LINE_LIMIT = 1000;
+
+/** Opgørelsen ramte rækkegrænsen — fejl højlydt frem for at levere en afkortet opgørelse. */
+export class FeeLinesTooManyError extends Error {
+  constructor() {
+    super(
+      `Perioden har mindst ${FEE_LINE_LIMIT} honorarlinjer — opgørelsen er ikke vist, fordi den ville være afkortet. Vælg en kortere periode eller én partner.`,
+    );
+    this.name = "FeeLinesTooManyError";
+  }
+}
+
+/**
+ * Læs og beregn linjer. KASTER ved læsefejl (linjer ELLER regler) og ved rækkegrænsen: en
+ * honoraropgørelse — og især CSV-eksporten til bogholderen — der stille er tom, afkortet eller
+ * regnet uden regler ("ingen sats"), er værre end en fejl (sikkerhedsreview, samme greb som
+ * `loadFeeTotals` og ADR 0053). Kun "Supabase ikke konfigureret" svarer [] (kontofri CI/dev).
+ */
 async function readLines(
   period: FeePeriodQuery,
   scope: { appUserId?: string; partnerId?: string },
@@ -123,16 +145,23 @@ async function readLines(
     .from("partner_fee_line")
     .select(LINE_COLUMNS)
     .gte("starts_at", period.from)
-    .lt("starts_at", period.to);
+    .lt("starts_at", period.to)
+    .limit(FEE_LINE_LIMIT);
   if (scope.appUserId) query = query.eq("app_user_id", scope.appUserId);
   if (scope.partnerId) query = query.eq("partner_profile_id", scope.partnerId);
 
-  const [{ data, error }, rules] = await Promise.all([query, listFeeRules(env)]);
-  if (error) {
-    console.error(`[fees] læsning af honorarlinjer fejlede: ${error.message}`);
-    return [];
-  }
-  return buildFeeLines(((data ?? []) as unknown as LineRow[]).map(rowToLineRow), rules);
+  const [lines, rules] = await Promise.all([
+    query,
+    supabase.from("fee_rule").select(RULE_COLUMNS).order("version", { ascending: false }),
+  ]);
+  if (lines.error) throw new Error(`Honorarlinjerne kunne ikke læses: ${lines.error.message}`);
+  if (rules.error) throw new Error(`Honorarreglerne kunne ikke læses: ${rules.error.message}`);
+  const rows = (lines.data ?? []) as unknown as LineRow[];
+  if (rows.length >= FEE_LINE_LIMIT) throw new FeeLinesTooManyError();
+  return buildFeeLines(
+    rows.map(rowToLineRow),
+    ((rules.data ?? []) as unknown as RuleRow[]).map(rowToRule),
+  );
 }
 
 /**

@@ -12,7 +12,12 @@
  */
 
 import { getCurrentUser } from "@/server/auth";
-import { REGISTERED_STATUS_LABEL, listFeeLines, resolvePeriod } from "@/server/fees";
+import {
+  FeeLinesTooManyError,
+  REGISTERED_STATUS_LABEL,
+  listFeeLines,
+  resolvePeriod,
+} from "@/server/fees";
 import { toCsv } from "@/server/fees/csv";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +51,18 @@ export async function GET(request: Request): Promise<Response> {
   const partner = url.searchParams.get("partner") || undefined;
   if (partner && !UUID.test(partner)) return new Response("Ugyldigt partner-id.", { status: 400 });
 
-  const lines = await listFeeLines({ from: period.from, to: period.to, partnerId: partner });
+  // Aldrig en tom eller afkortet CSV ved fejl: bogholderen ville tro perioden var tom.
+  let lines;
+  try {
+    lines = await listFeeLines({ from: period.from, to: period.to, partnerId: partner });
+  } catch (e) {
+    const tooMany = e instanceof FeeLinesTooManyError;
+    console.error(`[fees] eksport fejlede: ${e instanceof Error ? e.name : "ukendt"}`);
+    return new Response(
+      tooMany ? e.message : "Opgørelsen kunne ikke læses — der er ikke lavet nogen eksport.",
+      { status: tooMany ? 422 : 500, headers: { "content-type": "text/plain; charset=utf-8" } },
+    );
+  }
 
   const rows = lines.map((line) => {
     const { result } = line;

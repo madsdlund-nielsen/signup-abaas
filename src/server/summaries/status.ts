@@ -63,3 +63,10 @@ export function failureCode(e: unknown): string {
   if (e instanceof Error) return e.name || "Error";
   return "UkendtFejl";
 }
+
+/**
+ * Hvor længe en opgivet (`fejlet`) opsummering skal ligge før ejeren kan sætte den i gang igen.
+ * Teknisk bremse mod en nulstillingsløkke (hvert gennemløb kan koste MAX_ATTEMPTS betalte kald),
+ * ikke en forretningsregel.
+ */
+export const RETRY_COOLDOWN_MS = 15 * 60 * 1000;
