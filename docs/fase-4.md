@@ -18,7 +18,7 @@
 - [x] De **15 minutters betalte forberedelse** for partnere er understøttet med
       et sted at forberede sig (kobling til honorargrundlag fra fase 2). **(2026-08-27)**
 - [x] Rating efter møde: deltagere kan vurdere mødet; resultat gemt i Supabase.
-      **(2026-08-27 — men signerede engangslinks mangler, se B-21)**
+      **(2026-08-27; signerede engangslinks fra mail bygget 2026-10-11, ADR 0060 — kræver `RATING_LINK_SECRET`)**
 - [ ] Transskription via **Ordbogen (ordbogen.ai)** bag `FLAG_TRANSCRIPTION` — flaget
       tændes når DPA og samtykkeflow er på plads.
 - [ ] Auto-resumé af møde via **Ordbogen (Odin-LLM)** bag `FLAG_AIFOLLOWUP`.
@@ -48,8 +48,8 @@ Migration `0015_preparation_and_rating.sql`, `src/server/preparation/`, `src/ser
 forberedelsesrummet på `/moeder/[id]` og admin-visningen på `/admin/vurderinger`. Datamodel og
 de tre synlighedsregimer er begrundet i **ADR 0038**.
 
-Udestår i 4.2: **signerede engangslinks** (B-21) — bevidst udskudt til 4.5, som er den der
-udsender dem.
+Signerede engangslinks til rating (B-21) er bygget 2026-10-11 (ADR 0060, migration 0023,
+`/vurdering/[token]`): HMAC over rækken, engangsbrug afgjort atomisk i basen. Koblet på `sendRatingRequests`; tændt når `RATING_LINK_SECRET` er sat, og sendes først når ejeren har fastsat udsendelsestidspunktet. Levetiden (teknisk default 14 dage) er `TODO(ejer)`.
 
 **4.3–4.6 bygges skærm-først** siden 2026-09-14 (ADR 0042) mod demo-adapterne (ADR 0041):
 skærmen først, så Mads kan klikke og designe; leverandøren droppes ind når Ordbogen-nøglerne
@@ -75,7 +75,7 @@ preview og LIVE/UDKAST-markering, motoren (`engine.ts`: reservér → live skabe
 med retry → log → analytics), Resend- og inMobile-adaptere og e-mail/SMS-demo. Aflysning/flytning
 er koblet på møde-handlingerne. **Udestår:** konti og nøgler (adaptere aldrig kørt live — inMobile
 er desuden uverificeret), ejerens udsendelsestidspunkter (så planlagte beskeder ikke sendes og
-ruten ikke er planlagt), skabelonteksten, telefonnumre (SMS kan ikke sendes). Signerede engangslinks til rating (B-21) er stadig ikke bygget.
+ruten ikke er planlagt), skabelonteksten, telefonnumre (SMS kan ikke sendes). Ratinganmodningens `{{link}}` er et personligt signeret engangslink (B-21, ADR 0060).
 
 **4.3/4.4 — Ordbogen-adapterne er bygget 2026-10-10 (ADR 0058)** mod OdinCores offentlige
 OpenAPI-spec (`docs/spikes/ordbogen-api.md`): `src/lib/llm/ordbogen.ts` (`/v1/chat/completions`,
@@ -106,7 +106,7 @@ gate for denne migrations RLS.
 ### 4.2 Rating
 - Rating efter afholdt møde (kobling til mødestatus fra fase 2).
 - Simpelt, hurtigt format — det skal kunne besvares på under et minut.
-- Signerede engangslinks frem for åbne endpoints (byggespec §8).
+- Signerede engangslinks frem for åbne endpoints (byggespec §8). **Bygget (ADR 0060).**
 - Aggregering pr. partner er **datagrundlag**, ikke en offentlig score. ⚠ Hvad
   ratings bruges til (matching? udskiftning?) er ikke besluttet → byg lagring
   og visning for admin, ikke automatisk konsekvens.

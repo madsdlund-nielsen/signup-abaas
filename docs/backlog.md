@@ -50,7 +50,6 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 
 | ID | Punkt | Hvor | Fase | Ejer |
 |---|---|---|---|---|
-| **B-21** | **Signerede engangslinks til rating er ikke bygget.** Fase 4.2's DoD nævner dem (byggespec §8); ADR 0038 udskød dem bevidst, fordi et engangslink er en auth-fri skrivevej der først kan gennemspilles end-to-end når der findes en notifikationsmotor til at udsende den. Vurdering kræver login indtil videre — det opfylder "ingen åbne endpoints", men ikke "besvares på under et minut" fra en mail. | `src/server/ratings/actions.ts` (`TODO(mads)`) | **4.5** — bygges sammen med notifikationsmotoren. Blokeret på Resend-konto. | Mads |
 | **B-40** | **Aflysning/flytning direkte i Cal.com udløser ingen besked.** Notifikationen sendes fra app-handlingerne `rescheduleMeeting`/`cancelMeeting` (ADR 0057). Cal.com-webhooken (`BOOKING_CANCELLED`/`BOOKING_RESCHEDULED`) opdaterer mødet i Supabase uden at kalde `scheduleMeetingChangedNotification` — så en partner der aflyser i Cals egen UI giver ingen besked. | `src/server/meetings/webhook.ts` | Beslutningen er truffet (aflysning/flytning skal give besked); kun koblingen mangler. Brug samme `after`-mønster og en diskriminator der er stabil pr. webhook-event, så Cals gentagelser ikke giver dobbeltbeskeder. Kan først gennemspilles med en Cal.com-konto. | Mads |
 
 ## 4. Guardrails & sikkerhedshygiejne

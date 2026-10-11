@@ -43,6 +43,12 @@
 |---|---|---|---|---|
 | **e-conomic ELLER Dinero** | ~150-400 kr/md | `ACCOUNTING_API_KEY` | `FLAG_ACCOUNTING` | **Leverandørvalg (ejer)** — det eneste tilbageværende leverandørvalg. Bemærk at e-conomics API typisk kræver en app-/integrationsaftale oveni |
 
+## C. Egne hemmeligheder — ingen konto, men skal sættes
+
+| Hemmelighed | Env-variabel | Hvad den gør | Note |
+|---|---|---|---|
+| Rating-linkenes HMAC-nøgle | `RATING_LINK_SECRET` | Signerer `/vurdering/<token>`-linkene, så en vurdering kan afgives fra en mail uden login (B-21, ADR 0060) | ≥ 32 tilfældige tegn (`openssl rand -base64 48`), kun i Netlify env vars. **Uden den er funktionen slået fra** (fejler lukket) og ratinganmodningen linker til det loginbeskyttede `/moeder/[id]`. Roteres den, ugyldiggøres udestående links |
+
 ## Groft run-rate
 
 Faste poster: Supabase $25 + Netlify $20 + Alunta 199-499 kr + QuickPay 148 kr +

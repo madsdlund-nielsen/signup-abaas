@@ -13,11 +13,9 @@
  *   2. Raten skal selv være knyttet til mødet (ejer af boardet, eller deltagende partner).
  *   3. Et partner-subjekt skal faktisk have deltaget i mødet.
  *
- * ⚠ Signerede engangslinks (byggespec §8) er IKKE bygget her. Se ADR 0038: de hører sammen
- * med den notifikation der udsender dem (fase 4.5), og en auth-fri skrivevej der ikke kan
- * afprøves end-to-end er en sikkerhedsrisiko frem for en leverance. Indtil da kræver
- * vurdering login — hvilket byggespec §8's egentlige krav, "ingen åbne endpoints", opfylder.
- * TODO(mads): signerede engangslinks sammen med notifikationsmotoren i 4.5.
+ * Denne vej kræver LOGIN. Den auth-frie vej fra en mail — signerede engangslinks (byggespec
+ * §8) — ligger i `./link-actions` (B-21, ADR 0060): den skriver til samme tabel, men bærer sin
+ * egen autorisation (HMAC-signatur + engangsindløsning i basen).
  */
 
 import { revalidatePath } from "next/cache";
@@ -27,7 +25,7 @@ import type { AuthFormState } from "@/components/AuthForm";
 import { getCurrentUser, type AuthUser } from "@/server/auth";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServiceSupabase } from "@/server/auth/supabase-server";
-import { RATING_MAX, RATING_MIN } from "./index";
+import { parseScore, RATING_MAX, RATING_MIN } from "./score";
 
 interface ActionContext {
   service: SupabaseClient;
@@ -112,12 +110,6 @@ async function requireValidSubject(
     .eq("partner_profile_id", subjectPartnerProfileId)
     .maybeSingle();
   if (!data) throw new Error("Den valgte partner deltog ikke i mødet.");
-}
-
-function parseScore(raw: string): number | null {
-  const score = Number(raw);
-  if (!Number.isInteger(score) || score < RATING_MIN || score > RATING_MAX) return null;
-  return score;
 }
 
 /**
