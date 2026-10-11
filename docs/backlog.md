@@ -65,7 +65,6 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 | ID | Punkt | Hvor | Note | Ejer |
 |---|---|---|---|---|
 | **B-13** | **Docker er ikke installeret lokalt** (hverken i bash eller PowerShell). Integration- og db-testene — inkl. de **obligatoriske negative RLS-tests** — kan derfor ikke køres på maskinen, kun i CI. | lokal maskine | Installér Docker Desktop, **eller** accepter bevidst at CI er eneste db-gate og skriv det ned i `tests/CLAUDE.md`. Det er den eneste gate for autorisationslaget. | Mads |
-| **B-14** | **`npm test` kræver Docker.** Rod-scriptet kører alle tre Vitest-projekter, inkl. `db`, så det fejler bare uden Docker. | `package.json` | Overvej at lade `npm test` dække unit + integration og holde `test:db` eksplicit. | Mads |
 
 ## Lukkede punkter
 
@@ -98,3 +97,4 @@ Dubler ikke et punkt herind fra en af de fire — referér det i stedet.
 | B-66 | Sammensætningsændringer var ikke én transaktion (`applyPlan` skrev i trin; samtidige redaktører kunne overskrive hinanden) | 2026-10-11 | Migration `0026`: `change_board_composition` (`security invoker`, revoked fra klientrollerne) — rækkelås, optimistisk medlemstjek (`40001`), invarianterne som sidste værn og revisionsrækken i samme transaktion; TypeScript afviser stadig invarianterne først. Cal.com-synk forbliver uden for (pessimistisk `calcom_sync`, rettes bagefter) — **ADR 0064**, db-tests i `board-composition-fn.test.ts` |
 | B-67 | Ændres en partners Cal.com-sæde, blev boardets hosts ikke opdateret | 2026-10-11 | `setPartnerCalcomUserId` kører `syncHostsForPartner` for hvert board partneren sidder på (kun ved faktisk sædeskift; fejl → advarsel, aldrig rollback; logges som `opdater_hosts`) — **ADR 0064**. Rest (sletning af en katalogpost): B-68 |
 | B-20 | Vite 8 og `@vitejs/plugin-react` 6 udestod, og `overrides` i `package.json` skulle ryddes op | 2026-10-11 | Vite `^8.3.4` + plugin-react `^6.1.2`; hele `overrides`-blokken fjernet (Vite 8 har ikke esbuild i træet); `vitest.config.ts` → `.mts` mod Vites config-loader-advarsel. Tests og dækning uændrede, tærskler urørt — **ADR 0067** |
+| B-14 | `npm test` krævede Docker, fordi rod-scriptet kørte alle tre Vitest-projekter inkl. `db` | 2026-10-11 | `npm test` = unit + integration (`vitest run --project unit --project integration`, ingen Postgres nødvendig); `test:db` er uændret og eksplicit; nyt `test:all` = alle tre. CI uændret (kalder `test:coverage`/`test:integration`/`test:db`). Dokumenteret i `tests/CLAUDE.md` og `pre-pr-check`-skillen |

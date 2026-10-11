@@ -16,12 +16,18 @@ Test-runner er **Vitest** (ADR 0003), opdelt i tre projekter i `vitest.config.mt
 
 Kør:
 ```bash
+npm test                     # unit + integration — ingen Docker/Postgres (B-14)
 npm run test:unit            # jsdom
 npm run test:integration     # node
 npm run db:test:up           # docker Postgres + wait-for-db (kræves før test:db)
 npm run test:db
+npm run test:all             # alle tre projekter, inkl. db (kræver Postgres)
 npm run test:coverage        # scoped coverage (src/components, src/server/flags)
 ```
+
+`npm test` kører bevidst kun unit + integration, så det virker uden Docker. `db`-laget er
+eksplicit (`test:db`) og kræver en Postgres på `TEST_DATABASE_URL`; `test:all` kører alle tre.
+CI kalder de enkelte scripts (`test:coverage`, `test:integration`, `test:db`), ikke `npm test`.
 
 ## Mappe-layout
 ```
