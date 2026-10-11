@@ -3,7 +3,7 @@ import type { Transcript, TranscriptionProvider, TranscriptionRequest } from "./
 
 /**
  * Demo (ADR 0041): et fast transskript, så opfølgningsflowet kan klikkes igennem før
- * Ordbogen-DPA og samtykke til optagelse er på plads. Ikke afledt af nogen lyd.
+ * Ordbogen-nøglerne og optagelsen (L-8) er på plads. Ikke afledt af nogen lyd.
  */
 export class DemoTranscriptionProvider implements TranscriptionProvider {
   readonly name = "demo";

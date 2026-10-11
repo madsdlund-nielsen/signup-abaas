@@ -52,8 +52,6 @@ const ownerRaw = emptyRaw({
     display_name: "[DEMO] Eva Ejer",
     phone_e164: "+4500000000",
     time_zone: "America/Nuuk",
-    sms_opt_in: true,
-    sms_opt_in_at: "2026-02-01T10:00:00Z",
   },
   roles: [{ role: "ejer" }],
   ownedBoards: [{ id: "b1", owner_id: "u1", name: "Testboard", created_at: "2026-02-01T00:00:00Z" }],
@@ -135,7 +133,7 @@ describe("composeSubjectAccessExport — ejer", () => {
     expect(doc.roller).toEqual(["ejer"]);
   });
 
-  it("tager kontoprofilen med: navn, telefon, tidszone og SMS-samtykke med tidspunkt (ADR 0061)", () => {
+  it("tager kontoprofilen med: navn, telefon og tidszone (ADR 0061) — intet SMS-samtykke, det er en del af kontrakten (ADR 0065)", () => {
     expect(doc.person).toEqual({
       id: "u1",
       email: "test@example.invalid",
@@ -143,17 +141,15 @@ describe("composeSubjectAccessExport — ejer", () => {
       navn: "[DEMO] Eva Ejer",
       telefon: "+4500000000",
       tidszone: "America/Nuuk",
-      sms_samtykke: { givet: true, tidspunkt: "2026-02-01T10:00:00Z" },
     });
   });
 
-  it("en konto uden profil viser tomme felter og intet samtykke — nøglerne findes, så det ses at der er spurgt", () => {
+  it("en konto uden profil viser tomme felter — nøglerne findes, så det ses at der er spurgt", () => {
     const bare = composeSubjectAccessExport(emptyRaw(), META) as Record<string, any>;
     expect(bare.person).toMatchObject({
       navn: null,
       telefon: null,
       tidszone: null,
-      sms_samtykke: { givet: false, tidspunkt: null },
     });
   });
 
@@ -195,6 +191,7 @@ describe("composeSubjectAccessExport — ejer", () => {
   it("siger højt at der ikke findes en samtykkelog, og hvad udtrækket ikke dækker", () => {
     expect(doc.samtykke.registreret).toBe(false);
     expect(doc.samtykke.note).toMatch(/cookie/);
+    expect(doc.samtykke.note).toMatch(/kontrakten/);
     expect(doc.afgraensning.ikke_inkluderet).toEqual([...NOT_INCLUDED]);
     expect(NOT_INCLUDED.length).toBeGreaterThan(0);
   });

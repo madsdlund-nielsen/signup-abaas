@@ -95,6 +95,7 @@ det gjort sådan?", så skriv en ADR.
 | 0062 | Admin styrer board-sammensætning: fælles invarianter, revisionsspor (`board_change`) og Cal.com-hosts efter hver ændring | Accepteret | 1 + 2 |
 | 0063 | DB-testfilerne kører én ad gangen (`fileParallelism: false`) — deadlocks på tværs af testfiler | Accepteret | — |
 | 0064 | Boardets sammensætning som én transaktion (`change_board_composition`), hosts ved sædeskift og revisionssporet i indsigtsudtrækket (lukker B-65/66/67) | Accepteret | 1 + 2 + 5 |
+| 0065 | Samtykke er en del af kontrakten: ingen opt-in/out på platformen (optagelse, AI, SMS); `sms_opt_in` fjernet; cookie-samtykket er en bevidst undtagelse | Accepteret | 4 + 5 |
 | 0066 | PostHog-driftstatus på `/admin/drift`: separat læse-port (`ops-metrics`), personal API key med læse-scope, siden vælter aldrig | Accepteret | 5 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.

@@ -9,8 +9,8 @@
  * Alle roller må redigere deres egen konto: ejere, partnere og admin. En partners navn i
  * kataloget (`partner_profile.name`) er et andet felt og røres ikke herfra.
  *
- * TODO(ejer): samtykketeksten til SMS (og ToS) — teksten på siden er en teknisk pladsholder,
- * ikke godkendt juridisk ordlyd (docs/stub-register.md).
+ * Der er intet SMS-samtykke at gemme: samtykke til SMS, optagelse og AI er en del af kontrakten
+ * (Mads, 2026-10-11, ADR 0065). Et telefonnummer er nok til at modtage SMS.
  */
 
 import { revalidatePath } from "next/cache";
@@ -20,7 +20,7 @@ import { getCurrentUser } from "@/server/auth";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServiceSupabase } from "@/server/auth/supabase-server";
 
-import { parseProfileInput, smsConsentStamp } from "./validation";
+import { parseProfileInput } from "./validation";
 
 export async function saveAccountProfile(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
   try {
@@ -33,36 +33,17 @@ export async function saveAccountProfile(_prev: AuthFormState, formData: FormDat
       displayName: String(formData.get("display_name") ?? ""),
       phone: String(formData.get("phone") ?? ""),
       timeZone: String(formData.get("time_zone") ?? ""),
-      // En afkrydsning er kun et ja når den står i formularen; mangler feltet, er svaret nej.
-      smsOptIn: formData.get("sms_opt_in") === "on",
     });
     if (!parsed.ok) return { error: parsed.error };
 
     const service = createServiceSupabase(config);
-    const { data: stored, error: readError } = await service
-      .from("app_user")
-      .select("phone_e164, sms_opt_in, sms_opt_in_at")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (readError) return { error: "Kunne ikke læse din konto. Prøv igen." };
-    if (!stored) return { error: "Din konto blev ikke fundet." };
-    const row = stored as { phone_e164: string | null; sms_opt_in: boolean; sms_opt_in_at: string | null };
-
     const { profile } = parsed;
-    const smsOptInAt = smsConsentStamp(
-      profile,
-      { phone: row.phone_e164, smsOptIn: row.sms_opt_in, smsOptInAt: row.sms_opt_in_at },
-      new Date(),
-    );
-
     const { error } = await service
       .from("app_user")
       .update({
         display_name: profile.displayName,
         phone_e164: profile.phone,
         time_zone: profile.timeZone,
-        sms_opt_in: profile.smsOptIn,
-        sms_opt_in_at: smsOptInAt,
       })
       .eq("id", user.id);
     if (error) {

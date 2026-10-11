@@ -1,12 +1,13 @@
 /**
- * Registreret samtykke til optagelse af ét møde (ejerens punkt — må aldrig stubbes).
- * TODO(ejer): samtykke til mødeoptagelse — hvem giver det, hvordan registreres og tilbagekaldes
- * det. Typen er kun formen en kalder skal kunne fremvise; mekanismen er ikke besluttet.
+ * Grundlaget for at optage og AI-behandle ét møde. Siden 2026-10-11 (ADR 0065) er det
+ * kontrakten: samtykke til optagelse, AI og SMS er en del af kontraktindgåelsen, og der findes
+ * ingen opt-in/out på platformen. Typen er stadig det en kalder skal kunne fremvise for netop
+ * dette møde — adapteren afviser uden det (defense-in-depth, må aldrig stubbes eller omgås).
  */
 export interface RecordingConsent {
   meetingId: string;
-  /** ISO 8601-tidspunkt for registreringen. */
-  registeredAt: string;
+  /** Retsgrundlaget. Kun `kontrakt` findes; feltet gør grundlaget eksplicit og kan udvides. */
+  basis: "kontrakt";
 }
 
 /** Selve lyden, hentet af kalderen (porten henter ikke fra Cal.com — jf. spike L-8). */
@@ -22,8 +23,8 @@ export interface TranscriptionRequest {
   /** Reference til lydfil/optagelse. */
   audioRef: string;
   /**
-   * Registreret optagelsessamtykke. Rigtige udbydere afviser uden det (fejler lukket); demoen
-   * sender intet nogen steder og kræver det ikke.
+   * Grundlaget for optagelsen (kontrakten, ADR 0065). Rigtige udbydere afviser uden det (fejler
+   * lukket); demoen sender intet nogen steder og kræver det ikke.
    */
   consent?: RecordingConsent;
   /** Lyden. Rigtige udbydere kræver den; demoen ignorerer den. */

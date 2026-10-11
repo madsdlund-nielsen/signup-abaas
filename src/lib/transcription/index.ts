@@ -41,7 +41,7 @@ class StubTranscriptionProvider implements TranscriptionProvider {
   }
 }
 
-// TODO(ejer): samtykke til mødeoptagelse — adapteren afviser uden registreret samtykke (fejler lukket).
+// Grundlaget for optagelse er kontrakten (ADR 0065), men adapteren afviser stadig uden et `consent`-objekt for mødet (fejler lukket).
 export function createTranscriptionProvider(
   env: Record<string, string | undefined> = process.env,
 ): TranscriptionProvider {

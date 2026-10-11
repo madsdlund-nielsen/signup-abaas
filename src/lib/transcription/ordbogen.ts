@@ -3,9 +3,9 @@
  * OpenAI-kompatible `POST /v1/audio/transcriptions` (multipart/form-data, synkront JSON-svar).
  * Domænet ser kun `TranscriptionProvider`-porten.
  *
- * 🔴 SAMTYKKE TIL OPTAGELSE (ejerens punkt) stubbes og omgås ALDRIG: adapteren kalder ikke
- * leverandøren uden et registreret samtykke for netop dette møde — den fejler lukket med
- * `RecordingConsentMissingError`. Kontrollen ligger HER (sidste led før lyden forlader os),
+ * 🔴 GRUNDLAGET FOR OPTAGELSE stubbes og omgås ALDRIG: siden ADR 0065 er det kontrakten (ingen
+ * opt-in/out), men adapteren kalder stadig ikke leverandøren uden et `consent`-objekt for netop
+ * dette møde — den fejler lukket med `RecordingConsentMissingError`. Kontrollen ligger HER (sidste led før lyden forlader os),
  * ikke kun i kalderen.
  *
  * Aldrig logning af lyd eller transskript.
@@ -69,7 +69,7 @@ export class OrdbogenTranscriptionProvider implements TranscriptionProvider {
   constructor(private readonly config: OrdbogenTranscriptionConfig) {}
 
   async transcribe(req: TranscriptionRequest): Promise<Transcript> {
-    // Rækkefølgen er bevidst: samtykke FØR alt andet, så lyden aldrig engang inspiceres uden.
+    // Rækkefølgen er bevidst: grundlaget (kontrakten) FØR alt andet, så lyden aldrig engang inspiceres uden.
     if (!req.consent || req.consent.meetingId !== req.meetingId) {
       throw new RecordingConsentMissingError(req.meetingId);
     }

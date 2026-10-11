@@ -1,6 +1,6 @@
 # 0058 — Ordbogen/OdinCore-adaptere: fælles klient og nøgle, synkron transskription, samtykke fejler lukket
 
-- **Status:** Accepteret
+- **Status:** Accepteret — delvist erstattet af 0065 (samtykkehullet er lukket: grundlaget er kontrakten, `getRecordingConsent` leverer det; adapterens og generatorens fail-closed-værn består)
 - **Dato:** 2026-10-10
 - **Fase:** 4 (4.3 transskription, 4.4 AI-opsummering)
 - **Berører uafklaret punkt:** ja — **samtykke til mødeoptagelse** (ejer) bygges som et fail-closed hul, ikke besluttet
@@ -64,8 +64,9 @@ synkron eller asynkron; og hvad der sker, når der ingen samtykkemekanisme finde
 - Negative / pris: **uden samtykkemekanisme kan rigtig transskription ikke køre** — det er
   tilsigtet. Alt dokumenteret er kun testet mod mocket `fetch`, aldrig mod OdinCore live.
 - Opfølgning:
-  - `TODO(ejer)`: samtykke til mødeoptagelse — mekanisme, tekst, tilbagekaldelse; derefter erstattes
-    kroppen af `getRecordingConsent` (tabel + RLS, ADR 0007).
+  - ~~`TODO(ejer)`: samtykke til mødeoptagelse — mekanisme, tekst, tilbagekaldelse~~ → lukket af
+    ADR 0065: samtykket er en del af kontrakten, `getRecordingConsent` returnerer `basis: "kontrakt"`
+    for et møde der findes. Ingen tabel, ingen tilbagekaldelse. Værnene i punkt 4 består.
   - `TODO(mads)`: nøgle, modelnavne, grænser, dataresidens for API'et, Cal.com-optagelse (L-8);
     se spike-dokumentet.
   - Backlog B-45: gem resuméet som mødeartefakt og kør generering som baggrundsjob — i dag

@@ -11,11 +11,11 @@ const USER = {
   ejerE: "00000000-0000-0000-0000-00000000000e",
 };
 
-const PROFILE_COLUMNS = "display_name, phone_e164, time_zone, sms_opt_in, sms_opt_in_at";
+const PROFILE_COLUMNS = "display_name, phone_e164, time_zone";
 
-/** Kontoprofilen (0024, ADR 0061): kolonner på app_user, adgang via de eksisterende policies. */
+/** Kontoprofilen (0024, ADR 0061; SMS-samtykket fjernet i 0027, ADR 0065): kolonner på app_user, adgang via de eksisterende policies. */
 describe("kontoprofil — standardværdier", () => {
-  it("en eksisterende bruger har ingen forretningsværdier: intet navn, intet nummer, intet samtykke", async () => {
+  it("en eksisterende bruger har ingen forretningsværdier: intet navn, intet nummer", async () => {
     const row = await asUser(USER.ejerA, async (client) => {
       const res = await client.query(`select ${PROFILE_COLUMNS} from app_user where id = $1`, [USER.ejerA]);
       return res.rows[0];
@@ -24,8 +24,6 @@ describe("kontoprofil — standardværdier", () => {
       display_name: null,
       phone_e164: null,
       time_zone: "Europe/Copenhagen",
-      sms_opt_in: false,
-      sms_opt_in_at: null,
     });
   });
 });
@@ -46,19 +44,19 @@ async function asUserWithData<T>(
 
 const seedEjerE = async (client: Client) => {
   await client.query(
-    `update app_user set display_name = 'Ejer E', phone_e164 = '+4500000000', sms_opt_in = true,
-       sms_opt_in_at = now() where id = $1`,
+    `update app_user set display_name = 'Ejer E', phone_e164 = '+4500000000'
+       where id = $1`,
     [USER.ejerE],
   );
 };
 
 describe("RLS: kontoprofil (egen række + admin)", () => {
-  it("brugeren læser sin egen profil, inkl. telefon og samtykke", async () => {
+  it("brugeren læser sin egen profil, inkl. telefon", async () => {
     const row = await asUserWithData(USER.ejerE, seedEjerE, async (client) => {
       const res = await client.query(`select ${PROFILE_COLUMNS} from app_user where id = $1`, [USER.ejerE]);
       return res.rows[0];
     });
-    expect(row).toMatchObject({ display_name: "Ejer E", phone_e164: "+4500000000", sms_opt_in: true });
+    expect(row).toMatchObject({ display_name: "Ejer E", phone_e164: "+4500000000" });
   });
 
   it("admin kan læse en brugers profil (indsigt, support)", async () => {
@@ -150,8 +148,8 @@ async function accepts(sql: string, params: unknown[] = []): Promise<void> {
 describe("kontoprofil — formatkontrol i databasen", () => {
   it("accepterer en komplet, gyldig profil", async () => {
     await accepts(
-      `update app_user set display_name = $2, phone_e164 = '+4520000000', time_zone = 'America/Argentina/Buenos_Aires',
-         sms_opt_in = true, sms_opt_in_at = now() where id = $1`,
+      `update app_user set display_name = $2, phone_e164 = '+4520000000', time_zone = 'America/Argentina/Buenos_Aires'
+         where id = $1`,
       [USER.ejerA, "Eva Ejer"],
     );
     await accepts("update app_user set time_zone = 'UTC' where id = $1", [USER.ejerA]);
@@ -201,40 +199,29 @@ describe("kontoprofil — formatkontrol i databasen", () => {
   });
 });
 
-describe("kontoprofil — SMS-samtykke er konsistent", () => {
-  it("NEGATIV: samtykke uden telefonnummer er en ødelagt tilstand", async () => {
-    expect(
-      await rejects("update app_user set sms_opt_in = true, sms_opt_in_at = now() where id = $1", [USER.ejerA]),
-    ).toBe("app_user_sms_opt_in_consistent");
+describe("kontoprofil — SMS-opt-in er fjernet (0027, ADR 0065)", () => {
+  it("sms_opt_in, sms_opt_in_at og deres check-constraint findes ikke længere", async () => {
+    const found = await asPostgres(async (client) => {
+      const columns = await client.query(
+        `select column_name from information_schema.columns
+          where table_name = 'app_user' and column_name in ('sms_opt_in', 'sms_opt_in_at')`,
+      );
+      const constraints = await client.query(
+        "select conname from pg_constraint where conname = 'app_user_sms_opt_in_consistent'",
+      );
+      return { columns: columns.rows, constraints: constraints.rows };
+    });
+    expect(found).toEqual({ columns: [], constraints: [] });
   });
 
-  it("NEGATIV: samtykke uden tidspunkt er en ødelagt tilstand", async () => {
-    expect(
-      await rejects("update app_user set phone_e164 = '+4520000000', sms_opt_in = true where id = $1", [USER.ejerA]),
-    ).toBe("app_user_sms_opt_in_consistent");
-  });
-
-  it("NEGATIV: et tidspunkt uden samtykke er en ødelagt tilstand (et tilbagekaldt samtykke efterlader intet tidspunkt)", async () => {
-    expect(
-      await rejects("update app_user set phone_e164 = '+4520000000', sms_opt_in_at = now() where id = $1", [USER.ejerA]),
-    ).toBe("app_user_sms_opt_in_consistent");
-  });
-
-  it("et nummer uden samtykke er lovligt — og samtykket kan ikke bestå uden nummeret", async () => {
+  it("nummeret, navnet og tidszonen består — et nummer kan gemmes og fjernes uden noget samtykke ved siden af", async () => {
     await accepts("update app_user set phone_e164 = '+4520000000' where id = $1", [USER.ejerA]);
-    expect(
-      await asPostgres(async (client) => {
-        await client.query(
-          "update app_user set phone_e164 = '+4520000000', sms_opt_in = true, sms_opt_in_at = now() where id = $1",
-          [USER.ejerA],
-        );
-        try {
-          await client.query("update app_user set phone_e164 = null where id = $1", [USER.ejerA]);
-          return "ACCEPTERET";
-        } catch (error) {
-          return (error as { constraint?: string }).constraint;
-        }
-      }),
-    ).toBe("app_user_sms_opt_in_consistent");
+    await accepts("update app_user set phone_e164 = null where id = $1", [USER.ejerA]);
+  });
+
+  it("NEGATIV: de fjernede kolonner kan ikke længere skrives", async () => {
+    expect(await rejects("update app_user set sms_opt_in = true where id = $1", [USER.ejerA])).toMatch(
+      /sms_opt_in/,
+    );
   });
 });

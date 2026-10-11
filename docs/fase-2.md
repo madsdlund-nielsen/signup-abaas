@@ -85,8 +85,8 @@
 - Cal Video som primært mødelokale (RealtimeKit udgår, jf. `CLAUDE.md`).
 - Udfyld porten i `src/lib/video/`; aktiveres af `FLAG_VIDEO` + `CALVIDEO_API_KEY`.
 - Videolink eksponeres i appen for alle mødedeltagere, aldrig offentligt.
-- ⚠ Optagelse: Cal.com er ansvarlig for optag, men **plan/EU-residens og
-  samtykke er uafklaret** — byg ikke optagefunktion uden beslutning.
+- ⚠ Optagelse: Cal.com er ansvarlig for optag, men **plan/EU-residens er
+  uafklaret** (samtykket er kontraktens, ADR 0065) — byg ikke optagefunktion uden beslutning.
 
 ### 2.6 Booking-UI (ejer + lead-partner)
 - Book, flyt og aflys i appen. ⚠ Atoms hørte til Platform-planen og er ikke en åben vej
@@ -146,7 +146,7 @@
 ## Uafklarede punkter berørt i fase 2 (flag, beslut ikke)
 
 - Ændre/aflyse-vindue inden møde (ejer).
-- Samtykke til mødeoptagelse (ejer) + Cal.com-optagelse på valgt plan (Mads).
+- ~~Samtykke til mødeoptagelse (ejer)~~ → del af kontrakten (ADR 0065). Cal.com-optagelse på valgt plan (Mads).
 - Cal.com EU-residens på valgt niveau (Mads) — verificér før produktionsbrug.
 - Cal.com multi-host-liveverifikation + plan-/tier-valg (Mads/ejer) — spiken køres
   når nøglerne lander; plan-valget er STOP-gate.

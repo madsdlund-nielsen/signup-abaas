@@ -1,6 +1,6 @@
 # 0059 — Mødeopsummering som gemt artefakt, genereret i baggrunden (`meeting_summary`)
 
-- **Status:** Accepteret
+- **Status:** Accepteret — delvist erstattet af 0065 (`mangler_samtykke` betyder nu «intet grundlag for mødet»; samtykket er kontrakten. Note-synlighed er uberørt)
 - **Dato:** 2026-10-10
 - **Fase:** 4 (4.4 AI-resumé, backlog B-45)
 - **Berører uafklaret punkt:** ja — **note-synlighed** (§12 pkt. 16) og **samtykke til mødeoptagelse** (ejer); begge holdes restriktive/fejler lukket, ingen af dem besluttes her
@@ -120,9 +120,10 @@ tager den, med samme samtykke-gate.
 
 ## Åbent — flagget, ikke besluttet
 
-- 🔴 **Samtykke til mødeoptagelse (ejer):** mekanismen findes ikke, så `getRecordingConsent` svarer
-  `null` og alle rigtige resuméer ender som `mangler_samtykke`. Dette er tilsigtet.
-  `// TODO(ejer): samtykke til mødeoptagelse`.
+- ~~🔴 **Samtykke til mødeoptagelse (ejer):** mekanismen findes ikke~~ → lukket af ADR 0065:
+  samtykket er en del af kontrakten, og `getRecordingConsent` leverer `basis: "kontrakt"` for et
+  møde der findes. `mangler_samtykke` betyder nu kun «intet grundlag» (ukendt møde); rigtige
+  møder stopper først ved `mangler_optagelse` (L-8).
 - **Note-synlighed (ejer, §12 pkt. 16):** restriktiv default i RLS. `// TODO(ejer): note-synlighed`.
 - `// TODO(mads)`: Netlify begrænser kørselstiden for en scheduled function/route. Tre møder pr. kald
   og én rigtig 75-minutters transskription kan overskride den — verificér med en rigtig nøgle; fald-
