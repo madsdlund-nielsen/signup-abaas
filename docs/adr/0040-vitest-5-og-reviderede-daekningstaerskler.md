@@ -96,3 +96,7 @@ gøre den sidste åbne B-16-post til en blokering frem for en opgave.
 - Opfølgning: `OptionsSection.tsx` står på 0 af 10 funktioner og er det største hul —
   se `docs/backlog.md` B-16. Vite 8, `@vitejs/plugin-react` 6 og oprydningen i `overrides`
   står stadig åbne i B-20.
+
+> **Opdatering 2026-10-11 (ADR 0067):** Vite 8, `@vitejs/plugin-react` 6 og oprydningen i
+> `overrides` er taget — B-20 er lukket. Bemærkningen ovenfor om at Vite er låst til 6 gælder
+> ikke længere.

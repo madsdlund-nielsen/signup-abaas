@@ -4,6 +4,7 @@
 - **Dato:** 2026-08-26
 - **Fase:** 3 (tværgående)
 - **Supplerer:** ADR 0033 (Vitest 3)
+- **Afløst delvist af:** ADR 0067 — `overrides` er fjernet, Vite 8 er taget (B-20 lukket)
 - **Berører uafklaret punkt:** nej (Spand A — teststruktur/værktøjskæde)
 
 ## Kontekst

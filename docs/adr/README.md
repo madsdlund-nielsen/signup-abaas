@@ -95,6 +95,7 @@ det gjort sådan?", så skriv en ADR.
 | 0062 | Admin styrer board-sammensætning: fælles invarianter, revisionsspor (`board_change`) og Cal.com-hosts efter hver ændring | Accepteret | 1 + 2 |
 | 0063 | DB-testfilerne kører én ad gangen (`fileParallelism: false`) — deadlocks på tværs af testfiler | Accepteret | — |
 | 0064 | Boardets sammensætning som én transaktion (`change_board_composition`), hosts ved sædeskift og revisionssporet i indsigtsudtrækket (lukker B-65/66/67) | Accepteret | 1 + 2 + 5 |
+| 0067 | Vite 8 og `@vitejs/plugin-react` 6; `overrides` ryddet; `vitest.config.mts` (lukker B-20) | Accepteret | — |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så

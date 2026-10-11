@@ -65,7 +65,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      # test:coverage kører unit-projektet MED dækningstærsklerne fra vitest.config.ts.
+      # test:coverage kører unit-projektet MED dækningstærsklerne fra vitest.config.mts.
       # Tærsklen var tidligere kun konfigureret, aldrig kørt i CI — den er nu en rigtig gate.
       - name: Unit tests + coverage-tærskel
         run: npm run test:coverage
