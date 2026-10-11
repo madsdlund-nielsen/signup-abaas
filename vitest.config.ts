@@ -41,6 +41,10 @@ export default defineConfig({
           environment: "node",
           include: ["tests/db/**/*.test.ts"],
           globalSetup: ["tests/setup/db-global.ts"],
+          // Én testfil ad gangen (ADR 0063): filerne deler én database, og parallelle
+          // transaktioner der indsætter samme unikke nøgler (fx demo-seed og skabelontestene)
+          // deadlocker. Isolation er vigtigere end de få sekunder parallelisme sparede.
+          fileParallelism: false,
         },
       },
     ],
