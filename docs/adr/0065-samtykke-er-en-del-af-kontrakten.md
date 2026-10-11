@@ -72,6 +72,8 @@ kontrakt er ikke dækket af den, og cookiereglerne kræver samtykke til analytic
 en kontrakt. Banneret er derfor stadig et opt-in-håndtag. **Afgørelsen er Mads'** — undtagelsen
 står her, så den er en bevidst afvigelse fra «ingen levers» og ikke en glemt rest.
 
+**Afgjort (Mads, 2026-10-11): cookie-banneret bliver.**
+
 ## Konsekvenser
 
 - Positive: tre blokeringer er væk (optagelses-/AI-samtykke, SMS-samtykketekst, lead-information);
@@ -84,7 +86,7 @@ står her, så den er en bevidst afvigelse fra «ingen levers» og ikke en glemt
     AI-behandling (Ordbogen), SMS og at boardets lead ser ejerens kompetencebehov. Det gælder
     **begge sider**: ejeren (ToS) og partneren (honoraraftalen) deltager i de optagne møder.
   - `TODO(ejer)`: skabelonteksterne til SMS/e-mail forudsætter stadig ToS (ADR 0057).
-  - `TODO(mads)`: afgør om cookie-samtykket til analytics fortsat skal være et opt-in-banner.
+  - ~~Afgør om cookie-samtykket til analytics fortsat skal være et opt-in-banner~~ → **ja, banneret bliver** (Mads, 2026-10-11).
   - `TODO(mads)`: bekræft at kontrakten er et tilstrækkeligt retsgrundlag for optagelse af
     **partnere** og for AI-behandling af mødeindholdet (databehandleraftalen med Ordbogen er
     håndteret uden for repoet, ADR 0024) — og at kontrakten indgås **før** det første møde.

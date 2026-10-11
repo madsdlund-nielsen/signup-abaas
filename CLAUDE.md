@@ -130,7 +130,7 @@ samtykke.
   parameter + webhook-secret + faktureringsinterval) og live-verifikation i test_mode
 
 **Lukket siden sidst:**
-- ~~Samtykke til mødeoptagelse~~ → **del af kontraktindgåelsen** (Mads, 2026-10-11; ADR 0065). Ingen opt-in/out på platformen; cookie-samtykke til analytics er en bevidst undtagelse
+- ~~Samtykke til mødeoptagelse~~ → **del af kontraktindgåelsen** (Mads, 2026-10-11; ADR 0065). Ingen opt-in/out på platformen; cookie-samtykke til analytics er en bevidst undtagelse — **banneret bliver** (Mads, 2026-10-11)
 - ~~Cal.com plan-/tier-valg~~ → **Teams** ($12/bruger/md) (Mads, 2026-09-15; ADR 0046).
   Platform-planen er deprecated og lukket for nye kunder, så managed users + Atoms er ikke
   en åben vej. EU-residens og native optagelse er **ikke** lukket af dette
