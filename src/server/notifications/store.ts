@@ -58,9 +58,10 @@ export interface NotificationStore {
   /** Opdatér rækken — både undervejs (forsøgstælleren) og når udfaldet er kendt. */
   updateDelivery(deliveryId: string, patch: DeliveryPatch): Promise<void>;
   /**
-   * Slå modtagerens adresse op. Adressen forlader aldrig dette kald — den logges ikke. SMS kræver
-   * BÅDE et nummer og et registreret SMS-samtykke (`app_user.sms_opt_in`, ADR 0061); mangler
-   * en af delene, er svaret en begrundelse frem for en adresse.
+   * Slå modtagerens adresse op. Adressen forlader aldrig dette kald — den logges ikke. SMS kræver et
+   * telefonnummer (`app_user.phone_e164`) — samtykket til SMS er en del af kontrakten og
+   * kontrolleres ikke pr. bruger (ADR 0065); mangler nummeret, er svaret en begrundelse frem
+   * for en adresse.
    */
   resolveRecipient(userId: string, channel: NotificationChannelKey): Promise<RecipientAddress>;
   /** Modtagerens navn (kontoens `display_name`), eller null hvis vedkommende ikke har angivet et. */
@@ -70,8 +71,8 @@ export interface NotificationStore {
 /** Et claim uden forsøg ældre end dette regnes som forladt (kørslen døde før afsendelsen). */
 export const STALE_CLAIM_MS = 10 * 60 * 1000;
 
-/** Loggen når en SMS ikke kan sendes fordi nummer eller samtykke mangler (ingen persondata). */
-export const NO_SMS_CONSENT_REASON = "intet SMS-samtykke/telefonnummer";
+/** Loggen når en SMS ikke kan sendes fordi brugeren intet telefonnummer har (ingen persondata). */
+export const NO_PHONE_REASON = "intet telefonnummer";
 
 /** Postgres' kode for brud på en unik constraint. */
 const UNIQUE_VIOLATION = "23505";
@@ -170,13 +171,12 @@ export function createSupabaseNotificationStore(service: SupabaseClient): Notifi
       if (channel === "sms") {
         const { data, error } = await service
           .from("app_user")
-          .select("phone_e164, sms_opt_in")
+          .select("phone_e164")
           .eq("id", userId)
           .maybeSingle();
         if (error) throw new Error(`Kunne ikke læse modtageren: ${error.message}`);
-        const row = data as { phone_e164: string | null; sms_opt_in: boolean | null } | null;
-        // Begge dele: et nummer uden samtykke (gemt, men ikke givet til SMS) bruges ikke.
-        if (!row?.sms_opt_in || !row.phone_e164) return { address: null, reason: NO_SMS_CONSENT_REASON };
+        const row = data as { phone_e164: string | null } | null;
+        if (!row?.phone_e164) return { address: null, reason: NO_PHONE_REASON };
         return { address: row.phone_e164 };
       }
       const { data, error } = await service

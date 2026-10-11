@@ -17,8 +17,6 @@ export interface AccountProfile {
   displayName: string | null;
   phone: string | null;
   timeZone: string;
-  smsOptIn: boolean;
-  smsOptInAt: string | null;
 }
 
 export interface AccountRow {
@@ -26,12 +24,10 @@ export interface AccountRow {
   display_name: string | null;
   phone_e164: string | null;
   time_zone: string | null;
-  sms_opt_in: boolean | null;
-  sms_opt_in_at: string | null;
 }
 
 /** Kolonnerne en profil-læsning henter — delt med skrivevejen, så de to ikke driver fra hinanden. */
-export const ACCOUNT_COLUMNS = "email, display_name, phone_e164, time_zone, sms_opt_in, sms_opt_in_at";
+export const ACCOUNT_COLUMNS = "email, display_name, phone_e164, time_zone";
 
 export function toAccountProfile(row: AccountRow): AccountProfile {
   return {
@@ -39,8 +35,6 @@ export function toAccountProfile(row: AccountRow): AccountProfile {
     displayName: row.display_name,
     phone: row.phone_e164,
     timeZone: row.time_zone ?? DEFAULT_TIME_ZONE,
-    smsOptIn: row.sms_opt_in ?? false,
-    smsOptInAt: row.sms_opt_in_at,
   };
 }
 

@@ -17,15 +17,16 @@ export class NotConfiguredError extends Error {
 }
 
 /**
- * Transskription forsøgt uden registreret samtykke til mødeoptagelse. Samtykke er ejerens
- * punkt og må aldrig stubbes eller omgås — kodestien fejler lukket (CLAUDE.md, stub-politik).
- * TODO(ejer): samtykke til mødeoptagelse — mekanismen findes ikke endnu.
+ * Transskription forsøgt uden grundlag for mødeoptagelse. Siden 2026-10-11 (ADR 0065) er
+ * grundlaget kontrakten (`getRecordingConsent` → `basis: "kontrakt"` for et møde der findes);
+ * mangler det, fx for et ukendt møde, fejler kodestien lukket og må aldrig stubbes eller omgås
+ * (CLAUDE.md, stub-politik).
  */
 export class RecordingConsentMissingError extends Error {
   constructor(public readonly meetingId: string) {
     super(
-      "Samtykke til mødeoptagelse er ikke registreret for dette møde — transskription afvist. " +
-        "Der sendes ingen lyd til leverandøren uden samtykke.",
+      "Intet grundlag (kontrakt) for mødeoptagelse er registreret for dette møde — transskription afvist. " +
+        "Der sendes ingen lyd til leverandøren uden grundlag.",
     );
     this.name = "RecordingConsentMissingError";
   }

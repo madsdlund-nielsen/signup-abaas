@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { AuthForm } from "@/components/AuthForm";
-import { Checkbox } from "@/components/Checkbox";
 import { Field } from "@/components/Field";
 import { PageBody, PageHeader } from "@/components/PageHeader";
 import { Select } from "@/components/Select";
@@ -16,15 +15,12 @@ export const metadata: Metadata = { title: "Konto — Advisory Board Unlimited" 
 export const dynamic = "force-dynamic";
 
 /**
- * Kontoprofilen (skive K, ADR 0061): navn, telefon, tidszone og SMS-samtykke. Åben for alle
- * indloggede roller — det er KONTOENS navn, ikke partnerens katalogprofil (`/partner`).
+ * Kontoprofilen (skive K, ADR 0061): navn, telefon og tidszone. Åben for alle indloggede
+ * roller — det er KONTOENS navn, ikke partnerens katalogprofil (`/partner`).
  *
  * Hvad felterne bruges til står på siden, så ingen afgiver et nummer uden at vide til hvad.
- * Samtykket til SMS er en eksplicit, aldrig forudafkrydset afkrydsning for nye konti; en
- * allerede givet tilladelse vises afkrydset, fordi den afspejler brugerens eget valg.
- *
- * TODO(ejer): samtykketeksten og privatlivsvilkår (ToS) — teksten nedenfor er teknisk
- * pladsholder, ikke godkendt juridisk ordlyd.
+ * Der er ingen afkrydsning til SMS: samtykke til SMS, optagelse og AI er en del af kontrakten
+ * (Mads, 2026-10-11, ADR 0065), og platformen har ingen opt-in/out. Et nummer er nok til at få SMS.
  */
 export default async function AccountPage() {
   const user = await getCurrentUser();
@@ -38,7 +34,7 @@ export default async function AccountPage() {
       <PageHeader
         eyebrow="Konto"
         title="Din konto"
-        lead="Dit navn, dit telefonnummer og din tidszone. Navnet og tidszonen bruges, når du bookes til et møde; telefonnummeret kun hvis du siger ja til SMS."
+        lead="Dit navn, dit telefonnummer og din tidszone. Navnet og tidszonen bruges, når du bookes til et møde; telefonnummeret bruges til SMS-påmindelser om dine møder."
       />
       <PageBody>
         <section className="panel measure">
@@ -80,33 +76,6 @@ export default async function AccountPage() {
                 Danske numre kan skrives med otte cifre — vi sætter +45 foran. Til udlandet skrives
                 landekoden med +.
               </p>
-
-              <div className="stack">
-                <Checkbox
-                  name="sms_opt_in"
-                  value="on"
-                  label="Ja tak, send mig SMS om mine møder."
-                  defaultChecked={account.smsOptIn}
-                />
-                <p className="body">
-                  Med et flueben giver du os lov til at bruge nummeret i feltet ovenfor til
-                  SMS-påmindelser og -bedømmelse af dine møder. Nummeret bruges ikke til
-                  markedsføring. Fjerner du fluebenet, sendes der ingen flere SMS. Uden flueben
-                  gemmer vi nummeret, men sender intet til det.
-                </p>
-                {account.smsOptIn && account.smsOptInAt ? (
-                  <p className="body">
-                    Du sagde ja til SMS{" "}
-                    {new Intl.DateTimeFormat("da-DK", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                      timeZone,
-                    }).format(new Date(account.smsOptInAt))}
-                    .
-                  </p>
-                ) : null}
-              </div>
             </AuthForm>
           ) : (
             <p className="form__notice" role="status">

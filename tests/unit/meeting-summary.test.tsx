@@ -47,9 +47,9 @@ describe("MeetingSummary", () => {
     expect(container.querySelector(".summary-actions")).toBeNull();
   });
 
-  it("forklarer manglende samtykke og manglende optagelse hver for sig", () => {
+  it("forklarer manglende grundlag og manglende optagelse hver for sig", () => {
     const consent = render(<MeetingSummary state={{ kind: "missing_consent" }} />);
-    expect(consent.container.querySelector("p.empty")?.textContent).toContain("samtykke");
+    expect(consent.container.querySelector("p.empty")?.textContent).toContain("grundlag");
     consent.unmount();
 
     const recording = render(<MeetingSummary state={{ kind: "missing_recording" }} />);

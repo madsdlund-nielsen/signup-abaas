@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
-  NO_SMS_CONSENT_REASON,
+  NO_PHONE_REASON,
   createSupabaseNotificationStore,
 } from "@/server/notifications/store";
 
 /**
- * Modtager-opslaget i Supabase-lageret (skive K, ADR 0061): SMS kræver BÅDE nummer og samtykke.
+ * Modtager-opslaget i Supabase-lageret (skive K, ADR 0061): SMS kræver et nummer (samtykket er kontrakten, ADR 0065).
  * Klienten er en minimal dobbeltgænger der svarer med én `app_user`-række og husker hvilke
  * kolonner der blev spurgt om — så testen også vogter at e-mail ikke læses til en SMS.
  */
@@ -31,37 +31,31 @@ function fakeService(row: Row, error: { message: string } | null = null) {
 
 const USER = "00000000-0000-0000-0000-00000000000a";
 
-describe("resolveRecipient — SMS kræver nummer OG samtykke", () => {
-  it("giver nummeret når samtykket er givet", async () => {
-    const { client } = fakeService({ phone_e164: "+4500000000", sms_opt_in: true });
+describe("resolveRecipient — SMS kræver et telefonnummer (samtykket er kontrakten, ADR 0065)", () => {
+  it("giver nummeret — uden noget samtykke ved siden af", async () => {
+    const { client } = fakeService({ phone_e164: "+4500000000" });
     const store = createSupabaseNotificationStore(client);
     expect(await store.resolveRecipient(USER, "sms")).toEqual({ address: "+4500000000" });
   });
 
-  it("NEGATIV: et gemt nummer uden samtykke bruges ikke", async () => {
-    const { client } = fakeService({ phone_e164: "+4500000000", sms_opt_in: false });
+  it("NEGATIV: uden telefonnummer er der ingen adresse, og begrundelsen er 'intet telefonnummer'", async () => {
+    const { client } = fakeService({ phone_e164: null });
     const store = createSupabaseNotificationStore(client);
-    expect(await store.resolveRecipient(USER, "sms")).toEqual({ address: null, reason: NO_SMS_CONSENT_REASON });
-  });
-
-  it("NEGATIV: samtykke uden nummer giver ingen adresse", async () => {
-    const { client } = fakeService({ phone_e164: null, sms_opt_in: true });
-    const store = createSupabaseNotificationStore(client);
-    expect(await store.resolveRecipient(USER, "sms")).toEqual({ address: null, reason: NO_SMS_CONSENT_REASON });
+    expect(await store.resolveRecipient(USER, "sms")).toEqual({ address: null, reason: NO_PHONE_REASON });
   });
 
   it("NEGATIV: ingen række og en tom række lander begge i samme begrundelse", async () => {
     const store = createSupabaseNotificationStore(fakeService(null).client);
-    expect(await store.resolveRecipient(USER, "sms")).toEqual({ address: null, reason: NO_SMS_CONSENT_REASON });
+    expect(await store.resolveRecipient(USER, "sms")).toEqual({ address: null, reason: NO_PHONE_REASON });
     const empty = createSupabaseNotificationStore(fakeService({}).client);
-    expect(await empty.resolveRecipient(USER, "sms")).toEqual({ address: null, reason: NO_SMS_CONSENT_REASON });
+    expect(await empty.resolveRecipient(USER, "sms")).toEqual({ address: null, reason: NO_PHONE_REASON });
   });
 
   it("begrundelsen er den aftalte tekst og indeholder aldrig et telefonnummer", () => {
-    expect(NO_SMS_CONSENT_REASON).toBe("intet SMS-samtykke/telefonnummer");
+    expect(NO_PHONE_REASON).toBe("intet telefonnummer");
   });
 
-  it("e-mail påvirkes ikke af SMS-samtykket", async () => {
+  it("e-mail påvirkes ikke af telefonnummeret", async () => {
     const { client, selects } = fakeService({ email: "modtager@example.invalid" });
     const store = createSupabaseNotificationStore(client);
     expect(await store.resolveRecipient(USER, "email")).toEqual({ address: "modtager@example.invalid" });
@@ -69,12 +63,12 @@ describe("resolveRecipient — SMS kræver nummer OG samtykke", () => {
   });
 
   it("SMS-opslaget læser ikke e-mailadressen", async () => {
-    const { client, selects } = fakeService({ phone_e164: "+4500000000", sms_opt_in: true });
+    const { client, selects } = fakeService({ phone_e164: "+4500000000" });
     await createSupabaseNotificationStore(client).resolveRecipient(USER, "sms");
-    expect(selects).toEqual(["phone_e164, sms_opt_in"]);
+    expect(selects).toEqual(["phone_e164"]);
   });
 
-  it("fejler højlydt hvis basen svarer med en fejl (ingen stille 'intet samtykke')", async () => {
+  it("fejler højlydt hvis basen svarer med en fejl (ingen stille 'intet nummer')", async () => {
     const store = createSupabaseNotificationStore(fakeService(null, { message: "nede" }).client);
     await expect(store.resolveRecipient(USER, "sms")).rejects.toThrow(/Kunne ikke læse modtageren/);
   });

@@ -1,5 +1,6 @@
 /**
- * Kontoprofilens rene regler (skive K, ADR 0061): navn, telefon, tidszone og SMS-samtykke.
+ * Kontoprofilens rene regler (skive K, ADR 0061): navn, telefon og tidszone. (SMS-samtykket er
+ * fjernet — det er en del af kontrakten, ADR 0065.)
  * Ingen I/O og ingen Supabase — formularens input kommer ind som tekst og går ud som en
  * valideret, normaliseret værdi (eller en dansk fejl). Databasen (0024) har de samme former som
  * constraints; appen er den der giver brugeren en læsbar besked FØR databasen afviser.
@@ -116,15 +117,13 @@ export interface ProfileFormInput {
   displayName: string;
   phone: string;
   timeZone: string;
-  smsOptIn: boolean;
 }
 
-/** Den validerede profil, klar til at skrive (uden tidsstempel — det sættes af `smsConsentStamp`). */
+/** Den validerede profil, klar til at skrive. */
 export interface ValidProfile {
   displayName: string | null;
   phone: string | null;
   timeZone: string;
-  smsOptIn: boolean;
 }
 
 export type ProfileResult = { ok: true; profile: ValidProfile } | { ok: false; error: string };
@@ -148,37 +147,5 @@ export function parseProfileInput(input: ProfileFormInput): ProfileResult {
     return { ok: false, error: "Vælg en gyldig tidszone." };
   }
 
-  // Samtykket gælder et nummer: at sige ja uden at have givet et er en fejl, ikke et stille nej.
-  if (input.smsOptIn && phone.phone === null) {
-    return { ok: false, error: "Du har sagt ja til SMS, men ikke angivet et telefonnummer." };
-  }
-
-  return {
-    ok: true,
-    profile: { displayName, phone: phone.phone, timeZone, smsOptIn: input.smsOptIn },
-  };
-}
-
-/** Det samtykke-relaterede af den gemte profil (det `smsConsentStamp` sammenligner med). */
-export interface StoredConsent {
-  phone: string | null;
-  smsOptIn: boolean;
-  smsOptInAt: string | null;
-}
-
-/**
- * Tidspunktet samtykket skal gemmes med. Samtykket er givet til ET nummer:
- *  - ikke afkrydset → `null` (tilbagekaldt / aldrig givet);
- *  - afkrydset og samme nummer som før, med et allerede givet samtykke → det eksisterende
- *    tidspunkt bevares (gem af et nyt navn må ikke forny samtykket);
- *  - ellers (nyt samtykke, eller et ændret nummer) → nu. Teksten ved afkrydsningsfeltet siger at
- *    samtykket gælder nummeret i feltet, når der gemmes — så et nyt nummer er et nyt samtykke, og
- *    tidspunktet viser hvornår det skete.
- */
-export function smsConsentStamp(profile: ValidProfile, stored: StoredConsent | null, now: Date): string | null {
-  if (!profile.smsOptIn) return null;
-  if (stored && stored.smsOptIn && stored.smsOptInAt && stored.phone === profile.phone) {
-    return stored.smsOptInAt;
-  }
-  return now.toISOString();
+  return { ok: true, profile: { displayName, phone: phone.phone, timeZone } };
 }

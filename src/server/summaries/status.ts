@@ -8,10 +8,10 @@
  *       ▲                   │
  *       │                   ├─ fejl, forsøg < MAX ──▶ afventer (næste kørsel prøver igen)
  *       │                   ├─ fejl, forsøg ≥ MAX ──▶ fejlet   (ejeren trykker "Generér igen")
- *       │                   └─ samtykke/optagelse manglede ─▶ mangler_samtykke / mangler_optagelse
+ *       │                   └─ grundlag/optagelse manglede ─▶ mangler_samtykke / mangler_optagelse
  *       └──────── "Generér igen" (fejlet → afventer, forsøg nulstilles)
  *
- * mangler_* tjekkes igen ved hver kørsel (samtykke eller optagelse kan komme senere) og
+ * mangler_* tjekkes igen ved hver kørsel (grundlag eller optagelse kan komme senere) og
  * skrives kun hvis tilstanden ændrer sig.
  */
 

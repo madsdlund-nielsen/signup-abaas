@@ -157,7 +157,7 @@ describe("OrdbogenLlmProvider", () => {
 
 describe("OrdbogenTranscriptionProvider", () => {
   const audio = { data: new Uint8Array([1, 2, 3, 4]), filename: "moede.webm", contentType: "audio/webm" };
-  const consent = { meetingId: "m-1", registeredAt: "2026-10-10T08:00:00Z" };
+  const consent = { meetingId: "m-1", basis: "kontrakt" as const };
 
   it("sender multipart til audio/transcriptions og mapper svaret", async () => {
     const fetchMock = mockFetch(() => json({ text: "Ejer: Tak fordi I kunne.", language: "da", duration: 12 }));
@@ -189,7 +189,7 @@ describe("OrdbogenTranscriptionProvider", () => {
       RecordingConsentMissingError,
     );
     await expect(provider.transcribe({ meetingId: "m-1", audioRef: "r", audio })).rejects.toThrow(
-      /Samtykke til mødeoptagelse er ikke registreret/,
+      /Intet grundlag \(kontrakt\) for mødeoptagelse/,
     );
     // Samtykke for et ANDET møde er ikke samtykke til dette.
     await expect(

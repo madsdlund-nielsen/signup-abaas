@@ -45,18 +45,20 @@ export function SubjectAccessForm({ error }: { error: string | null }) {
 }
 
 /**
- * Samtykkelog. Der findes ingen samtykketabel — samtykke er en typet kerne
+ * Samtykkelog. Der findes ingen samtykketabel — cookie-samtykke er en typet kerne
  * (`src/server/consent`) og en cookie i browseren, hverken bannerets valg eller et tidspunkt
- * gemmes. Skærmen siger det højt, i stedet for at tilbyde en tom CSV.
+ * gemmes. Samtykke til optagelse, AI og SMS er kontraktens (ADR 0065) og logges ikke. Skærmen siger det højt, i stedet for at tilbyde en tom CSV.
  */
 export function ConsentLogGap() {
   return (
     <div className="stack">
       <p className="eyebrow">Samtykkelog</p>
       <p className="empty">
-        Ingen samtykkelog at eksportere. Samtykke gemmes i dag kun som en cookie i personens egen browser
-        (opt-in, kun &quot;nødvendig&quot; er aktiv som standard) — der er hverken en tabel eller et
-        bevis for hvem der har sagt ja til hvad og hvornår. Det er et hul, ikke en tom eksport. Undtagelsen er SMS-samtykket: tilstand og tidspunkt står på kontoen og er med i indsigtsudtrækket — men uden historik over tidligere valg.
+        Ingen samtykkelog at eksportere. Cookie-samtykket gemmes kun som en cookie i personens egen
+        browser (opt-in, kun &quot;nødvendig&quot; er aktiv som standard) — der er hverken en tabel eller et
+        bevis for hvem der har sagt ja til hvad og hvornår. Samtykke til optagelse, AI-behandling og SMS er
+        en del af kontrakten og registreres ikke pr. person (ADR 0065). Det er et hul for cookies, ikke en
+        tom eksport.
       </p>
     </div>
   );

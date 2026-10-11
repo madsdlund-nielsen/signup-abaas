@@ -76,9 +76,9 @@ Alle står i kode med `TODO(ejer)` / `TODO(mads)` og i `docs/stub-register.md`. 
 | **«Kalenderplads»** (Udskift-filteret) | `src/server/matching/index.ts:101` | Hvor mange ledige timer, i hvilken periode, og om en partner uden angivelse tæller med. Stub-register |
 | **Må en partner se sine egne ratings?** | `src/components/Dashboard.tsx` (`RatingsPanel`) | Om en ny læsevej bygges (fx en view med egen-række-filter). ADR 0055, 0038 |
 | **Lead-tildeling og -rotation** (§12 pkt. 15) | `src/server/boards/actions.ts`, `src/server/dashboard/index.ts` | Hvem der er lead. Dashboardet hviler på det. ADR 0055 |
-| **Skal ejeren informeres om boardets lead-aflæsning?** | Vilkår og privatlivstekst | Om ejeren ved at lead ser ejerens kompetencebehov. ADR 0055 |
+| ~~**Skal ejeren informeres om boardets lead-aflæsning?**~~ → dækket af kontrakten (Mads, 2026-10-11) | Vilkår og privatlivstekst (ejerens ordlyd) | Intet. ToS skal nævne det. ADR 0055, 0065 |
 | **ToS og honoraraftale** | `src/server/admin/legal.ts` (`Ikke udarbejdet`) | Indholdet i `/admin/juridisk`. Honoraraftalen hænger sammen med sats og moms. ADR 0053 |
-| **Samtykketekst og samtykkelog** (`consent_event`) | `src/server/consent/` (ingen tabel) | En CSV-eksport af samtykker kan først bygges, når teksten og kategorierne er besluttet. ADR 0053 |
+| **Cookie-samtykketekst og samtykkelog** (`consent_event`) | `src/server/consent/` (ingen tabel) | En CSV-eksport af cookie-samtykker kan først bygges, når teksten og kategorierne er besluttet. Samtykke til optagelse, AI og SMS er kontraktens og logges ikke (ADR 0065); cookie-samtykket er en bevidst undtagelse, Mads afgør. ADR 0053 |
 | **Modtagne vurderinger i partnerens indsigtsudtræk** | `src/server/admin/subject-access.ts` (udeladt) | Om de må med (evt. uden afgiver). Jura. ADR 0053 |
 | **Opbevaringspligt vs. sletning** og slette-SLA | `docs/gdpr/sletteflow.md` | Egen skive: en admin-sletteaction bygges først efter afklaring. ADR 0053 |
 | **Board-livscyklus** (hvornår slutter et board) | `docs/fase-5.md` (uafklaret, ingen ADR) | Hvornår honorar og dashboards lukkes ned. |
@@ -104,7 +104,7 @@ kodegennemgang. Fasens egne ADR'er peger på disse forhold:
 - **Tilgængelighed står kun i Supabase.** En booking oprettet direkte i Cal.com omgår vagten.
   ADR 0052 nævner den først blandt de negative konsekvenser.
 - **Lead-partneren læser ejerens behov via service-role**, bag et tre-leds tjek. Det er en reel
-  udvidelse af hvem der kan se hvad om ejeren, og ejeren er ikke informeret om det (ADR 0055).
+  udvidelse af hvem der kan se hvad om ejeren, og informeringen af ejeren er nu kontraktens (ADR 0055, 0065).
 - **Indsigtsudtrækket er ikke revisionssporet.** Der er ingen persistent log over hvem der har
   hentet et udtræk (stub-register, ADR 0053).
 

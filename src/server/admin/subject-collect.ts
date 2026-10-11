@@ -107,7 +107,7 @@ export async function collectSubjectData(
 
   const [user] = await get<AppUserRow>({
     table: "app_user",
-    columns: "id, email, created_at, display_name, phone_e164, time_zone, sms_opt_in, sms_opt_in_at",
+    columns: "id, email, created_at, display_name, phone_e164, time_zone",
     eq: { column: "email", value: email },
   });
   if (!user) return null;

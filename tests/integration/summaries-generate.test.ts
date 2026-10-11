@@ -8,6 +8,7 @@ import { OrdbogenError } from "@/lib/ordbogen/client";
 import type { TranscriptionProvider } from "@/lib/transcription";
 import { createLlmProvider } from "@/lib/llm";
 import { createTranscriptionProvider } from "@/lib/transcription";
+import { getRecordingConsent } from "@/server/consent/recording";
 import {
   generatePendingSummaries,
   type SummaryDeps,
@@ -125,6 +126,10 @@ function fakeDb(tables: Tables) {
           upsertRows = rows;
           return query;
         },
+        async maybeSingle() {
+          const rows = (run().data ?? []) as Row[];
+          return { data: rows[0] ?? null, error: null };
+        },
         then(resolve: (r: unknown) => unknown, reject?: (e: unknown) => unknown) {
           return Promise.resolve(run()).then(resolve, reject);
         },
@@ -137,7 +142,7 @@ function fakeDb(tables: Tables) {
 
 const NOW = new Date("2026-10-10T12:00:00Z");
 const SECRET_TRANSCRIPT = "TRANSSKRIPT-MED-PERSONDATA-42";
-const CONSENT = { meetingId: "m-1", registeredAt: "2026-10-01T00:00:00Z" };
+const CONSENT = { meetingId: "m-1", basis: "kontrakt" as const };
 const AUDIO = { data: new Uint8Array([1]), filename: "m.mp3", contentType: "audio/mpeg" };
 
 function tables(overrides: Partial<Tables> = {}): Tables {
@@ -215,7 +220,7 @@ describe("generatePendingSummaries — baggrundsgenerering", () => {
     expect(summarize).not.toHaveBeenCalled();
   });
 
-  it("en blokeret række tjekkes igen uden at skrive, og genereres når samtykket dukker op", async () => {
+  it("en blokeret række tjekkes igen uden at skrive, og genereres når grundlaget dukker op", async () => {
     const db = fakeDb(tables());
     const getConsent = vi.fn(async () => null as typeof CONSENT | null);
     const { deps, transcribe } = fakeDeps({ getConsent });
@@ -232,6 +237,53 @@ describe("generatePendingSummaries — baggrundsgenerering", () => {
     expect(result.generated).toBe(1);
     expect(summaryOf(db).status).toBe("klar");
     expect(transcribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("kontrakt som grundlag (ADR 0065): et møde på platformen kommer forbi samtykke-tjekket og stopper først ved den manglende optagelse (L-8)", async () => {
+    const db = fakeDb(tables());
+    // Rigtig getRecordingConsent + rigtig loadMeetingRecording (der stadig er et hul).
+    const { deps, transcribe, summarize } = fakeDeps({
+      getConsent: (id) => getRecordingConsent(id, db),
+      loadRecording: (await import("@/server/summaries/recording")).loadMeetingRecording,
+    });
+
+    const result = await generatePendingSummaries(db, NOW, 3, deps);
+
+    expect(result).toMatchObject({ generated: 0, missingConsent: 0, missingRecording: 1 });
+    expect(summaryOf(db).status).toBe("mangler_optagelse");
+    expect(transcribe).not.toHaveBeenCalled();
+    expect(summarize).not.toHaveBeenCalled();
+  });
+
+  it("🔴 ukendt møde: intet grundlag → mangler_samtykke, fejler lukket (ingen optagelse, ingen transskription)", async () => {
+    // Opsummeringsrækken peger på et møde der ikke findes på platformen.
+    const db = fakeDb(
+      tables({
+        meeting: [],
+        meeting_summary: [
+          {
+            id: "summary-x",
+            meeting_id: "m-ghost",
+            status: "afventer",
+            attempts: 0,
+            action_items: [],
+            created_at: "2026-10-10T10:00:00Z",
+            updated_at: "2026-10-10T10:00:00Z",
+          },
+        ],
+      }),
+    );
+    const { deps, transcribe, summarize, loadRecording } = fakeDeps({
+      getConsent: (id) => getRecordingConsent(id, db),
+    });
+
+    const result = await generatePendingSummaries(db, NOW, 3, deps);
+
+    expect(result).toMatchObject({ generated: 0, missingConsent: 1 });
+    expect(summaryOf(db, "m-ghost")).toMatchObject({ status: "mangler_samtykke", attempts: 0 });
+    expect(loadRecording).not.toHaveBeenCalled();
+    expect(transcribe).not.toHaveBeenCalled();
+    expect(summarize).not.toHaveBeenCalled();
   });
 
   it("samtykke men ingen optagelse → mangler_optagelse, ingen transskription", async () => {

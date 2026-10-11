@@ -6,8 +6,8 @@
  * autorisationen står her; mønster fra preparation/actions).
  *
  * Handlingen genererer IKKE selv: den sætter kun rækken tilbage til `afventer` med nulstillede
- * forsøg, og baggrundskørslen (samme samtykke- og låsemekanik som altid) samler den op. Siden
- * kan derfor aldrig udløse et betalt kald synkront eller omgå samtykket.
+ * forsøg, og baggrundskørslen (samme grundlags- og låsemekanik som altid) samler den op. Siden
+ * kan derfor aldrig udløse et betalt kald synkront eller omgå grundlagstjekket.
  */
 
 import { revalidatePath } from "next/cache";

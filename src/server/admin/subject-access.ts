@@ -17,8 +17,8 @@
  *     UDFØRT ændringen (aktør-id), for ejeren af boardet og for den partner ændringen handler om.
  *     Andre aktørers id'er udleveres ikke — kun deres rolle (ejer/admin). Ingen navne/e-mails
  *     findes i sporet; partnernes navne slås op som i resten af udtrækket.
- *   - Samtykke: der findes ingen samtykketabel — kun en cookie i browseren. SMS-samtykket er
- *     undtagelsen: det er en kolonne på brugeren (0024) og står under `person`.
+ *   - Samtykke: der findes ingen samtykketabel — kun en cookie i browseren (analytics). Samtykke
+ *     til optagelse, AI og SMS er en del af kontrakten og registreres ikke pr. person (ADR 0065).
  */
 
 export interface AppUserRow {
@@ -29,8 +29,6 @@ export interface AppUserRow {
   display_name?: string | null;
   phone_e164?: string | null;
   time_zone?: string | null;
-  sms_opt_in?: boolean | null;
-  sms_opt_in_at?: string | null;
 }
 
 export interface RoleRow {
@@ -276,7 +274,7 @@ export const NOT_INCLUDED: readonly string[] = [
   "Transskripter og lydoptagelser — det rå transskript gemmes ikke (dataminimering, ADR 0059); optagelsen ligger hos Cal.com. AI-resuméet af ejerens møder er med.",
   "Teksten i udsendte beskeder — udsendelsesloggen (type, kanal, status) er med, men selve teksten gemmes ikke.",
   "Andre aktørers identitet i revisionssporet for boardets sammensætning — kun deres rolle (ejer/admin) er med.",
-  "Samtykkelog — der findes ingen samtykketabel; cookie-samtykke registreres kun i personens egen browser. SMS-samtykket (tilstand + tidspunkt) er med under `person`, men uden historik over tidligere valg.",
+  "Samtykkelog — der findes ingen samtykketabel; cookie-samtykke registreres kun i personens egen browser. Samtykke til optagelse, AI-behandling og SMS er en del af kontrakten og registreres ikke pr. person (ADR 0065).",
 ];
 
 export interface SubjectAccessMeta {
@@ -495,14 +493,10 @@ export function composeSubjectAccessExport(raw: RawSubjectData, meta: SubjectAcc
       id: raw.user.id,
       email: raw.user.email,
       oprettet: raw.user.created_at,
-      // Kontoprofilen (`/konto`, ADR 0061). SMS-samtykket er personens eget valg og hører med.
+      // Kontoprofilen (`/konto`, ADR 0061). Samtykke til SMS er en del af kontrakten (ADR 0065).
       navn: raw.user.display_name ?? null,
       telefon: raw.user.phone_e164 ?? null,
       tidszone: raw.user.time_zone ?? null,
-      sms_samtykke: {
-        givet: raw.user.sms_opt_in ?? false,
-        tidspunkt: raw.user.sms_opt_in_at ?? null,
-      },
     },
     roller: raw.roles.map((r) => r.role).sort(),
     ejer: hasOwnerData ? ownerSection(raw) : null,
@@ -528,7 +522,7 @@ export function composeSubjectAccessExport(raw: RawSubjectData, meta: SubjectAcc
     })),
     samtykke: {
       registreret: false,
-      note: "Der findes ingen samtykketabel. Samtykke til cookies gemmes kun som en cookie i personens egen browser og kan ikke udtrækkes herfra. SMS-samtykket står under `person.sms_samtykke`.",
+      note: "Der findes ingen samtykketabel. Samtykke til cookies gemmes kun som en cookie i personens egen browser og kan ikke udtrækkes herfra. Samtykke til optagelse, AI-behandling og SMS er en del af kontrakten og registreres ikke pr. person (ADR 0065).",
     },
     afgraensning: { ikke_inkluderet: [...NOT_INCLUDED] },
   };
