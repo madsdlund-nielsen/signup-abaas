@@ -36,3 +36,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# e2e (fase 6.1, ADR 0071): kørselsartefakter. Skærmbilleder gemmes som CI-artefakt, ikke i git.
+/tests/e2e/__screens__/
+/tests/e2e/.runtime/
+/playwright-report/
+/test-results/
+# lokal Supabase-CLI-tilstand for e2e-stakken (config.toml er committet; .temp/.branches er ikke)
+/tests/e2e/supabase/.temp/
+/tests/e2e/supabase/.branches/

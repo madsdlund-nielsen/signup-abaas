@@ -26,6 +26,12 @@ describe("translateAuthError", () => {
     expect(out).not.toMatch(/for kort/i);
   });
 
+  it("samme adgangskode som før → egen besked, ikke «for kort»", () => {
+    const out = translateAuthError("New password should be different from the old password.");
+    expect(out).toMatch(/ikke har brugt før/i);
+    expect(out).not.toMatch(/for kort/i);
+  });
+
   it("ukendt fejl → generisk dansk besked (lækker ikke den rå engelske tekst)", () => {
     const out = translateAuthError("Some unexpected internal error xyz");
     expect(out).toMatch(/noget gik galt/i);

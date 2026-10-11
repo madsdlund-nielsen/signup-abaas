@@ -38,9 +38,11 @@
       (PostHog)"). Afkrydses når Mads har sat `POSTHOG_PERSONAL_API_KEY` + `POSTHOG_PROJECT_ID`
       og verificeret forespørgslerne live — TODO(mads).)*
 - [x] Juridisk download-interface til admin (jf. §11-krav) er tilgængeligt (`/admin/juridisk`,
-      ADR 0053): indsigtsudtræk (art. 15), dokumentoversigt og henvisning til sletteflowet.
+      ADR 0053): indsigtsudtræk (art. 15), **sletning (art. 17, ADR 0068)** og dokumentoversigt.
       Interfacet er bygget, ikke indholdet: ToS/honoraraftale ikke udarbejdet (`TODO(ejer)`),
-      ingen samtykkelog at eksportere, og ingen admin-sletteaction (se stub-register).
+      ingen samtykkelog at eksportere. Sletningen er bygget **fail-closed**: opbevaringspligt
+      (`TODO(ejer/jura)`) og slette-SLA (`TODO(ejer)`) er uafklaret, så en person med betalingsdata
+      eller registreret honorargrundlag kan ikke slettes af flowet (se stub-register).
 - [x] Fuld test suite grøn, inkl. RLS: en partner må kun se eget honorar
       (positiv **og** negativ case). *(`tests/db/partner-fee-rls.test.ts` — medpartner på samme board er den svære negative case)*
 
@@ -100,8 +102,8 @@
 
 ### 5.5 Juridisk download-interface (admin)
 - Admin kan hente juridiske dokumenter/data samlet (krav fra §11).
-- Kobler til GDPR-arkitekturen fra fase 0 (sletteflow, samtykkelog,
-  `docs/gdpr/leverandoer-register.md`).
+- Kobler til GDPR-arkitekturen fra fase 0 (sletteflow — nu bygget, ADR 0068, `docs/gdpr/sletteflow.md` —,
+  samtykkelog, `docs/gdpr/leverandoer-register.md`).
 - ⚠ ToS + honoraraftale er uafklaret (ejer) — byg interfacet, ikke indholdet.
 
 ## Uafklarede punkter berørt i fase 5 (flag, beslut ikke)

@@ -28,6 +28,11 @@ export function translateAuthError(message: string): string {
   ) {
     return "Adgangskoden optræder i kendte datalæk — vælg en anden.";
   }
+  // Skal stå FØR «password should be»: Supabase' tekst her («New password should be different from
+  // the old password») ville ellers fejlagtigt blive oversat til «for kort».
+  if (m.includes("different from the old password") || m.includes("same_password")) {
+    return "Vælg en adgangskode, du ikke har brugt før.";
+  }
   if (m.includes("password should be") || m.includes("password is too short")) {
     return "Adgangskoden er for kort — brug mindst 8 tegn.";
   }

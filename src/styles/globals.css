@@ -58,3 +58,54 @@ body {
   line-height: var(--lh-lead);
   color: var(--color-text-muted);
 }
+
+/* --- Tilgængelighed (fase 6.2, ADR 0070) --------------------------------------
+   Synligt tastaturfokus overalt, i en farve der har mindst 3:1 mod fladen (WCAG 1.4.11).
+   Guld dur ikke som fokusring på hvidt (2,8:1) — navy på lyse flader, hvid på mørke. */
+:focus-visible {
+  outline: 2px solid var(--color-navy);
+  outline-offset: 2px;
+}
+.topbar :focus-visible,
+.siteheader :focus-visible,
+.sitefooter :focus-visible,
+.band--navy :focus-visible,
+.band--charcoal :focus-visible,
+.pagehead :focus-visible {
+  outline-color: var(--color-white);
+}
+
+/* "Spring til indhold": skjult indtil det får fokus, så tastaturbrugere slipper for at tabbe
+   gennem kontaktbar, logo og navigation på hver eneste side. */
+.skiplink {
+  position: absolute;
+  left: var(--space-3);
+  top: var(--space-3);
+  z-index: 100;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-navy);
+  color: var(--color-white);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  text-decoration: none;
+  transform: translateY(-300%);
+}
+.skiplink:focus {
+  transform: none;
+  outline-color: var(--color-white);
+}
+
+/* Kun for skærmlæsere: statusbeskeder (fx «Dit valg er gemt») der ikke skal ses. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

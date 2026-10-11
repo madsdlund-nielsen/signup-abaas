@@ -78,8 +78,13 @@ export default function AdminHome() {
             href="/admin/drift"
           />
           <AdminEntry
+            title="Klar til launch"
+            body="Go-live-tjekliste: hvad der kører rigtigt, hvilke hemmeligheder der mangler, hvilke regler der er aktive, og hvilke beslutninger der står tilbage."
+            href="/admin/klar"
+          />
+          <AdminEntry
             title="Juridisk"
-            body="Indsigtsudtræk (GDPR art. 15), samtykke, juridiske dokumenter og henvisning til sletteflowet."
+            body="Indsigtsudtræk (GDPR art. 15), sletning (art. 17), samtykke og juridiske dokumenter."
             href="/admin/juridisk"
           />
         </div>

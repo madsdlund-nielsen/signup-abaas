@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { AuthForm } from "@/components/AuthForm";
 import { Field } from "@/components/Field";
 import { signUpAction } from "@/server/auth/actions";
+import { PASSWORD_MIN_LENGTH } from "@/server/auth/password-policy";
 
 export const metadata: Metadata = {
   title: "Opret konto — Advisory Board Unlimited",
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function SignupPage() {
   return (
-    <main className="focus-page">
+    <main id="main" className="focus-page">
       <div className="focus-page__inner">
         <Image
           className="focus-page__mark"
@@ -39,7 +40,7 @@ export default function SignupPage() {
               type="password"
               autoComplete="new-password"
               required
-              minLength={8}
+              minLength={PASSWORD_MIN_LENGTH}
             />
           </AuthForm>
         </div>

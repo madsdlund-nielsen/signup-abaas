@@ -18,3 +18,13 @@ export type { PostHogOps } from "./posthog-ops";
 export { getIntegrationOverview, listIntegrations } from "./integrations";
 export type { IntegrationMode, IntegrationOverview, IntegrationStatus } from "./integrations";
 export { NOT_INCLUDED } from "./subject-access";
+export { buildReadiness, getReadiness } from "./readiness";
+export type {
+  FlagReadiness,
+  GateReadiness,
+  PortReadiness,
+  ReadinessReport,
+  RuleReadiness,
+  SecretRow,
+  Verdict,
+} from "./readiness";

@@ -8,9 +8,41 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+import { readBrowserAnalyticsConfig } from "@/lib/analytics/browser-config";
 import { isSupabaseBrowserConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { GATE_COOKIE, isGateActive, isGateExempt, readGateConfig } from "@/server/gate";
 import { verifyToken } from "@/server/gate/token";
+import { buildCsp, cspHeaderName, generateNonce } from "@/server/security/headers";
+
+/**
+ * Content-Security-Policy med nonce (fase 6.2, ADR 0070). Nonce'n lægges på BÅDE request- og
+ * svar-headeren: Next læser den fra request-headeren under server-rendering og sætter den på
+ * sine egne scripts og styles; browseren håndhæver svar-headeren. De statiske headere (HSTS,
+ * nosniff, Permissions-Policy …) bor i next.config.ts via `security/headers.ts`.
+ *
+ * Returnerer en fabrik, fordi Supabase-sessionsopfriskningen nedenfor genopbygger svaret når
+ * den sætter cookies — og det nye svar skal bære samme nonce som det første.
+ */
+function cspResponder(request: NextRequest): () => NextResponse {
+  const headerName = cspHeaderName();
+  const csp = buildCsp({
+    nonce: generateNonce(),
+    isDev: process.env.NODE_ENV === "development",
+    // PostHog EU åbnes kun når banneret findes (ADR 0072) — samme betingelse som rodlayoutet.
+    posthog: readBrowserAnalyticsConfig() !== null,
+    upgradeInsecure:
+      request.nextUrl.protocol === "https:" || request.headers.get("x-forwarded-proto") === "https",
+  });
+  return () => {
+    // Headerne læses FRISKE hver gang: setAll nedenfor har da skrevet de opfriskede
+    // auth-cookies ind i request.cookies, og de skal videre til serverkomponenterne.
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set(headerName, csp);
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    response.headers.set(headerName, csp);
+    return response;
+  };
+}
 
 export async function proxy(request: NextRequest) {
   // Adgangsport FØR alt andet (ADR 0020): uden en gyldig, signeret gate-cookie sendes enhver
@@ -29,16 +61,17 @@ export async function proxy(request: NextRequest) {
   }
 
   const config = readSupabaseAuthConfig();
-  if (!isSupabaseBrowserConfigured(config)) return NextResponse.next();
+  const respond = cspResponder(request);
+  if (!isSupabaseBrowserConfigured(config)) return respond();
 
-  let response = NextResponse.next({ request });
+  let response = respond();
 
   const supabase = createServerClient(config.url, config.anonKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (cookiesToSet) => {
         for (const { name, value } of cookiesToSet) request.cookies.set(name, value);
-        response = NextResponse.next({ request });
+        response = respond();
         for (const { name, value, options } of cookiesToSet) {
           response.cookies.set(name, value, options);
         }

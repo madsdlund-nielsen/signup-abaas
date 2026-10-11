@@ -1,0 +1,12 @@
+<!--
+  Supabase Auth: invitationsmail (B-70, ADR 0073). Sendes af auth.admin.inviteUserByEmail (invitePartner).
+  Linket peger på appens egen bekræftelsesrute, IKKE på Supabases verify-endpoint — så tokenet
+  indløses på serveren og sessionen sættes i cookies. Indsættes i dashboardet under
+  Authentication → Email Templates → «Invite user» (se docs/runbook.md); lokalt læses filen af
+  tests/e2e/supabase/config.toml.
+-->
+<h2>Du er inviteret som rådgiver</h2>
+<p>Du er blevet inviteret til Advisory Board Unlimited. Åbn linket for at vælge din adgangskode og komme i gang.</p>
+<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/konto/adgangskode">Vælg adgangskode</a></p>
+<p>Virker linket ikke, så kopiér denne adresse ind i din browser:<br />{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/konto/adgangskode</p>
+<p>Linket kan kun bruges én gang. Har du ikke forventet en invitation, kan du se bort fra denne mail.</p>

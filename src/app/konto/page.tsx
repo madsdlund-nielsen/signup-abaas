@@ -85,6 +85,9 @@ export default async function AccountPage() {
         </section>
 
         <p className="body">
+          <Link href="/konto/adgangskode">Skift adgangskode</Link>
+        </p>
+        <p className="body">
           <Link href="/dashboard">Til dashboardet</Link>
         </p>
       </PageBody>

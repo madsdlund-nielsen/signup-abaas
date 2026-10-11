@@ -13,6 +13,7 @@ Test-runner er **Vitest** (ADR 0003), opdelt i tre projekter i `vitest.config.mt
 | Unit | jsdom | `tests/unit/` | Hver kodeændring (komponenter, flags, consent, rene funktioner) |
 | Integration | node | `tests/integration/` | Adapter-/modul-wiring uden netværk (fx adapter-registry) |
 | DB | node | `tests/db/` | Schema- og RLS-ændringer (mod lokal Postgres) |
+| E2E | Chromium (Playwright) | `tests/e2e/` | Rejser på tværs af lagene — `npm run test:e2e`, kræver Docker + lokal Supabase (`docs/e2e.md`, ADR 0071). Ikke i `npm test` |
 
 Kør:
 ```bash
@@ -50,6 +51,8 @@ tests/
 |---|---|---|
 | `src/components/**` | unit (token-only) | `tests/unit/components.test.tsx` |
 | `src/server/flags`, `src/server/consent` | unit | `tests/unit/flags.test.ts`, `consent.test.ts` |
+| `src/components/**`, sider (tilgængelighed) | unit (axe-core, jsdom) | `tests/unit/a11y.test.tsx` — nye skærme tilføjes dér (ADR 0070); kontrast regnes på tokens i `contrast.test.ts` |
+| `src/server/security/**`, `src/proxy.ts` (headere, CSP) | unit + integration | `tests/unit/security-headers.test.ts`, `tests/integration/proxy-csp.test.ts` |
 | `src/lib/<vendor>/**` (adaptere) | integration (registry/wiring) | `tests/integration/adapters.test.ts` |
 | `supabase/migrations/**` (incl. RLS-policies) | db (RLS) | `tests/db/rls.test.ts` |
 
