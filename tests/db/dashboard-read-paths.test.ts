@@ -69,7 +69,7 @@ describe("partnerens egne vurderinger — ikke læsbare, derfor intet tal på da
     ).toBe(0);
   });
 
-  it("partneren ser kun vurderinger han selv har afgivet", async () => {
+  it("partneren ser kun vurderinger partneren selv har afgivet", async () => {
     expect(await countAs(USER.partnerB, "select id from meeting_rating")).toBe(1);
   });
 

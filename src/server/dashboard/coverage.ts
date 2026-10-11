@@ -20,7 +20,7 @@ export interface NeedCoverage {
 }
 
 export interface BoardCoverage {
-  /** Ejerens behov (unikke, i hendes rækkefølge) med hvem der dækker dem. */
+  /** Ejerens behov (unikke, i ejerens rækkefølge) med hvem der dækker dem. */
   needs: NeedCoverage[];
   coveredTagIds: string[];
   uncoveredTagIds: string[];

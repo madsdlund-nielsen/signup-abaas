@@ -5,7 +5,7 @@
 - **Fase:** 5 (5.4)
 - **Berører uafklaret punkt:** ja — lead-partner: tildelings- og rotationsregler (ejer); hvad
   vurderinger bruges til / om en partner må se sine egne (ejer); om ejeren skal vide at boardets
-  lead ser hendes kompetencebehov (ToS, ejer)
+  lead ser ejerens kompetencebehov (ToS, ejer)
 
 ## Kontekst
 
@@ -102,5 +102,5 @@ bliver `null` → "—". Admin-resuméet på `/dashboard` genbruger samme aggreg
   `getMyBoard` — den samme kant som `/board` og `/betaling` har i dag; mødelisten er afgrænset
   til det board, så den leder ikke til fejl.
 - Opfølgning: `TODO(ejer)` — lead-tildeling; partnerens egne vurderinger; skal ejeren
-  informeres (vilkår/privatlivstekst) om at boardets lead ser hendes kompetencebehov?
+  informeres (vilkår/privatlivstekst) om at boardets lead ser ejerens kompetencebehov?
   `TODO(mads)` — PostHog-driftstatus på admin-resuméet (live nøgle).

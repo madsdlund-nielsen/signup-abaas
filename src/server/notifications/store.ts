@@ -63,7 +63,7 @@ export interface NotificationStore {
    * en af delene, er svaret en begrundelse frem for en adresse.
    */
   resolveRecipient(userId: string, channel: NotificationChannelKey): Promise<RecipientAddress>;
-  /** Modtagerens navn (kontoens `display_name`), eller null hvis hun ikke har angivet et. */
+  /** Modtagerens navn (kontoens `display_name`), eller null hvis vedkommende ikke har angivet et. */
   resolveRecipientName(userId: string): Promise<string | null>;
 }
 

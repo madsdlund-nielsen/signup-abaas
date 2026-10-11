@@ -29,7 +29,7 @@ bag `requireRole('ejer')`. `/admin/boards` kunne kun sætte Cal.com-event typen.
 **Revisionsspor**
 - *A — en analytics-hændelse (PostHog) uden persondata.* Ingen migration. Men PostHog er
   samtykkestyret og er ikke sandhedskilde: en ændring af hvem der sidder på boardet ændrer hvad
-  ejeren betaler, hvem der ser hendes behov (leadet) og hvem der bookes mod. Det er forretningsdata
+  ejeren betaler, hvem der ser ejerens behov (leadet) og hvem der bookes mod. Det er forretningsdata
   (arkitekturprincip 1), og et spor der kan mangle, fordi en besøgende afviste cookies, er ikke et spor.
 - *B — tabellen `board_change` (migration 0025).* **Valgt.** Den bærer også udfaldet af Cal.com-
   synkroniseringen, så "hosts hænger efter" kan *aflæses* frem for gættes — det alene gør den
@@ -42,7 +42,7 @@ bag `requireRole('ejer')`. `/admin/boards` kunne kun sætte Cal.com-event typen.
   Admin kører "Opdatér hosts" (idempotent).
 
 **Hvad der vises for ejeren, når hosts ikke blev opdateret**
-Intet. Hun kan ikke gøre noget ved det og skal ikke møde "Cal.com". Fejlen står på sporet og som
+Intet. Ejeren kan ikke gøre noget ved det og skal ikke møde "Cal.com". Fejlen står på sporet og som
 "Hosts hænger efter" på admins overblik.
 
 ## Beslutning
@@ -55,7 +55,7 @@ Invarianter, ens for begge veje:
 
 - 2-3 partnere, ingen dubletter, mindst én intern;
 - lead er altid en intern partner på boardet, og der er præcis én;
-- fjern/udskift af lead: nuværende lead består hvis hun er intern og stadig på boardet, ellers
+- fjern/udskift af lead: nuværende lead består hvis vedkommende er intern og stadig på boardet, ellers
   overtager den indkommende (hvis intern), ellers den første interne.
 
 En afvist ændring skriver intet: planen laves og valideres før første write. Rækkefølgen af
@@ -99,7 +99,7 @@ værterne og kalder ikke Cal.com. `hostsOutOfSync` (rent) udleder "hænger efter
 ## Konsekvenser
 
 - Admin og ejer kan ikke længere komme ud af sync om hvad et gyldigt board er. Ejerens flow er
-  uændret udadtil (samme redirects, samme fejlbeskeder), men hun får nu også opdateret
+  uændret udadtil (samme redirects, samme fejlbeskeder), men ejeren får nu også opdateret
   Cal.com-hosts, hvilket lukker ADR 0046's åbne punkt. Rest: en ændret `calcom_user_id` (B-67).
 - `listAdminBoards`/`AdminBoardRow` (kun Cal.com-status) er erstattet af `listAdminBoardOverviews`.
 - Priseffekt: en ændring slår igennem i abonnementet ved næste periode (ADR 0056) — admins editor

@@ -10,7 +10,7 @@
  * Invarianterne (byggespec §3/§5.6 "altid mindst 1 intern partner", §5.2 2-3 partnere) og de
  * skrivende trin bor i ./composition og deles med admins vej (./admin-actions, ADR 0062) — her er
  * kun auth, ejerskab og navigation. Efter hver ændring opdateres boardets Cal.com-hosts og
- * ændringen logges; en Cal.com-fejl vises ikke for ejeren (hun kan intet stille op med den) men
+ * ændringen logges; en Cal.com-fejl vises ikke for ejeren (ejeren kan intet stille op med den) men
  * står på admins revisionsspor, som viser at hosts hænger efter.
  */
 
@@ -115,7 +115,7 @@ export async function swapBoardPartner(formData: FormData): Promise<void> {
   if (!boardId || !outgoingId || !incomingId) throw new Error("Manglende felter til udskiftning.");
   if (outgoingId === incomingId) redirect("/board");
 
-  // Mister boardet sin lead ved udskiftningen, går den til den indkommende hvis hun er intern,
+  // Mister boardet sin lead ved udskiftningen, går den til den indkommende hvis vedkommende er intern,
   // ellers den første interne (./composition). TODO(ejer): lead-partner regler.
   await changeOwnBoard(context, boardId, { kind: "udskift", outgoingId, incomingId });
 

@@ -8,7 +8,7 @@
 
 ## Kontekst
 
-Fase 5.3: partneren angiver hvornår hun kan holde møder, og det skal respekteres når ejeren
+Fase 5.3: partneren angiver hvornår vedkommende kan holde møder, og det skal respekteres når ejeren
 booker/flytter og når lead-partneren initierer næste møde. Bygget skærm-først (ADR 0042):
 `/partner/tilgaengelighed` er produktionskode fra første commit.
 
@@ -35,7 +35,7 @@ Fire valg lå i spil, og alle er svære at omgøre når der først ligger data:
   `partner_profile_select_board_owner`, nemt, men eksponerer noterne. **Ingen ejer-policy; booking-
   visningen beregnes server-side og afleverer kun fælles vinduer (B)**.
 - **"Ikke angivet": ikke bookbar (A)** — booking brydes for alle der ikke har udfyldt, også i dag.
-  **Ubegrænset (B)** — bryder intet, men en partner kan bookes selv om hun aldrig har taget stilling.
+  **Ubegrænset (B)** — bryder intet, men en partner kan bookes selv om vedkommende aldrig har taget stilling.
 
 ## Beslutning
 

@@ -83,7 +83,7 @@ export function assertBoardShape(partnerIds: string[], internalById: Map<string,
 }
 
 /**
- * Hvem er lead bagefter? Nuværende lead består hvis hun stadig sidder på boardet og er intern;
+ * Hvem er lead bagefter? Nuværende lead består hvis vedkommende stadig sidder på boardet og er intern;
  * ellers den foretrukne (fx den indkommende ved udskift af lead'en); ellers den første interne.
  */
 function resolveLead(

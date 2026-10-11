@@ -3,7 +3,7 @@
 -- idempotent).
 --
 -- Hvorfor en tabel og ikke en analytics-hændelse: en ændring af hvem der sidder på et board
--- ændrer hvad ejeren betaler (prisen følger boardstørrelsen), hvem der ser hendes behov (leadet)
+-- ændrer hvad ejeren betaler (prisen følger boardstørrelsen), hvem der ser ejerens behov (leadet)
 -- og hvem der bookes mod (Cal.com-værterne). Det er forretningsdata, og Supabase er sandhedskilden
 -- (arkitekturprincip 1) — PostHog er samtykkestyret og kan ikke være revisionsspor. Tabellen bærer
 -- også resultatet af Cal.com-synkroniseringen, så admin kan se at et boards værter hænger efter

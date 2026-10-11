@@ -174,9 +174,9 @@ export type MeetingChange = "aflyst" | "flyttet";
 /**
  * Giv boardets partnere besked om at et møde er aflyst eller flyttet.
  *
- * Modtagerne er partnerne: det er EJEREN der aflyser/flytter, og hun har selv set resultatet.
+ * Modtagerne er partnerne: det er EJEREN der aflyser/flytter, og har selv set resultatet.
  * (Kataloget nævner «ejer og boardets partnere»; en bekræftelse til ejeren er en
- * tilføjelse hun ikke har bedt om. TODO(ejer): skal ejeren også have en bekræftelse?)
+ * tilføjelse ejeren ikke har bedt om. TODO(ejer): skal ejeren også have en bekræftelse?)
  *
  * `discriminator` indgår i idempotensnøglen — byg den med `meetingChangeDiscriminator`, så
  * appens handling og Cal.com-webhookens ekko af SAMME ændring giver samme nøgle (B-40).

@@ -103,7 +103,7 @@ export async function adminRemoveBoardPartner(
   }));
 }
 
-/** Udskift én partner med en anden. Lead'en går til den indkommende, hvis hun er intern. */
+/** Udskift én partner med en anden. Lead'en går til den indkommende, hvis vedkommende er intern. */
 export async function adminSwapBoardPartner(
   _prev: BoardActionState,
   formData: FormData,

@@ -1,7 +1,7 @@
 /**
  * Business-data-access for ejerens board (Fase 1.5, ADR 0021). Læsning via den authed server-klient:
  * `board_select_owner` scoper til auth.uid(), og `partner_profile_select_board_owner` (0010) giver
- * ejeren adgang til præcis de katalogposter der sidder på hendes eget board — ikke hele puljen.
+ * ejeren adgang til præcis de katalogposter der sidder på ejerens eget board — ikke hele puljen.
  * Writes ligger i ./actions (service-role bag requireRole('ejer')); admins overblik og editor bor i ./admin
 (ADR 0062).
  *
@@ -81,7 +81,7 @@ function rowToMember(row: MemberRow): BoardMember | null {
   };
 }
 
-/** Den nuværende ejers board, eller null hvis hun endnu ikke har godkendt et. */
+/** Den nuværende ejers board, eller null hvis ejeren endnu ikke har godkendt et. */
 export async function getMyBoard(
   env: Record<string, string | undefined> = process.env,
 ): Promise<OwnerBoard | null> {

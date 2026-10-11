@@ -48,7 +48,7 @@ export interface LeadBoardNeeds {
  * TODO(ejer): lead-tildeling er uafklaret (byggespec §12 pkt. 15). Tjekket her hviler på
  * `board_partner.is_lead` som den står i data — uanset om markeringen er tændt i UI'et
  * (flaget `leadPartner`).
- * TODO(ejer): bør ejeren informeres om at boardets lead ser hendes kompetencebehov? Det er et
+ * TODO(ejer): bør ejeren informeres om at boardets lead ser ejerens kompetencebehov? Det er et
  * privatlivs-/vilkårspunkt (ToS), ikke et teknisk.
  */
 export async function getLeadBoardNeeds(

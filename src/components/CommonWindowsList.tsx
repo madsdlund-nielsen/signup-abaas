@@ -26,7 +26,7 @@ const shortDayFormat = new Intl.DateTimeFormat("da-DK", {
 
 /**
  * Boardets fælles ledige vinduer (fase 5.3), grupperet pr. dag i dansk tid. Hjælp til ejeren
- * før hun vælger starttidspunkt — ikke en booking: vinduerne er et overblik, og vagten i
+ * før ejeren vælger starttidspunkt — ikke en booking: vinduerne er et overblik, og vagten i
  * booking-flowet afgør til sidst. Styling via token-klasser (.slotlist*).
  */
 export function CommonWindowsList({

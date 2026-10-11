@@ -76,7 +76,7 @@ Alle står i kode med `TODO(ejer)` / `TODO(mads)` og i `docs/stub-register.md`. 
 | **«Kalenderplads»** (Udskift-filteret) | `src/server/matching/index.ts:101` | Hvor mange ledige timer, i hvilken periode, og om en partner uden angivelse tæller med. Stub-register |
 | **Må en partner se sine egne ratings?** | `src/components/Dashboard.tsx` (`RatingsPanel`) | Om en ny læsevej bygges (fx en view med egen-række-filter). ADR 0055, 0038 |
 | **Lead-tildeling og -rotation** (§12 pkt. 15) | `src/server/boards/actions.ts`, `src/server/dashboard/index.ts` | Hvem der er lead. Dashboardet hviler på det. ADR 0055 |
-| **Skal ejeren informeres om boardets lead-aflæsning?** | Vilkår og privatlivstekst | Om ejeren ved at lead ser hendes kompetencebehov. ADR 0055 |
+| **Skal ejeren informeres om boardets lead-aflæsning?** | Vilkår og privatlivstekst | Om ejeren ved at lead ser ejerens kompetencebehov. ADR 0055 |
 | **ToS og honoraraftale** | `src/server/admin/legal.ts` (`Ikke udarbejdet`) | Indholdet i `/admin/juridisk`. Honoraraftalen hænger sammen med sats og moms. ADR 0053 |
 | **Samtykketekst og samtykkelog** (`consent_event`) | `src/server/consent/` (ingen tabel) | En CSV-eksport af samtykker kan først bygges, når teksten og kategorierne er besluttet. ADR 0053 |
 | **Modtagne vurderinger i partnerens indsigtsudtræk** | `src/server/admin/subject-access.ts` (udeladt) | Om de må med (evt. uden afgiver). Jura. ADR 0053 |

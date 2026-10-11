@@ -5,7 +5,7 @@
  * assertMeetingBoardAvailable) — den eneste kobling mellem de to moduler.
  *
  * Tjekker mødetiden (60 min); de 15 forberedelsesminutter er partnerens egen, betalte tid og
- * kræver ikke at hun er "ledig" i booking-forstand. Fejlen er en almindelig Error med en
+ * kræver ikke at vedkommende er "ledig" i booking-forstand. Fejlen er en almindelig Error med en
  * dansk, brugervendt besked — actions.ts' toError viser den i formularen.
  *
  * Service-role-klienten kommer fra kalderen (som i resten af actions); vagten læser kun.
