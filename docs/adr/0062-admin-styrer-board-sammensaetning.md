@@ -60,7 +60,8 @@ Invarianter, ens for begge veje:
 
 En afvist ændring skriver intet: planen laves og valideres før første write. Rækkefølgen af
 writes (indsæt → slet → flyt lead) sikrer at boardet aldrig er mindre end før. Det er ikke én
-transaktion — se B-66. Ejerens `setBoardLead` slettede før i denne version lead'en *før* den
+transaktion — se B-66. **Opdatering (ADR 0064):** skrivningen er nu én transaktion (migration 0026), og
+revisionsrækken skrives i den. Ejerens `setBoardLead` slettede før i denne version lead'en *før* den
 tjekkede at den nye sad på boardet; nu valideres det først.
 
 **2. Admin-flade.** `/admin/boards` er et overblik (ejer, partnere med intern/ekstern/lead, antal
@@ -100,10 +101,11 @@ værterne og kalder ikke Cal.com. `hostsOutOfSync` (rent) udleder "hænger efter
 
 - Admin og ejer kan ikke længere komme ud af sync om hvad et gyldigt board er. Ejerens flow er
   uændret udadtil (samme redirects, samme fejlbeskeder), men hun får nu også opdateret
-  Cal.com-hosts, hvilket lukker ADR 0046's åbne punkt. Rest: en ændret `calcom_user_id` (B-67).
+  Cal.com-hosts, hvilket lukker ADR 0046's åbne punkt. Rest: en ændret `calcom_user_id` (B-67, lukket af ADR 0064).
 - `listAdminBoards`/`AdminBoardRow` (kun Cal.com-status) er erstattet af `listAdminBoardOverviews`.
 - Priseffekt: en ændring slår igennem i abonnementet ved næste periode (ADR 0056) — admins editor
   siger det, men viser intet beløb (pris er uafklaret, CLAUDE.md).
-- Nye backlog-punkter: B-65 (indsigtsudtrækket), B-66 (ikke atomisk), B-67 (Cal.com-sæde ændres).
+- Nye backlog-punkter: B-65 (indsigtsudtrækket), B-66 (ikke atomisk), B-67 (Cal.com-sæde ændres) —
+  alle tre lukket af ADR 0064.
 - Uændret uafklaret: lead-tildeling og -rotation, tie-break ved lige gode kandidater (admins
   kandidatliste rangordner ikke), board-livscyklus.

@@ -25,17 +25,17 @@ afterEach(() => vi.restoreAllMocks());
 describe("changeBoardComposition — invarianter", () => {
   it("tilføj: tredje partner kommer på boardet, lead består", async () => {
     const db = createFakeDb(boardTables());
-    await changeBoardComposition(db.client, IDS.board, { kind: "tilfoej", partnerId: IDS.carl });
+    await changeBoardComposition(db.client, ADMIN, IDS.board, { kind: "tilfoej", partnerId: IDS.carl });
     expect(memberIds(db)).toEqual([IDS.anna, IDS.bo, IDS.carl]);
     expect(leadIds(db)).toEqual([IDS.anna]);
   });
 
   it("NEGATIV: en fjerde partner afvises, og intet er skrevet", async () => {
     const db = createFakeDb(boardTables());
-    await changeBoardComposition(db.client, IDS.board, { kind: "tilfoej", partnerId: IDS.carl });
+    await changeBoardComposition(db.client, ADMIN, IDS.board, { kind: "tilfoej", partnerId: IDS.carl });
     const before = JSON.stringify(db.tables.board_partner);
     await expect(
-      changeBoardComposition(db.client, IDS.board, { kind: "tilfoej", partnerId: IDS.dorte }),
+      changeBoardComposition(db.client, ADMIN, IDS.board, { kind: "tilfoej", partnerId: IDS.dorte }),
     ).rejects.toThrow(/2-3 partnere/);
     expect(JSON.stringify(db.tables.board_partner)).toBe(before);
   });
@@ -43,7 +43,7 @@ describe("changeBoardComposition — invarianter", () => {
   it("NEGATIV: dublet afvises", async () => {
     const db = createFakeDb(boardTables());
     await expect(
-      changeBoardComposition(db.client, IDS.board, { kind: "tilfoej", partnerId: IDS.anna }),
+      changeBoardComposition(db.client, ADMIN, IDS.board, { kind: "tilfoej", partnerId: IDS.anna }),
     ).rejects.toThrow(/allerede/);
     expect(memberIds(db)).toEqual([IDS.anna, IDS.bo]);
   });
@@ -51,7 +51,7 @@ describe("changeBoardComposition — invarianter", () => {
   it("NEGATIV: et board under to partnere afvises", async () => {
     const db = createFakeDb(boardTables());
     await expect(
-      changeBoardComposition(db.client, IDS.board, { kind: "fjern", partnerId: IDS.bo }),
+      changeBoardComposition(db.client, ADMIN, IDS.board, { kind: "fjern", partnerId: IDS.bo }),
     ).rejects.toThrow(/2-3 partnere/);
     expect(memberIds(db)).toEqual([IDS.anna, IDS.bo]);
   });
@@ -67,7 +67,7 @@ describe("changeBoardComposition — invarianter", () => {
       }),
     );
     await expect(
-      changeBoardComposition(db.client, IDS.board, { kind: "fjern", partnerId: IDS.anna }),
+      changeBoardComposition(db.client, ADMIN, IDS.board, { kind: "fjern", partnerId: IDS.anna }),
     ).rejects.toThrow(/mindst én intern/);
     expect(leadIds(db)).toEqual([IDS.anna]);
 
@@ -80,7 +80,7 @@ describe("changeBoardComposition — invarianter", () => {
       }),
     );
     await expect(
-      changeBoardComposition(small.client, IDS.board, { kind: "udskift", outgoingId: IDS.anna, incomingId: IDS.erik }),
+      changeBoardComposition(small.client, ADMIN, IDS.board, { kind: "udskift", outgoingId: IDS.anna, incomingId: IDS.erik }),
     ).rejects.toThrow(/mindst én intern/);
     expect(memberIds(small)).toEqual([IDS.anna, IDS.carl]);
   });
@@ -88,7 +88,7 @@ describe("changeBoardComposition — invarianter", () => {
   it("NEGATIV: ukendt partner afvises", async () => {
     const db = createFakeDb(boardTables());
     await expect(
-      changeBoardComposition(db.client, IDS.board, { kind: "tilfoej", partnerId: "findes-ikke" }),
+      changeBoardComposition(db.client, ADMIN, IDS.board, { kind: "tilfoej", partnerId: "findes-ikke" }),
     ).rejects.toThrow(/Ukendt partner/);
   });
 
@@ -102,7 +102,7 @@ describe("changeBoardComposition — invarianter", () => {
       }),
     );
     await expect(
-      changeBoardComposition(db.client, IDS.board, { kind: "saet_lead", partnerId: IDS.carl }),
+      changeBoardComposition(db.client, ADMIN, IDS.board, { kind: "saet_lead", partnerId: IDS.carl }),
     ).rejects.toThrow(/intern partner/);
     expect(leadIds(db)).toEqual([IDS.anna]);
   });
@@ -110,14 +110,14 @@ describe("changeBoardComposition — invarianter", () => {
   it("NEGATIV: lead kan ikke gives til en partner der ikke sidder på boardet — og lead mistes ikke", async () => {
     const db = createFakeDb(boardTables());
     await expect(
-      changeBoardComposition(db.client, IDS.board, { kind: "saet_lead", partnerId: IDS.dorte }),
+      changeBoardComposition(db.client, ADMIN, IDS.board, { kind: "saet_lead", partnerId: IDS.dorte }),
     ).rejects.toThrow(/ikke på boardet/);
     expect(leadIds(db)).toEqual([IDS.anna]);
   });
 
   it("sæt lead flytter markeringen: præcis én lead bagefter", async () => {
     const db = createFakeDb(boardTables());
-    await changeBoardComposition(db.client, IDS.board, { kind: "saet_lead", partnerId: IDS.bo });
+    await changeBoardComposition(db.client, ADMIN, IDS.board, { kind: "saet_lead", partnerId: IDS.bo });
     expect(leadIds(db)).toEqual([IDS.bo]);
   });
 });
@@ -136,14 +136,14 @@ describe("changeBoardComposition — lead følger sammensætningen", () => {
 
   it("fjern lead: markeringen går til den første interne", async () => {
     const db = withCarl();
-    await changeBoardComposition(db.client, IDS.board, { kind: "fjern", partnerId: IDS.anna });
+    await changeBoardComposition(db.client, ADMIN, IDS.board, { kind: "fjern", partnerId: IDS.anna });
     expect(memberIds(db)).toEqual([IDS.bo, IDS.carl]);
     expect(leadIds(db)).toEqual([IDS.bo]);
   });
 
   it("udskift lead med en intern: den indkommende bliver lead", async () => {
     const db = withCarl();
-    await changeBoardComposition(db.client, IDS.board, {
+    await changeBoardComposition(db.client, ADMIN, IDS.board, {
       kind: "udskift",
       outgoingId: IDS.anna,
       incomingId: IDS.dorte,
@@ -154,7 +154,7 @@ describe("changeBoardComposition — lead følger sammensætningen", () => {
 
   it("udskift lead med en ekstern: lead går til den første interne", async () => {
     const db = withCarl();
-    await changeBoardComposition(db.client, IDS.board, {
+    await changeBoardComposition(db.client, ADMIN, IDS.board, {
       kind: "udskift",
       outgoingId: IDS.anna,
       incomingId: IDS.erik,
@@ -164,7 +164,7 @@ describe("changeBoardComposition — lead følger sammensætningen", () => {
 
   it("udskift en ikke-lead: lead består uændret", async () => {
     const db = withCarl();
-    await changeBoardComposition(db.client, IDS.board, {
+    await changeBoardComposition(db.client, ADMIN, IDS.board, {
       kind: "udskift",
       outgoingId: IDS.carl,
       incomingId: IDS.erik,
@@ -182,7 +182,7 @@ describe("changeBoardComposition — lead følger sammensætningen", () => {
         ],
       }),
     );
-    await changeBoardComposition(db.client, IDS.board, { kind: "tilfoej", partnerId: IDS.carl });
+    await changeBoardComposition(db.client, ADMIN, IDS.board, { kind: "tilfoej", partnerId: IDS.carl });
     expect(leadIds(db)).toEqual([IDS.anna]);
   });
 });
@@ -302,11 +302,88 @@ describe("applyBoardChange — Cal.com-hosts og revisionsspor", () => {
 
   it("en fejl i selve skrivningen kastes højlydt (ikke slugt) og logger intet", async () => {
     const db = createFakeDb(boardTables());
-    db.failures["board_partner.insert"] = "disk fuld";
+    db.failures["rpc.change_board_composition"] = "disk fuld";
     await expect(
       applyBoardChange(db.client, ADMIN, IDS.board, { kind: "tilfoej", partnerId: IDS.carl }, new FakeBookingProvider()),
     ).rejects.toThrow(/disk fuld/);
     expect(db.tables.board_change).toEqual([]);
+  });
+});
+
+describe("atomisk skrivning (B-66, ADR 0064)", () => {
+  it("planen sendes som ÉT kald med det læste udgangspunkt, aktøren og handlingen — og revisionsrækken kommer fra samme kald", async () => {
+    const db = createFakeDb(boardTables());
+    const rpc = vi.spyOn(db.client, "rpc");
+
+    const { changeId } = await changeBoardComposition(db.client, ADMIN, IDS.board, {
+      kind: "udskift",
+      outgoingId: IDS.bo,
+      incomingId: IDS.dorte,
+    });
+
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith("change_board_composition", {
+      p_board_id: IDS.board,
+      p_expected_partner_ids: [IDS.anna, IDS.bo],
+      p_add: [IDS.dorte],
+      p_remove: [IDS.bo],
+      p_lead_id: IDS.anna,
+      p_actor_id: IDS.admin,
+      p_actor_role: "admin",
+      p_action: "udskift",
+      p_partner_id: IDS.dorte,
+      p_replaced_partner_id: IDS.bo,
+    });
+    expect(db.tables.board_change.map((r) => r.id)).toEqual([changeId]);
+  });
+
+  it("NEGATIV: en samtidig ændring (forældet udgangspunkt) afvises af basen, og intet er skrevet", async () => {
+    const db = createFakeDb(boardTables());
+    db.failures["rpc.change_board_composition"] = {
+      message: "Boardet blev ændret af en anden imens — genindlæs og prøv igen.",
+      code: "40001",
+    };
+    await expect(
+      applyBoardChange(db.client, ADMIN, IDS.board, { kind: "tilfoej", partnerId: IDS.carl }, new FakeBookingProvider()),
+    ).rejects.toThrow(/ændret af en anden/);
+    expect(memberIds(db)).toEqual([IDS.anna, IDS.bo]);
+    expect(db.tables.board_change).toEqual([]);
+  });
+
+  it("NEGATIV: basens sidste værn kan afvise en plan koden lod passere — højlydt, uden revisionsspor", async () => {
+    // Koden og basen er uenige (fx en forældet læsning af is_internal): basens afvisning vinder, og
+    // dens danske besked når brugeren uændret.
+    const db = createFakeDb(boardTables());
+    db.failures["rpc.change_board_composition"] = "Et board skal have mindst én intern partner.";
+    await expect(
+      changeBoardComposition(db.client, ADMIN, IDS.board, { kind: "tilfoej", partnerId: IDS.carl }),
+    ).rejects.toThrow(/mindst én intern/);
+    expect(memberIds(db)).toEqual([IDS.anna, IDS.bo]);
+    expect(db.tables.board_change).toEqual([]);
+  });
+
+  it("Cal.com-udfaldet rettes på den række funktionen skrev (pessimistisk 'fejlet' → faktisk udfald)", async () => {
+    const db = createFakeDb(boardTables());
+    const rpcRow = async () => {
+      await applyBoardChange(db.client, ADMIN, IDS.board, { kind: "tilfoej", partnerId: IDS.carl }, new FakeBookingProvider());
+      return db.tables.board_change[0];
+    };
+    expect(await rpcRow()).toMatchObject({ action: "tilfoej", calcom_sync: "opdateret" });
+  });
+
+  it("et fejlet udfalds-update vælter ikke ændringen: rækken står pessimistisk, fejlen logges uden persondata", async () => {
+    const db = createFakeDb(boardTables());
+    db.failures["board_change.update"] = "RLS sagde nej";
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(
+      applyBoardChange(db.client, ADMIN, IDS.board, { kind: "tilfoej", partnerId: IDS.carl }, new FakeBookingProvider()),
+    ).resolves.toBeDefined();
+
+    expect(memberIds(db)).toEqual([IDS.anna, IDS.bo, IDS.carl]);
+    expect(db.tables.board_change[0]).toMatchObject({ calcom_sync: "fejlet" });
+    expect(errors).toHaveBeenCalledWith(expect.stringContaining("RLS sagde nej"));
+    expect(String(errors.mock.calls[0]?.[0])).not.toContain(IDS.admin);
   });
 });
 

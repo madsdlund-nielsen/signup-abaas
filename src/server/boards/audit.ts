@@ -2,9 +2,15 @@
  * Revisionsspor for boardets sammensætning (`board_change`, migration 0025, ADR 0062). Skrives af
  * service-role bag den der kalder (ejer- eller admin-action); læses kun af admin (RLS).
  *
- * Sporet er bevidst uden persondata ud over pseudonyme id'er — ingen navne eller e-mails — og et
- * log-fejl må aldrig vælte den ændring det beskriver: ændringen er allerede sket i Supabase, og
- * en fejlet handling ville efterlade en halv tilstand. Fejlen logges (uden persondata) i stedet.
+ * Sporet er bevidst uden persondata ud over pseudonyme id'er — ingen navne eller e-mails.
+ *
+ * To skrivestier (ADR 0064):
+ *   - Sammensætningsændringer skrives af `change_board_composition` (0026) i SAMME transaktion som
+ *     ændringen selv — en fejl her ruller ændringen tilbage, så sporet aldrig mangler en ændring.
+ *     `settleBoardChangeSync` retter bagefter kun Cal.com-udfaldet.
+ *   - Alt andet (`opdater_hosts`: ingen sammensætning at holde atomisk med) skrives af
+ *     `recordBoardChange`, hvor et log-fejl aldrig må vælte handlingen: den er allerede sket i
+ *     Supabase. Fejlen logges (uden persondata) i stedet.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -43,6 +49,26 @@ export async function recordBoardChange(service: SupabaseClient, entry: BoardCha
   } catch (e) {
     console.error(
       `[boards] revisionsspor ikke skrevet for board ${entry.boardId}: ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+}
+
+/**
+ * Ret Cal.com-udfaldet på en række `change_board_composition` allerede har skrevet (med den
+ * pessimistiske værdi). Et fejlet kald lader rækken stå som den er — "hosts hænger efter" — og
+ * logges uden persondata; det vælter aldrig ændringen.
+ */
+export async function settleBoardChangeSync(
+  service: SupabaseClient,
+  changeId: string,
+  calcomSync: CalcomSyncResult,
+): Promise<void> {
+  try {
+    const { error } = await service.from("board_change").update({ calcom_sync: calcomSync }).eq("id", changeId);
+    if (error) console.error(`[boards] Cal.com-udfald ikke gemt på revisionssporet: ${error.message}`);
+  } catch (e) {
+    console.error(
+      `[boards] Cal.com-udfald ikke gemt på revisionssporet: ${e instanceof Error ? e.message : String(e)}`,
     );
   }
 }

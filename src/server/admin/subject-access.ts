@@ -13,6 +13,10 @@
  *     indsigtsretten er en jura-afvejning, ikke et teknisk valg. TODO(ejer): jura.
  *   - Partnernes private forberedelsesnoter er kun med for forfatteren selv.
  *   - Honorar findes endnu ikke som data (fase 5.1).
+ *   - Revisionssporet for boardets sammensætning (`board_change`, 0025) er med for den der har
+ *     UDFØRT ændringen (aktør-id), for ejeren af boardet og for den partner ændringen handler om.
+ *     Andre aktørers id'er udleveres ikke — kun deres rolle (ejer/admin). Ingen navne/e-mails
+ *     findes i sporet; partnernes navne slås op som i resten af udtrækket.
  *   - Samtykke: der findes ingen samtykketabel — kun en cookie i browseren. SMS-samtykket er
  *     undtagelsen: det er en kolonne på brugeren (0024) og står under `person`.
  */
@@ -152,6 +156,54 @@ export interface RatingRow {
   created_at: string;
 }
 
+/** Revisionssporet for boardets sammensætning (0025, ADR 0062). Ingen persondata ud over id'er. */
+export interface BoardChangeRecord {
+  id: string;
+  board_id: string;
+  actor_id: string | null;
+  actor_role: string;
+  action: string;
+  partner_id: string | null;
+  replaced_partner_id: string | null;
+  calcom_sync: string;
+  created_at: string;
+}
+
+/** AI-resuméet som mødeartefakt (0022, ADR 0059). Det rå transskript gemmes ikke. */
+export interface MeetingSummaryRow {
+  id: string;
+  meeting_id: string;
+  status: string;
+  summary: string | null;
+  action_items: unknown;
+  provider: string | null;
+  model: string | null;
+  generated_at: string | null;
+  created_at: string;
+}
+
+/** Udsendelseslog (0021): at en besked blev sendt til personen — ikke teksten. */
+export interface NotificationDeliveryRow {
+  id: string;
+  type_key: string;
+  channel: string;
+  related_id: string | null;
+  status: string;
+  provider_ref: string | null;
+  created_at: string;
+}
+
+/** Engangslink til vurdering (0023). Selve tokenet gemmes aldrig. */
+export interface RatingLinkRow {
+  id: string;
+  meeting_id: string;
+  rater_user_id: string | null;
+  rater_partner_profile_id: string | null;
+  expires_at: string;
+  used_at: string | null;
+  created_at: string;
+}
+
 export interface QuizAnswerRow {
   quiz_option_id: string;
   free_text: string | null;
@@ -196,6 +248,17 @@ export interface RawSubjectData {
   quizAnswers: QuizAnswerRow[];
   quizOptions: QuizOptionRow[];
   quizQuestions: QuizQuestionRow[];
+  /**
+   * Revisionsrækker personen er knyttet til: udførte dem (aktør), ejer boardet de handler om, eller
+   * er den partner ændringen berører. Slået sammen uden dubletter.
+   */
+  boardChanges: BoardChangeRecord[];
+  /** Resuméer af møderne på ejerens boards. */
+  meetingSummaries: MeetingSummaryRow[];
+  /** Beskeder sendt til personen. */
+  notificationDeliveries: NotificationDeliveryRow[];
+  /** Vurderingslinks udstedt til personen (som ejer eller som partner). */
+  ratingLinks: RatingLinkRow[];
 }
 
 export const SUBJECT_ACCESS_EXPORT_VERSION = 1;
@@ -210,7 +273,9 @@ export const NOT_INCLUDED: readonly string[] = [
   "Vurderinger, andre har afgivet OM personen som partner — afgiverens fortrolighed skal afvejes mod indsigtsretten (afventer ejer/jura).",
   "Andre partneres private forberedelsesnoter.",
   "Honorar — er endnu ikke bygget som data (fase 5.1).",
-  "AI-resuméer og transskripter — er endnu ikke gemt som data.",
+  "Transskripter og lydoptagelser — det rå transskript gemmes ikke (dataminimering, ADR 0059); optagelsen ligger hos Cal.com. AI-resuméet af ejerens møder er med.",
+  "Teksten i udsendte beskeder — udsendelsesloggen (type, kanal, status) er med, men selve teksten gemmes ikke.",
+  "Andre aktørers identitet i revisionssporet for boardets sammensætning — kun deres rolle (ejer/admin) er med.",
   "Samtykkelog — der findes ingen samtykketabel; cookie-samtykke registreres kun i personens egen browser. SMS-samtykket (tilstand + tidspunkt) er med under `person`, men uden historik over tidligere valg.",
 ];
 
@@ -226,6 +291,31 @@ function partnerName(names: RawSubjectData["partnerNames"], id: string): string 
 
 function byCreated<T extends { created_at: string }>(list: readonly T[]): T[] {
   return [...list].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+}
+
+/** En revisionsrække uden aktør-id: rollen er med, identiteten kun hvis det er personen selv. */
+function changeEntry(raw: RawSubjectData, c: BoardChangeRecord): Json {
+  return {
+    tidspunkt: c.created_at,
+    handling: c.action,
+    udfoert_af_rolle: c.actor_role,
+    udfoert_af_dig: c.actor_id === raw.user.id,
+    partner: c.partner_id ? partnerName(raw.partnerNames, c.partner_id) : null,
+    udskiftet_partner: c.replaced_partner_id ? partnerName(raw.partnerNames, c.replaced_partner_id) : null,
+    calcom_synkronisering: c.calcom_sync,
+  };
+}
+
+function summaryEntry(row: MeetingSummaryRow | undefined): Json | null {
+  if (!row) return null;
+  return {
+    status: row.status,
+    resume: row.summary,
+    handlingspunkter: row.action_items,
+    udbyder: row.provider,
+    model: row.model,
+    genereret: row.generated_at,
+  };
 }
 
 function ownerSection(raw: RawSubjectData): Json {
@@ -286,7 +376,12 @@ function ownerSection(raw: RawSubjectData): Json {
           .filter((a) => a.meeting_id === m.id)
           .sort((a, b) => a.sort_order - b.sort_order)
           .map((a) => ({ type: a.kind, tekst: a.body })),
+        resume: summaryEntry(raw.meetingSummaries.find((x) => x.meeting_id === m.id)),
       })),
+      // Alle ændringer af boardets sammensætning — også dem admin har udført på ejerens vegne.
+      aendringer: byCreated(raw.boardChanges.filter((c) => c.board_id === board.id)).map((c) =>
+        changeEntry(raw, c),
+      ),
     };
   });
 
@@ -371,6 +466,10 @@ function partnerSection(raw: RawSubjectData): Json | null {
       raw.prepNotes.filter((n) => n.partner_profile_id === profile.id),
     ).map((n) => ({ moede_id: n.meeting_id, tekst: n.body, oprettet: n.created_at, opdateret: n.updated_at })),
     vurderinger_afgivet: ratingList(raw, (r) => r.rater_partner_profile_id === profile.id),
+    // Ændringer af et board der handler om partneren selv (tilføjet, fjernet, udskiftet, lead).
+    board_aendringer_om_dig: byCreated(
+      raw.boardChanges.filter((c) => c.partner_id === profile.id || c.replaced_partner_id === profile.id),
+    ).map((c) => ({ board_id: c.board_id, ...changeEntry(raw, c) })),
   };
 }
 
@@ -408,6 +507,25 @@ export function composeSubjectAccessExport(raw: RawSubjectData, meta: SubjectAcc
     roller: raw.roles.map((r) => r.role).sort(),
     ejer: hasOwnerData ? ownerSection(raw) : null,
     partner: partnerSection(raw),
+    // Tværgående: gælder uanset rolle (en admin har ingen ejer-/partnerprofil, men udfører ændringer).
+    board_aendringer_udfoert: byCreated(raw.boardChanges.filter((c) => c.actor_id === raw.user.id)).map(
+      (c) => ({ board_id: c.board_id, ...changeEntry(raw, c) }),
+    ),
+    beskeder_sendt_til_dig: byCreated(raw.notificationDeliveries).map((n) => ({
+      type: n.type_key,
+      kanal: n.channel,
+      status: n.status,
+      relateret_id: n.related_id,
+      udbyder_reference: n.provider_ref,
+      oprettet: n.created_at,
+    })),
+    vurderingslinks: byCreated(raw.ratingLinks).map((l) => ({
+      moede_id: l.meeting_id,
+      som: l.rater_user_id === raw.user.id ? "ejer" : "partner",
+      udloeber: l.expires_at,
+      brugt: l.used_at,
+      oprettet: l.created_at,
+    })),
     samtykke: {
       registreret: false,
       note: "Der findes ingen samtykketabel. Samtykke til cookies gemmes kun som en cookie i personens egen browser og kan ikke udtrækkes herfra. SMS-samtykket står under `person.sms_samtykke`.",

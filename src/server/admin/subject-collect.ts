@@ -20,6 +20,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   AgendaItemRow,
   AppUserRow,
+  BoardChangeRecord,
   BoardPartnerRow,
   BoardRow,
   ChargeRow,
@@ -27,13 +28,16 @@ import type {
   MeetingNoteRow,
   MeetingPartnerRow,
   MeetingRow,
+  MeetingSummaryRow,
   MembershipRow,
+  NotificationDeliveryRow,
   PartnerProfileRow,
   PartnerTagLinkRow,
   PrepNoteRow,
   QuizAnswerRow,
   QuizOptionRow,
   QuizQuestionRow,
+  RatingLinkRow,
   RatingRow,
   RawSubjectData,
   RoleRow,
@@ -49,6 +53,11 @@ export interface RowQuery {
   /** Kolonnen skal være i listen. Tom liste → ingen rækker (undgår en ufiltreret læsning). */
   in?: { column: string; values: readonly string[] };
 }
+
+const BOARD_CHANGE_COLUMNS =
+  "id, board_id, actor_id, actor_role, action, partner_id, replaced_partner_id, calcom_sync, created_at";
+const RATING_LINK_COLUMNS =
+  "id, meeting_id, rater_user_id, rater_partner_profile_id, expires_at, used_at, created_at";
 
 export type RowFetcher = (query: RowQuery) => Promise<Record<string, unknown>[]>;
 
@@ -104,7 +113,8 @@ export async function collectSubjectData(
   if (!user) return null;
 
   // Trin 1: alt der hænger direkte på brugeren.
-  const [roles, ownedBoards, profiles, quizAnswers, userRatings] = await Promise.all([
+  const [roles, ownedBoards, profiles, quizAnswers, userRatings, actedChanges, deliveries, userRatingLinks] =
+    await Promise.all([
     get<RoleRow>({ table: "user_role_assignment", columns: "role", eq: { column: "user_id", value: user.id } }),
     get<BoardRow>({
       table: "board",
@@ -128,6 +138,14 @@ export async function collectSubjectData(
         "id, meeting_id, rater_user_id, rater_partner_profile_id, subject_partner_profile_id, score, comment, created_at",
       eq: { column: "rater_user_id", value: user.id },
     }),
+    // Revisionssporet: ændringer personen selv har udført, uanset rolle (ejer eller admin).
+    get<BoardChangeRecord>({ table: "board_change", columns: BOARD_CHANGE_COLUMNS, eq: { column: "actor_id", value: user.id } }),
+    get<NotificationDeliveryRow>({
+      table: "notification_delivery",
+      columns: "id, type_key, channel, related_id, status, provider_ref, created_at",
+      eq: { column: "recipient_user_id", value: user.id },
+    }),
+    get<RatingLinkRow>({ table: "rating_link", columns: RATING_LINK_COLUMNS, eq: { column: "rater_user_id", value: user.id } }),
   ]);
   const partnerProfile = profiles[0] ?? null;
   const ownedBoardIds = ownedBoards.map((b) => b.id);
@@ -144,6 +162,10 @@ export async function collectSubjectData(
     ownPrepNotes,
     tagLinks,
     quizOptions,
+    ownedBoardChanges,
+    partnerChanges,
+    partnerReplacedChanges,
+    partnerRatingLinks,
   ] = await Promise.all([
     get<BoardPartnerRow>({
       table: "board_partner",
@@ -210,6 +232,33 @@ export async function collectSubjectData(
       columns: "id, quiz_question_id, label",
       in: { column: "id", values: unique(quizAnswers.map((a) => a.quiz_option_id)) },
     }),
+    // Alle ændringer af ejerens boards — også admins — og dem der handler om partneren selv.
+    get<BoardChangeRecord>({
+      table: "board_change",
+      columns: BOARD_CHANGE_COLUMNS,
+      in: { column: "board_id", values: ownedBoardIds },
+    }),
+    partnerProfile
+      ? get<BoardChangeRecord>({
+          table: "board_change",
+          columns: BOARD_CHANGE_COLUMNS,
+          eq: { column: "partner_id", value: partnerProfile.id },
+        })
+      : Promise.resolve([] as BoardChangeRecord[]),
+    partnerProfile
+      ? get<BoardChangeRecord>({
+          table: "board_change",
+          columns: BOARD_CHANGE_COLUMNS,
+          eq: { column: "replaced_partner_id", value: partnerProfile.id },
+        })
+      : Promise.resolve([] as BoardChangeRecord[]),
+    partnerProfile
+      ? get<RatingLinkRow>({
+          table: "rating_link",
+          columns: RATING_LINK_COLUMNS,
+          eq: { column: "rater_partner_profile_id", value: partnerProfile.id },
+        })
+      : Promise.resolve([] as RatingLinkRow[]),
   ]);
 
   const ownedMeetingIds = ownedMeetings.map((m) => m.id);
@@ -225,6 +274,7 @@ export async function collectSubjectData(
     agendaItems,
     quizQuestions,
     competenceTags,
+    meetingSummaries,
   ] = await Promise.all([
     get<Pick<BoardRow, "id" | "name">>({
       table: "board",
@@ -262,7 +312,14 @@ export async function collectSubjectData(
       columns: "id, label",
       in: { column: "id", values: unique(tagLinks.map((l) => l.competence_tag_id)) },
     }),
+    get<MeetingSummaryRow>({
+      table: "meeting_summary",
+      columns: "id, meeting_id, status, summary, action_items, provider, model, generated_at, created_at",
+      in: { column: "meeting_id", values: ownedMeetingIds },
+    }),
   ]);
+
+  const boardChanges = dedupe([...actedChanges, ...ownedBoardChanges, ...partnerChanges, ...partnerReplacedChanges], (c) => c.id);
 
   // Møder personen deltog i som partner — hent selve møderækkerne (starttid/status).
   const partnerMeetingIds = unique(partnerMeetingRows.map((mp) => mp.meeting_id)).filter(
@@ -284,6 +341,7 @@ export async function collectSubjectData(
     ...ownedMeetingNotes.map((n) => n.partner_profile_id),
     ...userRatings.map((r) => r.subject_partner_profile_id),
     ...partnerRatings.map((r) => r.subject_partner_profile_id),
+    ...boardChanges.flatMap((c) => [c.partner_id, c.replaced_partner_id]),
   ]);
   const partnerNames = await get<Pick<PartnerProfileRow, "id" | "name">>({
     table: "partner_profile",
@@ -315,5 +373,9 @@ export async function collectSubjectData(
     quizAnswers,
     quizOptions,
     quizQuestions,
+    boardChanges,
+    meetingSummaries,
+    notificationDeliveries: deliveries,
+    ratingLinks: dedupe([...userRatingLinks, ...partnerRatingLinks], (l) => l.id),
   };
 }
