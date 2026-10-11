@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
  */
 export default function GatePage() {
   return (
-    <main className="focus-page">
+    <main id="main" className="focus-page">
       <div className="focus-page__inner">
         <Image
           className="focus-page__mark"

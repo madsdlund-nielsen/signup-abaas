@@ -4,7 +4,6 @@ import { Heading } from "@/components/Heading";
 import { PageHeader } from "@/components/PageHeader";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { SectionBand } from "@/components/SectionBand";
-import { TopBar } from "@/components/TopBar";
 
 /**
  * Levende reference for design-fundamentet. Intern styleguide — kan flag-gates
@@ -12,12 +11,7 @@ import { TopBar } from "@/components/TopBar";
  */
 export default function Styleguide() {
   return (
-    <>
-      <TopBar>
-        <span>Advisory Board Unlimited</span>
-        <span>kontakt@signupacademy.com</span>
-      </TopBar>
-
+    <main id="main">
       <SectionBand tone="navy">
         <div className="stack">
           <Eyebrow>Styleguide</Eyebrow>
@@ -64,6 +58,7 @@ export default function Styleguide() {
 
       <SectionBand tone="white">
         <div className="stack">
+          <Heading level={2}>Paneler</Heading>
           <div className="panel-grid">
             <div className="panel">
               <Heading level={3}>Panel</Heading>
@@ -106,6 +101,6 @@ export default function Styleguide() {
           <PrimaryButton>Sekundær handling</PrimaryButton>
         </div>
       </SectionBand>
-    </>
+    </main>
   );
 }

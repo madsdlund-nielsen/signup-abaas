@@ -50,6 +50,8 @@ tests/
 |---|---|---|
 | `src/components/**` | unit (token-only) | `tests/unit/components.test.tsx` |
 | `src/server/flags`, `src/server/consent` | unit | `tests/unit/flags.test.ts`, `consent.test.ts` |
+| `src/components/**`, sider (tilgængelighed) | unit (axe-core, jsdom) | `tests/unit/a11y.test.tsx` — nye skærme tilføjes dér (ADR 0070); kontrast regnes på tokens i `contrast.test.ts` |
+| `src/server/security/**`, `src/proxy.ts` (headere, CSP) | unit + integration | `tests/unit/security-headers.test.ts`, `tests/integration/proxy-csp.test.ts` |
 | `src/lib/<vendor>/**` (adaptere) | integration (registry/wiring) | `tests/integration/adapters.test.ts` |
 | `supabase/migrations/**` (incl. RLS-policies) | db (RLS) | `tests/db/rls.test.ts` |
 

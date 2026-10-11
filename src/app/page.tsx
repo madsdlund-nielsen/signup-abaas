@@ -21,7 +21,7 @@ export const metadata: Metadata = {
  */
 export default function Home() {
   return (
-    <>
+    <main id="main">
       <SectionBand tone="charcoal" hero>
         <p className="eyebrow">Advisory Board as a Service</p>
         <h1 className="heading-1 heading--on-dark measure-wide">
@@ -122,6 +122,6 @@ export default function Home() {
           </Link>
         </div>
       </SectionBand>
-    </>
+    </main>
   );
 }

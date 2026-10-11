@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function SignupPage() {
   return (
-    <main className="focus-page">
+    <main id="main" className="focus-page">
       <div className="focus-page__inner">
         <Image
           className="focus-page__mark"
