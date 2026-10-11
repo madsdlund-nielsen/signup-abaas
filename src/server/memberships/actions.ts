@@ -3,8 +3,9 @@
 /**
  * Ejer-mutationer for medlemskab (Fase 3, ADR 0030). Service-role bag requireRole('ejer') +
  * eksplicit ejerskabstjek (service-role bypasser RLS). Op-/nedgradering er RENE
- * Supabase-operationer — intet abonnement hos betalingsleverandøren at opdatere (ADR 0031);
- * ny frekvens/boardstørrelse slår igennem ved næste afholdelse (ingen proratering, §5.9).
+ * Supabase-operationer: leverandørens abonnementspris sættes af den planlagte kørsel
+ * (ADR 0056), ikke af ejerens klik. Ny frekvens/boardstørrelse slår igennem fra NÆSTE
+ * faktureringsperiode — ingen proratering midt i en periode (ikke besluttet, TODO(ejer)).
  */
 
 import { revalidatePath } from "next/cache";
@@ -16,6 +17,7 @@ import { createPaymentProvider } from "@/lib/payments";
 import { getCurrentUser, requireRole, type AuthUser } from "@/server/auth";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServiceSupabase } from "@/server/auth/supabase-server";
+import { copenhagenDate } from "@/server/charges/periods";
 
 const VALID_FREQUENCIES = new Set([4, 8, 12]);
 
@@ -79,7 +81,7 @@ export async function createMembership(_prev: AuthFormState, formData: FormData)
   }
 }
 
-/** Skift frekvens (op-/nedgradering). Ny pris gælder fra næste afholdte møde. */
+/** Skift frekvens (op-/nedgradering). Ny pris gælder fra næste faktureringsperiode. */
 export async function setMembershipFrequency(
   _prev: AuthFormState,
   formData: FormData,
@@ -141,7 +143,7 @@ export async function registerCard(_prev: AuthFormState, formData: FormData): Pr
 /**
  * Demo-checkoutens bekræftelse (ADR 0041). Udfører præcis det tilstandsskift
  * checkout.completed-webhooken udfører (`card_registered` i api/webhooks/alunta/route.ts),
- * men uden leverandør: provider_customer_ref får en demo-reference. Det er den eneste vej
+ * men uden leverandør: provider_customer_ref og provider_subscription_ref får demo-referencer. Det er den eneste vej
  * uden om webhooken, så den afvises medmindre demo-provideren er den aktive — dvs.
  * demo-tilstand ER slået til OG Alunta IKKE er konfigureret. Rigtige nøgler lukker den.
  */
@@ -163,11 +165,20 @@ export async function confirmDemoCard(_prev: AuthFormState, formData: FormData):
       .update({
         // Deterministisk og åbenlyst falsk: samme medlemskab → samme reference, aldrig en uuid.
         provider_customer_ref: `DEMO-CUSTOMER-${membershipId}`,
+        provider_subscription_ref: `DEMO-SUB-${membershipId}`,
         card_status: "registreret",
         updated_at: new Date().toISOString(),
       })
       .eq("id", membershipId);
     if (error) return { error: `Kunne ikke registrere demo-kortet: ${error.message}` };
+
+    // Periodeankeret — samme regel som webhooken: sættes én gang, flyttes aldrig.
+    const { error: anchorError } = await service
+      .from("membership")
+      .update({ billing_anchor: copenhagenDate(new Date()) })
+      .eq("id", membershipId)
+      .is("billing_anchor", null);
+    if (anchorError) return { error: `Kunne ikke sætte abonnementets startdato: ${anchorError.message}` };
 
     revalidatePath("/betaling");
   } catch (e) {

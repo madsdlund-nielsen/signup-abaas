@@ -2,10 +2,34 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
+import {
+  AdminDashboard,
+  DashboardSection,
+  OwnerDashboard,
+  PartnerDashboard,
+  SectionLinks,
+  type AvailabilitySummary,
+} from "@/components/Dashboard";
+import { LeadDashboard } from "@/components/LeadDashboard";
 import { PageBody, PageHeader } from "@/components/PageHeader";
 import { PrimaryButton } from "@/components/PrimaryButton";
+import { getOpsOverview } from "@/server/admin";
 import { getCurrentUser } from "@/server/auth";
 import { signOutAction } from "@/server/auth/actions";
+import { getMyAvailability } from "@/server/availability";
+import { copenhagenDateOf } from "@/server/availability/algorithm";
+import { getMyBoard } from "@/server/boards";
+import {
+  computeBoardCoverage,
+  getLeadBoardNeeds,
+  getMyMonthFees,
+  isLeadOnBoard,
+  upcomingMeetings,
+} from "@/server/dashboard";
+import { listMyMeetings } from "@/server/meetings";
+import { getMyMembership } from "@/server/memberships";
+import { getMyPartnerProfile } from "@/server/partners/portal";
+import { listTags } from "@/server/tags";
 
 export const metadata: Metadata = {
   title: "Dashboard — Advisory Board Unlimited",
@@ -21,34 +45,59 @@ const ROLE_LABEL: Record<string, string> = {
   admin: "Administrator",
 };
 
-/** Ét indgangspanel. Titel, én sætning om hvad man kan derinde, og ét link. */
-function EntryPanel({
-  title,
-  body,
-  href,
-  cta,
-}: {
-  title: string;
-  body: string;
-  href: string;
-  cta: string;
-}) {
-  return (
-    <div className="panel">
-      <h2 className="heading-3 heading--on-light">{title}</h2>
-      <p className="body">{body}</p>
-      <Link className="btn-secondary" href={href}>
-        {cta}
-      </Link>
-    </div>
-  );
-}
-
+/**
+ * Rolle-dashboards (fase 5.4, bygget skærm-først — ADR 0042/0055). Hver rolle får sin sektion,
+ * og en bruger med flere roller ser flere. Alt hentes via RLS-scopede læsninger; den ene
+ * undtagelse er lead-partnerens kompetenceoverblik, som læser ejerens behov via service-role
+ * bag et lead-tjek (`getLeadBoardNeeds`, ADR 0055).
+ *
+ * Betalingsstatus er kun medlemskabets egen status — trækhistorikken bor på /betaling.
+ *
+ * TODO(ejer): lead-tildeling er uafklaret — sektionen hviler på `board_partner.is_lead` i data.
+ * TODO(ejer): partnerens egne vurderinger vises ikke (RLS tillader det ikke) — se RatingsPanel.
+ * TODO(mads): PostHog-driftstatus på admin-resuméet (kræver live projektnøgle).
+ */
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const roles = user.roles.map((r) => ROLE_LABEL[r] ?? r);
+  const isOwner = user.roles.includes("ejer");
+  const isPartner = user.roles.includes("partner");
+  const isAdmin = user.roles.includes("admin");
+  const now = new Date();
+
+  const needsBoard = isOwner || isPartner;
+  const [board, meetings, membership, profile, ops] = await Promise.all([
+    needsBoard ? getMyBoard() : null,
+    needsBoard ? listMyMeetings() : [],
+    isOwner ? getMyMembership() : null,
+    isPartner ? getMyPartnerProfile() : null,
+    isAdmin ? getOpsOverview() : null,
+  ]);
+
+  // Afgrænset til boardet: en admin ser via RLS ALLE møder, og må ikke se andres under "mine".
+  const upcoming = board ? upcomingMeetings(meetings, now, board.id) : [];
+
+  const isLead = isPartner && isLeadOnBoard(profile?.id, board);
+  const [fees, availability, leadNeeds, tags] = await Promise.all([
+    isPartner && profile ? getMyMonthFees(now) : null,
+    isPartner && profile ? getMyAvailability(profile.id) : null,
+    isLead && board ? getLeadBoardNeeds(board.id) : null,
+    isLead ? listTags() : [],
+  ]);
+
+  const today = copenhagenDateOf(now);
+  const availabilitySummary: AvailabilitySummary | null = availability
+    ? {
+        slotCount: availability.slots.length,
+        upcomingAbsenceCount: availability.absences.filter((a) => a.endsOn >= today).length,
+      }
+    : null;
+
+  const coverage =
+    isLead && board && leadNeeds ? computeBoardCoverage(leadNeeds.ownerTagIds, board.members) : null;
+  const tagLabels = Object.fromEntries(tags.map((tag) => [tag.id, tag.label]));
 
   return (
     <>
@@ -71,58 +120,75 @@ export default async function DashboardPage() {
           </p>
         ) : null}
 
-        {user.roles.includes("ejer") ? (
-          <div className="panel-grid">
-            <EntryPanel
-              title="Onboarding"
-              body="Besvar quizzen, så vi kan oversætte dine udfordringer til de kompetencer dit board skal dække."
-              href="/onboarding"
-              cta="Start onboarding"
+        {isOwner ? (
+          <DashboardSection
+            eyebrow="Ejer"
+            title="Dit board og dine møder"
+            lead="Hvad der sker næste gang, hvem der sidder i dit board, og hvor dit abonnement står."
+          >
+            <OwnerDashboard board={board} membership={membership} upcoming={upcoming} />
+            <SectionLinks
+              links={[
+                { href: "/onboarding", label: "Onboarding" },
+                { href: "/board", label: "Dit board" },
+                { href: "/moeder", label: "Møder" },
+                { href: "/betaling", label: "Abonnement" },
+              ]}
             />
-            <EntryPanel
-              title="Dit board"
-              body="Se hvilke rådgivere vi har sammensat til dig, og hvorfor hver enkelt er valgt."
-              href="/board"
-              cta="Se board"
-            />
-            <EntryPanel
-              title="Møder"
-              body="Book, flyt eller aflys møder — og forbered dagsordenen inden I mødes."
-              href="/moeder"
-              cta="Gå til møder"
-            />
-            <EntryPanel
-              title="Abonnement"
-              body="Din betaling og dit abonnements omfang."
-              href="/betaling"
-              cta="Se abonnement"
-            />
-          </div>
+          </DashboardSection>
         ) : null}
 
-        {user.roles.includes("partner") ? (
-          <div className="panel-grid">
-            <EntryPanel
-              title="Partnerportalen"
-              body="Din profil, dine møder, og forberedelsen til dem."
-              href="/partner"
-              cta="Gå til portalen"
+        {isPartner ? (
+          <DashboardSection
+            eyebrow="Partner"
+            title="Dine møder og dit honorar"
+            lead="Næste møde, månedens honorar og hvor din tilgængelighed står."
+          >
+            <PartnerDashboard
+              linked={profile != null}
+              upcoming={upcoming}
+              fees={fees}
+              availability={availabilitySummary}
             />
-          </div>
+            <SectionLinks
+              links={[
+                { href: "/partner", label: "Partnerportalen" },
+                { href: "/partner/honorar", label: "Honorar" },
+                { href: "/partner/tilgaengelighed", label: "Tilgængelighed" },
+              ]}
+            />
+          </DashboardSection>
         ) : null}
 
-        {user.roles.includes("admin") ? (
-          <div className="panel-grid">
-            <EntryPanel
-              title="Administration"
-              body="Quiz, kompetence-tags, partnerkatalog, prisregler og vurderinger."
-              href="/admin"
-              cta="Gå til admin"
+        {isLead && board ? (
+          <DashboardSection
+            eyebrow="Lead-partner"
+            title="Boardets kompetencer"
+            lead="Hvad ejeren har brug for, hvad dit board dækker — og ansvaret for at næste møde bliver aftalt."
+          >
+            <LeadDashboard
+              boardName={board.name}
+              coverage={coverage}
+              tagLabels={tagLabels}
+              next={upcoming[0] ?? null}
             />
-          </div>
+          </DashboardSection>
         ) : null}
 
-        <div className="section-rule">
+        {isAdmin ? (
+          <DashboardSection
+            eyebrow="Administrator"
+            title="Platformen i tal"
+            lead="Et kort resumé. Detaljerne ligger i driftsoverblikket og honoraropgørelsen."
+          >
+            <AdminDashboard ops={ops} />
+          </DashboardSection>
+        ) : null}
+
+        <div className="section-rule row-form">
+          <Link className="btn-secondary" href="/konto">
+            Din konto
+          </Link>
           <form action={signOutAction}>
             <PrimaryButton type="submit">Log ud</PrimaryButton>
           </form>

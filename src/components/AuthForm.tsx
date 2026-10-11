@@ -6,6 +6,8 @@ import { PrimaryButton } from "@/components/PrimaryButton";
 
 export interface AuthFormState {
   error?: string;
+  /** Bekræftelse efter en vellykket handling (fx «Gemt.») — vist som status, ikke som fejl. */
+  notice?: string;
 }
 
 export type AuthAction = (prev: AuthFormState, formData: FormData) => Promise<AuthFormState>;
@@ -34,6 +36,11 @@ export function AuthForm({
       {state.error ? (
         <p className="form__notice" role="alert">
           {state.error}
+        </p>
+      ) : null}
+      {!state.error && state.notice ? (
+        <p className="form__notice" role="status">
+          {state.notice}
         </p>
       ) : null}
       <PrimaryButton type="submit" disabled={pending}>

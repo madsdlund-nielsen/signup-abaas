@@ -60,9 +60,9 @@ det gjort sådan?", så skriv en ADR.
 | 0027 | Webhook-ingest: signatur før alt, idempotens via event-tabel | Accepteret | 2 |
 | 0028 | Guardrails: lag-grænser som lint-regel og gates der faktisk kører | Accepteret | 2 |
 | 0029 | Webhook-idempotens skal betyde "præcis én gang" (præciserer 0027) | Accepteret | 2 |
-| 0030 | Betalings-datamodel: versionerede prisregler + charge pr. afholdt møde | Accepteret | 3 |
+| 0030 | Betalings-datamodel: versionerede prisregler + charge pr. afholdt møde (delvist erstattet af 0056) | Accepteret | 3 |
 | 0031 | Alunta-tilgangen: omdøbt config og webhook-skelet, ingen gættet adapter | Accepteret | 3 |
-| 0032 | Alunta-dataflow verificeret: usage-abonnement med øre-parameter | Accepteret | 3 |
+| 0032 | Alunta-dataflow verificeret: usage-abonnement med øre-parameter (delvist erstattet af 0056) | Accepteret | 3 |
 | 0033 | Vitest 3: sikkerhedsopgradering og projekter i `test.projects` | Accepteret | 3 |
 | 0034 | Betalingsmodel: fast abonnement hver 4. uge, gateway = QuickPay | Accepteret | 3 |
 | 0035 | Projektstruktur: domænemapper under `src/server/` (erstatter 0002's opdeling) | Accepteret | 3 |
@@ -81,6 +81,19 @@ det gjort sådan?", så skriv en ADR.
 | 0048 | Notifikationskataloget bor i kode indtil skabelonerne får en tabel | Accepteret | 4 |
 | 0049 | Brugeropslaget memoiseres pr. request, og proxyen holdes billig | Accepteret | — |
 | 0050 | Sessionen ud af rodlayoutet: header-nav'en streames | Accepteret | — |
+| 0051 | Partner-honorar: regel med gyldighedstidspunkt og en view der kun viser egne linjer | Accepteret | 5 |
+| 0052 | Partner-tilgængelighed: lokal vægurstid i Supabase, ingen ejer-læsning, "ikke angivet" = ubegrænset | Accepteret | 5 |
+| 0053 | Admin-drift og juridisk interface: indsigtsudtrækkets form og integrationsstatus via factoryen | Accepteret | 5 |
+| 0054 | *(nummer reserveret til Cal.com-skiven, ikke brugt — valget blev skrevet ind i 0046)* | — | — |
+| 0055 | Rolle-dashboards: læsevejene, og lead-partnerens service-role-læsning af ejerens behov | Accepteret | 5 |
+| 0056 | Abonnementsfakturering: periodekæde i Supabase, pris sat på Alunta-abonnementet (erstatter triggeren fra 0030/0032 i kode) | Accepteret | 3 |
+| 0057 | Notifikationsskabeloner som versioneret data, motor med idempotensnøgle, og en log uden persondata | Accepteret | 4 |
+| 0058 | Ordbogen/OdinCore-adaptere: fælles klient og nøgle, synkron transskription, samtykke fejler lukket | Accepteret | 4 |
+| 0059 | Mødeopsummering som gemt artefakt (`meeting_summary`), genereret i baggrunden; RLS ejer + admin | Accepteret | 4 |
+| 0060 | Signerede engangslinks til rating: HMAC over rækken, engangsbrug afgjort i databasen, ingen orakel | Accepteret | 4 |
+| 0061 | Kontoprofil: navn, telefon, tidszone og SMS-samtykke som kolonner på `app_user` (lukker hullerne fra 0046 og 0057) | Accepteret | 2 + 4 |
+| 0062 | Admin styrer board-sammensætning: fælles invarianter, revisionsspor (`board_change`) og Cal.com-hosts efter hver ændring | Accepteret | 1 + 2 |
+| 0063 | DB-testfilerne kører én ad gangen (`fileParallelism: false`) — deadlocks på tværs af testfiler | Accepteret | — |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så

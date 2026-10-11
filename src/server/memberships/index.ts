@@ -14,6 +14,11 @@ export interface Membership {
   frequencyWeeks: FrequencyWeeks;
   status: "aktiv" | "opsagt";
   cardStatus: "mangler" | "registreret";
+  /** Dagen (dansk dato) perioderne regnes fra; null indtil kortet er registreret. Valgfri, så
+   *  eksisterende forbrugere af typen (dashboards, tests) ikke brydes. */
+  billingAnchor?: string | null;
+  /** Dagen abonnementet blev opsagt; nye perioder oprettes ikke efter den. */
+  cancelledAt?: string | null;
 }
 
 interface MembershipRow {
@@ -22,6 +27,8 @@ interface MembershipRow {
   frequency_weeks: number;
   status: "aktiv" | "opsagt";
   card_status: "mangler" | "registreret";
+  billing_anchor: string | null;
+  cancelled_at: string | null;
 }
 
 /** Den nuværende ejers membership, eller null hvis intet er oprettet endnu. */
@@ -34,7 +41,7 @@ export async function getMyMembership(
   const supabase = await createServerSupabase(config);
   const { data, error } = await supabase
     .from("membership")
-    .select("id, board_id, frequency_weeks, status, card_status")
+    .select("id, board_id, frequency_weeks, status, card_status, billing_anchor, cancelled_at")
     .limit(1)
     .maybeSingle();
   if (error || !data) {
@@ -48,6 +55,8 @@ export async function getMyMembership(
     frequencyWeeks: row.frequency_weeks as FrequencyWeeks,
     status: row.status,
     cardStatus: row.card_status,
+    billingAnchor: row.billing_anchor,
+    cancelledAt: row.cancelled_at,
   };
 }
 

@@ -110,6 +110,11 @@
 > Udskift viser hele puljen; §5.2's "kun partnere med kalenderplads" kræver Cal.com multi-host
 > (fase 2), `TODO(mads)`.
 >
+> **Efterfølgende (skive L, ADR 0062):** admin kan også styre en ejers board — tilføj, fjern,
+> udskift og lead på `/admin/boards/[id]` — med de samme invarianter som ejerens vej
+> (`src/server/boards/composition.ts`), kompetence-delta pr. kandidat og Cal.com-hosts opdateret
+> bagefter. Ejerens egen redigering er uændret.
+>
 > **Udskudt:** partnere kan ikke se deres eget board — `board_select_partner` er fjernet indtil
 > partner-login i Fase 2 kobler katalogpost ↔ auth-bruger (ADR 0021).
 

@@ -40,4 +40,29 @@ describe("MeetingSummary", () => {
     expect(container.querySelector("p.empty")?.textContent).toContain("ikke konfigureret");
     expect(container.querySelector(".summary-actions")).toBeNull();
   });
+
+  it("viser en rolig 'på vej'-linje mens resuméet endnu ikke er genereret", () => {
+    const { container } = render(<MeetingSummary state={{ kind: "pending" }} />);
+    expect(container.querySelector("p.empty")?.textContent).toContain("på vej");
+    expect(container.querySelector(".summary-actions")).toBeNull();
+  });
+
+  it("forklarer manglende samtykke og manglende optagelse hver for sig", () => {
+    const consent = render(<MeetingSummary state={{ kind: "missing_consent" }} />);
+    expect(consent.container.querySelector("p.empty")?.textContent).toContain("samtykke");
+    consent.unmount();
+
+    const recording = render(<MeetingSummary state={{ kind: "missing_recording" }} />);
+    expect(recording.container.querySelector("p.empty")?.textContent).toContain("optagelse");
+  });
+
+  it("viser 'Generér igen'-slotten kun ved en opgivet opsummering", () => {
+    const retry = <button type="submit">Generér igen</button>;
+    const failed = render(<MeetingSummary state={{ kind: "failed" }} retry={retry} />);
+    expect(failed.getByText("Generér igen")).toBeTruthy();
+    failed.unmount();
+
+    const pending = render(<MeetingSummary state={{ kind: "pending" }} retry={retry} />);
+    expect(pending.queryByText("Generér igen")).toBeNull();
+  });
 });

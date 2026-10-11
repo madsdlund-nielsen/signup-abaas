@@ -125,6 +125,8 @@ on conflict do nothing;
 --   partnere) indsættes KUN hvis ingen aktiv regel findes. Tallet er åbenlyst falsk (ADR 0041's
 --   data-regel) og fjernes af demo-clean. Findes en rigtig regel, røres intet, og ingen
 --   opkrævning seedes — tal er stadig ejer-territorium.
+--   Samme regel for honorarreglen (fee_rule, ADR 0051): én DEMO-regel på 1,00 kr i timen, kun hvis
+--   ingen honorarregel findes.
 
 do $$
 declare
@@ -133,6 +135,7 @@ declare
   v_board        constant uuid := 'd0000000-0000-4000-8000-000000000401';
   v_membership   constant uuid := 'd0000000-0000-4000-8000-000000000501';
   v_rule         constant uuid := 'd0000000-0000-4000-8000-000000000601';
+  v_fee_rule     constant uuid := 'd0000000-0000-4000-8000-000000000602';
   v_meeting_next constant uuid := 'd0000000-0000-4000-8000-000000000701';
   v_meeting_held constant uuid := 'd0000000-0000-4000-8000-000000000702';
   v_astrid       constant uuid := 'd0000000-0000-4000-8000-000000000301';
@@ -140,6 +143,7 @@ declare
   v_camilla      constant uuid := 'd0000000-0000-4000-8000-000000000305';
   v_next_start   timestamptz := date_trunc('day', now()) + interval '9 days' + interval '10 hours';
   v_held_start   timestamptz := date_trunc('day', now()) - interval '19 days' + interval '10 hours';
+  v_anchor       date;
 begin
   if v_email is null then
     raise notice '[seed] demo.owner_email er ikke sat — springer den befolkede tilstand over (kun quiz + katalog).';
@@ -176,9 +180,16 @@ begin
   on conflict do nothing;
 
   -- Medlemskab med demo-kort — samme tilstandsskift som confirmDemoCard (ADR 0041).
-  insert into membership (id, board_id, frequency_weeks, status, provider_customer_ref, card_status) values
-    (v_membership, v_board, 4, 'aktiv', 'DEMO-CUSTOMER-' || v_membership::text, 'registreret')
+  -- billing_anchor = dansk dato for kortregistreringen (B-19, ADR 0056): 10 dage tilbage, så
+  -- "i dag" ligger midt i den første 4-ugers periode og /betaling viser både en indeværende og
+  -- en kommende forfaldsdato.
+  insert into membership (id, board_id, frequency_weeks, status, provider_customer_ref,
+                          provider_subscription_ref, card_status, billing_anchor) values
+    (v_membership, v_board, 4, 'aktiv', 'DEMO-CUSTOMER-' || v_membership::text,
+     'DEMO-SUB-' || v_membership::text, 'registreret',
+     (now() at time zone 'Europe/Copenhagen')::date - 10)
   on conflict (id) do nothing;
+  select billing_anchor into v_anchor from membership where id = v_membership;
 
   -- Prisregel: kun hvis ingen aktiv findes (se advarslen ovenfor).
   if not exists (select 1 from pricing_rule where is_active) then
@@ -186,6 +197,18 @@ begin
                               factor_4_weeks, factor_8_weeks, factor_12_weeks, currency, is_active)
     select v_rule, coalesce(max(version), 0) + 1, 100, 100, 1, 1, 1, 'DKK', true
     from pricing_rule
+    on conflict (id) do nothing;
+  end if;
+
+  -- Honorarregel (fase 5.1, ADR 0051): kun hvis ingen findes. 100 øre pr. time = 1,00 kr — åbenlyst
+  -- falsk, og 75 min giver 1,25 kr pr. partner pr. afholdt møde. Moms og afbudsregel står som
+  -- 'ikke_fastlagt' (tabellens default), så opgørelsen viser forbeholdene præcis som i prod.
+  -- Gælder fra 60 dage tilbage, så det afholdte møde (19 dage tilbage) afregnes efter den.
+  -- Demopartnerne har ingen login; opgørelsen ses som admin på /admin/honorar.
+  -- Fjernes af demo-clean. TODO(ejer): honorarsats (§12 pkt. 1), moms (pkt. 14), udeblivelse (pkt. 13).
+  if not exists (select 1 from fee_rule) then
+    insert into fee_rule (id, version, hourly_rate_minor, currency, effective_from)
+    values (v_fee_rule, 1, 100, 'DKK', date_trunc('day', now()) - interval '60 days')
     on conflict (id) do nothing;
   end if;
 
@@ -229,14 +252,49 @@ begin
     ('d0000000-0000-4000-8000-000000000a12', v_meeting_held, v_owner, v_mikkel, 4, null)
   on conflict do nothing;
 
-  -- Opkrævning for det afholdte møde — kun hvis demo-reglen er den aktive. Beløbet følger
-  -- formlen (base + 3 × pr. partner) × faktor_4 = (100 + 300) × 1,0 = 400 øre, præcis som
-  -- createChargeForMeeting ville regne. 'rapporteret' = indberettet, afregnes på næste faktura.
+  -- Opkrævning for den første 4-ugers periode — kun hvis demo-reglen er den aktive. Beløbet
+  -- følger formlen (base + 3 × pr. partner) × faktor_4 = (100 + 300) × 1,0 = 400 øre, præcis som
+  -- createChargesForDuePeriods ville regne. 'rapporteret' = prisen er meldt til abonnementet,
+  -- som afregnes på næste faktura. Perioden er halvåben [anchor, anchor + 28).
   if exists (select 1 from pricing_rule where id = v_rule and is_active) then
-    insert into payment_charge (id, meeting_id, membership_id, pricing_rule_id, amount_minor, currency, status, provider_charge_ref) values
-      ('d0000000-0000-4000-8000-000000000b01', v_meeting_held, v_membership, v_rule, 400, 'DKK', 'rapporteret', 'DEMO-CHARGE-SEED-0702')
+    insert into payment_charge (id, membership_id, pricing_rule_id, amount_minor, currency, status,
+                                provider_charge_ref, period_start, period_end, frequency_weeks, partner_count) values
+      ('d0000000-0000-4000-8000-000000000b01', v_membership, v_rule, 400, 'DKK', 'rapporteret',
+       'DEMO-SUB-' || v_membership::text, v_anchor, v_anchor + 28, 4, 3)
     on conflict do nothing;
   end if;
 end $$;
+
+-- --- Notifikationsskabeloner (fase 4.6, ADR 0057) ----------------------------------------
+-- Migration 0021 starter TOM: skabelontekst er ejerens (ToS/samtykke, ADR 0048), og en opfundet
+-- tekst er et plausibelt svar, ikke et synligt hul. Til design og demo seedes derfor én LIVE
+-- version pr. (beskedtype, kanal) — med tekster der åbenlyst er falske ([DEMO]) og som kun bruger
+-- variabler kataloget tillader. Kun hvor der endnu ingen skabelon findes for (type, kanal), så
+-- rigtige skabeloner aldrig overskrives eller blandes. Fjernes af demo-clean.
+insert into notification_template (id, type_key, channel, version, status, subject, body, published_at)
+select v.id::uuid, v.type_key, v.channel::notification_channel, 1, 'live', v.subject, v.body, now()
+from (values
+  ('d0000000-0000-4000-8000-000000001001', 'meeting-reminder', 'email',
+   '[DEMO] Demo-påmindelse — {{board_navn}}',
+   E'[DEMO] Dette er en demo-skabelon, ikke en rigtig tekst.\n\nBoard: {{board_navn}}\nTidspunkt: {{moede_tidspunkt}}\nLink: {{link}}'),
+  ('d0000000-0000-4000-8000-000000001002', 'meeting-reminder', 'sms', null,
+   '[DEMO] Demo-SMS: {{board_navn}}, {{moede_tidspunkt}}. {{link}}'),
+  ('d0000000-0000-4000-8000-000000001003', 'meeting-changed', 'email',
+   '[DEMO] Demo: mødet er {{aendring}} — {{board_navn}}',
+   E'[DEMO] Dette er en demo-skabelon, ikke en rigtig tekst.\n\nMødet i {{board_navn}} er {{aendring}}.\nTidspunkt: {{moede_tidspunkt}}\nLink: {{link}}'),
+  ('d0000000-0000-4000-8000-000000001004', 'rating-request', 'email',
+   '[DEMO] Demo-ratinganmodning — {{board_navn}}',
+   E'[DEMO] Dette er en demo-skabelon, ikke en rigtig tekst.\n\nMødet {{moede_tidspunkt}} i {{board_navn}} er afholdt.\nLink: {{link}}'),
+  ('d0000000-0000-4000-8000-000000001005', 'rating-request', 'sms', null,
+   '[DEMO] Demo-SMS: vurdér mødet i {{board_navn}}. {{link}}'),
+  ('d0000000-0000-4000-8000-000000001006', 'payment-failed', 'email',
+   '[DEMO] Demo: betalingen fejlede — {{board_navn}}',
+   E'[DEMO] Dette er en demo-skabelon, ikke en rigtig tekst.\n\nEt træk for {{board_navn}} fejlede.\nLink: {{link}}')
+) as v(id, type_key, channel, subject, body)
+where not exists (
+  select 1 from notification_template t
+  where t.type_key = v.type_key and t.channel = v.channel::notification_channel
+)
+on conflict (id) do nothing;
 
 commit;

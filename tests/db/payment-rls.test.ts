@@ -128,7 +128,7 @@ describe("payment_charge RLS (0013) — ejer ser egne opkrævninger, aldrig andr
     });
   });
 
-  it("IDEMPOTENS: samme møde kan ikke få to opkrævninger (meeting_id unique)", async () => {
+  it("IDEMPOTENS (gammel pr.-møde-model, bevaret af 0020): samme møde kan ikke få to opkrævninger", async () => {
     await withCharge(async (client) => {
       await expect(
         client.query(

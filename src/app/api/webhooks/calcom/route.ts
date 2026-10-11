@@ -21,6 +21,10 @@ import {
   parseCalcomEvent,
   verifyCalcomSignature,
 } from "@/server/meetings/webhook";
+import {
+  meetingChangeDiscriminator,
+  scheduleMeetingChangedNotification,
+} from "@/server/notifications/meetings";
 
 export async function POST(request: Request): Promise<Response> {
   const secret = process.env.CALCOM_WEBHOOK_SECRET;
@@ -91,6 +95,26 @@ export async function POST(request: Request): Promise<Response> {
     });
     return new Response("Kunne ikke anvende event.", { status: 500 });
   }
+  // Aflysning/flytning foretaget i Cal.coms egen UI skal også give partnerne besked (B-40).
+  // Diskriminatoren er tilstandsbaseret, så appens egen handling og dette ekko af den — og
+  // Cal.coms genleveringer — er én besked, ikke flere. Sendes efter svaret; fejler aldrig webhooken.
+  const change =
+    event.triggerEvent === "BOOKING_CANCELLED"
+      ? ({ kind: "aflyst" } as const)
+      : event.triggerEvent === "BOOKING_RESCHEDULED" && event.payload.startTime
+        ? ({ kind: "flyttet", startsAt: event.payload.startTime } as const)
+        : null;
+  if (change) {
+    for (const row of (data ?? []) as Array<{ id: string }>) {
+      scheduleMeetingChangedNotification(
+        service,
+        row.id,
+        change.kind,
+        meetingChangeDiscriminator(change.kind, change.kind === "flyttet" ? change.startsAt : undefined),
+      );
+    }
+  }
+
   if (!data || data.length === 0) {
     // Ukendt booking (fx oprettet direkte i Cal.com) — logget, bevidst IKKE oprettet her.
     await analytics.capture({

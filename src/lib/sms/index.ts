@@ -1,7 +1,9 @@
-import { isEnabled } from "@/server/flags";
-import type { SmsMessage, SmsSender } from "./port";
+import { isDemoMode, isEnabled } from "@/server/flags";
+import { DemoSmsSender } from "./demo";
+import { InMobileSmsSender } from "./inmobile";
+import type { SmsMessage, SmsReceipt, SmsSender } from "./port";
 
-export type { SmsMessage, SmsSender } from "./port";
+export type { SmsMessage, SmsReceipt, SmsSender } from "./port";
 
 interface SmsConfig {
   apiKey: string | undefined;
@@ -16,19 +18,24 @@ function isConfigured(c: SmsConfig): boolean {
   return Boolean(c.apiKey && c.sender);
 }
 
-/** Stub: virker uden nøgler — logger i stedet for at sende. */
+/**
+ * Stub: virker uden nøgler — logger i stedet for at sende. Logger ALDRIG modtager eller tekst:
+ * nummeret er persondata, og teksten kan bære et auth-frit rating-link (ADR 0057/0060).
+ */
 class StubSmsSender implements SmsSender {
   readonly name = "stub";
-  async send(message: SmsMessage): Promise<void> {
-    console.info(`[sms:stub] ville sende til ${message.to}: "${message.message}"`);
+  async send(message: SmsMessage): Promise<SmsReceipt> {
+    console.info(`[sms:stub] ville sende én SMS (${message.message.length} tegn)`);
+    return { reference: null };
   }
 }
 
-// TODO: rigtig inMobile-adapter når INMOBILE_API_KEY lander.
 export function createSmsSender(env: Record<string, string | undefined> = process.env): SmsSender {
   const config = readConfig(env);
-  if (isEnabled("sms", env) && isConfigured(config)) {
-    // return new InMobileSmsSender(config);
+  if (isEnabled("sms", env) && config.apiKey && config.sender) {
+    return new InMobileSmsSender({ apiKey: config.apiKey, sender: config.sender });
   }
+  // Demo (ADR 0041): kun når rigtig config mangler — rigtige nøgler vinder altid.
+  if (isDemoMode(env) && !isConfigured(config)) return new DemoSmsSender();
   return new StubSmsSender();
 }

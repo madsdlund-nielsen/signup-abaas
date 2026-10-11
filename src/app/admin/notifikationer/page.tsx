@@ -5,20 +5,24 @@ import { NotificationOverview } from "@/components/NotificationOverview";
 import { PageBody, PageHeader } from "@/components/PageHeader";
 
 import { getNotificationOverview } from "@/server/notifications";
+import { listRecentDeliveries, listTemplateVersions, summarize } from "@/server/notifications/templates";
 
 export const metadata: Metadata = { title: "Notifikationer — Admin" };
 export const dynamic = "force-dynamic";
 
 /**
- * Admin-oversigt over notifikationer (fase 4.5/4.6, bygget skærm-først — ADR 0042).
- * Rolle-guarden ligger i /admin/layout.tsx.
+ * Admin-oversigt over notifikationer (fase 4.5/4.6, ADR 0048 + 0057). Rolle-guarden ligger i
+ * /admin/layout.tsx. Siden læser kun: den viser hvad der vil blive sendt, hvilke skabeloner
+ * der er LIVE, og de seneste udsendelser. Skabelonerne redigeres på /admin/notifikationer/[type].
  *
- * Siden er passiv med vilje: den viser hvad der vil blive sendt og hvor langt kanalerne er,
- * men har ingen send-knap. Der er endnu ingen motor at trykke på, og en knap der ikke gør
- * noget er værre end ingen knap.
+ * Der er bevidst ingen send-knap: udsendelserne udløses af hændelser (aflysning) og af en
+ * planlagt kørsel, som endnu ikke er tændt (tidspunkterne er ejerens, ADR 0048).
  */
 export default async function AdminNotificationsPage() {
   const state = getNotificationOverview();
+  const [versions, deliveries] = await Promise.all([listTemplateVersions(), listRecentDeliveries()]);
+  const templates = summarize(versions);
+  const anyLive = versions.some((version) => version.status === "live");
 
   return (
     <>
@@ -29,16 +33,18 @@ export default async function AdminNotificationsPage() {
           </>
         }
         title="Notifikationer"
-        lead="De beskeder platformen skylder at sende omkring et møde — og hvor langt hver kanal er fra at kunne sende dem."
+        lead="De beskeder platformen skylder at sende omkring et møde — hvad der er live, og hvor langt hver kanal er fra at kunne sende dem."
       />
       <PageBody>
-        <NotificationOverview state={state} />
+        {!anyLive ? (
+          <p className="form__notice" role="status">
+            Ingen skabeloner er live endnu. Uden en live skabelon sender motoren ingenting — den
+            logger «fejlet: ingen live skabelon» og opfinder aldrig en tekst. Skriv og publicér
+            skabelonerne under «Redigér skabeloner».
+          </p>
+        ) : null}
 
-        <p className="form__notice" role="status">
-          Skabelonerne er ikke skrevet endnu. Redigering med live preview og en synlig
-          markering af hvad der er live, bygges sammen med motoren (fase 4.6) — indtil da
-          findes der hverken skabelontekst eller udsendelseslog at vise.
-        </p>
+        <NotificationOverview state={state} templates={templates} deliveries={deliveries} />
       </PageBody>
     </>
   );

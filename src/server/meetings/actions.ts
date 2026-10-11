@@ -18,8 +18,14 @@ import type { AuthFormState } from "@/components/AuthForm";
 import { getCurrentUser, requireRole, type AuthUser, type Role } from "@/server/auth";
 import { isSupabaseAuthConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { createServiceSupabase } from "@/server/auth/supabase-server";
-import { createBookingProvider } from "@/lib/booking";
-import { createChargeForMeeting } from "@/server/charges/create";
+import { createBookingProvider, type BookingAttendee, type BookingProvider } from "@/lib/booking";
+import { assertBoardAvailable, assertMeetingBoardAvailable } from "@/server/availability/guard";
+import { copenhagenLocalToIso } from "@/server/time/copenhagen";
+import {
+  meetingChangeDiscriminator,
+  scheduleMeetingChangedNotification,
+} from "@/server/notifications/meetings";
+import { ownerAttendee, resolveEventTypeId } from "./booking-info";
 import type { MeetingRegisteredStatus } from "./index";
 
 interface ActionContext {
@@ -39,50 +45,45 @@ function toError(e: unknown): AuthFormState {
 }
 
 interface BoardBookingInfo {
-  ownerUserId: string;
-  /** Koblede partneres auth-id'er. TODO(mads): managed-user-provisionering hos Cal.com
-   *  afklares i liveverifikationen — ukoblede partnere kan ikke kalender-tjekkes endnu. */
-  partnerUserIds: string[];
+  /** Boardets collective event type (`board.calcom_event_type_id`, 0019) — værterne hører til det. */
+  eventTypeId: number;
+  /** Ejeren som Cal.com-attendee (ét objekt, ikke et bruger-id — ADR 0046). */
+  attendee: BookingAttendee;
 }
 
 async function readBoardBookingInfo(
   service: SupabaseClient,
   boardId: string,
+  provider: BookingProvider,
 ): Promise<BoardBookingInfo> {
   const { data: board, error: boardError } = await service
     .from("board")
-    .select("owner_id")
+    .select("owner_id, calcom_event_type_id")
     .eq("id", boardId)
     .maybeSingle();
   if (boardError || !board) throw new Error("Board ikke fundet.");
+  const row = board as { owner_id: string; calcom_event_type_id: number | null };
 
-  const { data: members, error: membersError } = await service
-    .from("board_partner")
-    .select("partner_profile(app_user_id)")
-    .eq("board_id", boardId);
-  if (membersError) throw new Error(`Kunne ikke læse boardets partnere: ${membersError.message}`);
+  // Højlydt fejl i rigtig tilstand hvis boardet mangler event type (demo: falsk id). Før
+  // ejer-opslaget, så intet læses unødigt — og før mødet oprettes i Supabase.
+  const eventTypeId = resolveEventTypeId(provider, row.calcom_event_type_id);
 
-  const profiles = ((members ?? []) as Array<{
-    partner_profile: { app_user_id: string | null } | Array<{ app_user_id: string | null }> | null;
-  }>).map((row) => (Array.isArray(row.partner_profile) ? row.partner_profile[0] : row.partner_profile));
+  const { data: owner, error: ownerError } = await service
+    .from("app_user")
+    .select("email, display_name, time_zone")
+    .eq("id", row.owner_id)
+    .maybeSingle();
+  if (ownerError || !owner) throw new Error("Ejerens kontaktoplysninger kunne ikke læses.");
 
-  const partnerUserIds = profiles
-    .map((profile) => profile?.app_user_id)
-    .filter((id): id is string => Boolean(id));
-
-  // Fejl højlydt frem for at booke et board-møde med FÆRRE værter end boardet har partnere.
-  // En partner uden auth-kobling (ADR 0025) kan ikke være vært hos Cal.com, og en stille
-  // udeladelse ville give et møde der ser komplet ud i appen, men mangler en rådgiver —
-  // præcis den slags "plausibelt, men forkert" som docs/stub-politik.md forbyder.
-  const unlinked = profiles.length - partnerUserIds.length;
-  if (unlinked > 0) {
-    throw new Error(
-      `${unlinked} af boardets partnere har endnu ikke et login og kan ikke bookes som vært. ` +
-        `Invitér dem først (admin → partner-katalog).`,
-    );
-  }
-
-  return { ownerUserId: (board as { owner_id: string }).owner_id, partnerUserIds };
+  const account = owner as { email: string; display_name: string | null; time_zone: string | null };
+  return {
+    eventTypeId,
+    attendee: ownerAttendee({
+      email: account.email,
+      displayName: account.display_name,
+      timeZone: account.time_zone,
+    }),
+  };
 }
 
 /** Opret møde + deltagere i Supabase, book hos provider, hægt referencen på. */
@@ -91,7 +92,10 @@ async function createMeetingForBoard(
   boardId: string,
   startsAt: string,
 ): Promise<void> {
-  const info = await readBoardBookingInfo(service, boardId);
+  // Partner-tilgængelighed (fase 5.3, ADR 0052): afvis før noget skrives.
+  await assertBoardAvailable(service, boardId, startsAt);
+  const booking = createBookingProvider();
+  const info = await readBoardBookingInfo(service, boardId, booking);
 
   const { data: members } = await service
     .from("board_partner")
@@ -121,13 +125,12 @@ async function createMeetingForBoard(
     throw new Error(`Kunne ikke tilknytte deltagere: ${participantsError.message}`);
   }
 
-  const booking = createBookingProvider();
   try {
     const scheduled = await booking.createMultiHostMeeting({
-      ownerUserId: info.ownerUserId,
-      partnerUserIds: info.partnerUserIds,
-      startsAt,
-      durationMinutes: 60,
+      eventTypeId: info.eventTypeId,
+      start: startsAt,
+      attendee: info.attendee,
+      metadata: { abaasMeetingId: meetingId, abaasBoardId: boardId },
     });
     const { error: attachError } = await service
       .from("meeting")
@@ -193,7 +196,7 @@ export async function bookMeeting(_prev: AuthFormState, formData: FormData): Pro
       .maybeSingle();
     if (!owned) return { error: "Board ikke fundet." };
 
-    await createMeetingForBoard(service, boardId, new Date(startsAt).toISOString());
+    await createMeetingForBoard(service, boardId, copenhagenLocalToIso(startsAt));
     revalidatePath("/moeder");
     return {};
   } catch (e) {
@@ -216,17 +219,26 @@ export async function rescheduleMeeting(
     if (!meetingId || !startsAt) return { error: "Møde og nyt starttidspunkt er påkrævet." };
 
     const { providerBookingUid } = await requireOwnedMeeting(service, user, meetingId);
-    let confirmed = new Date(startsAt).toISOString();
+    let confirmed = copenhagenLocalToIso(startsAt); // B-29: dansk vægurstid, ikke serverens zone
+    await assertMeetingBoardAvailable(service, meetingId, confirmed); // fase 5.3, ADR 0052
     if (providerBookingUid) {
       const scheduled = await createBookingProvider().rescheduleMeeting(providerBookingUid, confirmed);
       confirmed = scheduled.startsAt;
     }
 
+    const changedAt = new Date().toISOString();
     const { error } = await service
       .from("meeting")
-      .update({ starts_at: confirmed, updated_at: new Date().toISOString() })
+      .update({ starts_at: confirmed, updated_at: changedAt })
       .eq("id", meetingId);
     if (error) return { error: `Kunne ikke flytte mødet: ${error.message}` };
+    // Besked til partnerne (fase 4.5) — efter svaret, og aldrig en fejlkilde for handlingen.
+    scheduleMeetingChangedNotification(
+      service,
+      meetingId,
+      "flyttet",
+      meetingChangeDiscriminator("flyttet", confirmed),
+    );
     revalidatePath("/moeder");
     return {};
   } catch (e) {
@@ -246,11 +258,14 @@ export async function cancelMeeting(_prev: AuthFormState, formData: FormData): P
       await createBookingProvider().cancelMeeting(providerBookingUid);
     }
 
+    const changedAt = new Date().toISOString();
     const { error } = await service
       .from("meeting")
-      .update({ status: "aflyst", updated_at: new Date().toISOString() })
+      .update({ status: "aflyst", updated_at: changedAt })
       .eq("id", meetingId);
     if (error) return { error: `Kunne ikke aflyse mødet: ${error.message}` };
+    // Besked til partnerne (fase 4.5) — efter svaret, og aldrig en fejlkilde for handlingen.
+    scheduleMeetingChangedNotification(service, meetingId, "aflyst", meetingChangeDiscriminator("aflyst"));
     revalidatePath("/moeder");
     return {};
   } catch (e) {
@@ -280,7 +295,7 @@ export async function initiateNextMeeting(
       .maybeSingle();
     if (!lead) return { error: "Kun boardets lead-partner kan initiere næste møde." };
 
-    await createMeetingForBoard(service, boardId, new Date(startsAt).toISOString());
+    await createMeetingForBoard(service, boardId, copenhagenLocalToIso(startsAt));
     revalidatePath("/partner");
     revalidatePath("/moeder");
     return {};
@@ -326,18 +341,12 @@ export async function registerMeetingStatus(formData: FormData): Promise<void> {
   // Livscyklus-kobling (ADR 0026): en 'afholdt'-registrering bekræfter at mødet fandt sted →
   // planlagt→afholdt. Øvrige registreringer rører IKKE livscyklussen (konsekvens er ejer-uafklaret).
   if (status === "afholdt") {
-    const { data: flipped } = await service
+    await service
       .from("meeting")
       .update({ status: "afholdt", updated_at: new Date().toISOString() })
       .eq("id", meetingId)
-      .eq("status", "planlagt")
-      .select("id");
-    // Charge-grundlag KUN fra den registrering der faktisk flippede (ADR 0030) — ellers
-    // ville N partneres registreringer give N forsøg. `meeting_id unique` er andet lag.
-    // createChargeForMeeting kaster aldrig; partnerens registrering afhænger ikke af betaling.
-    if (flipped && flipped.length > 0) {
-      await createChargeForMeeting(service, meetingId);
-    }
+      .eq("status", "planlagt");
+    // Ingen opkrævning her (B-19, ADR 0056): abonnementet forfalder hver 4. uge uanset møder.
   }
 
   revalidatePath("/partner");

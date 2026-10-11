@@ -95,8 +95,8 @@ describe("PricingRuleForm — preview inden gem (ADR 0017-mønstret)", () => {
       <PricingRuleForm action={noop} nextVersion={1} />,
     );
 
-    fireEvent.change(getByLabelText("Grundpris pr. møde (øre)"), { target: { value: "100" } });
-    fireEvent.change(getByLabelText("Pris pr. partner pr. møde (øre)"), { target: { value: "10" } });
+    fireEvent.change(getByLabelText("Grundpris pr. periode (øre)"), { target: { value: "100" } });
+    fireEvent.change(getByLabelText("Pris pr. partner pr. periode (øre)"), { target: { value: "10" } });
     fireEvent.change(getByLabelText("Faktor — hver 4. uge"), { target: { value: "1" } });
     fireEvent.change(getByLabelText("Faktor — hver 8. uge"), { target: { value: "0.5" } });
     fireEvent.change(getByLabelText("Faktor — hver 12. uge"), { target: { value: "0.25" } });

@@ -66,7 +66,7 @@ Markeret i kode med `// TODO(ejer):` / `// TODO(mads):`.
 
 | Punkt | Hvor |
 |---|---|
-| Lead-partner: tildelings- og rotationsregler | `src/server/flags/index.ts:38`, `src/server/boards/actions.ts:88,162,195`, `supabase/migrations/0002_board.sql:15`, `0009_partner_profile.sql:14` |
+| Lead-partner: tildelings- og rotationsregler | `src/server/flags/index.ts:38`, `src/server/boards/composition.ts` (`resolveLead`), `src/server/boards/actions.ts`, `src/server/boards/admin-actions.ts`, `supabase/migrations/0002_board.sql:15`, `0009_partner_profile.sql:14` |
 | Board-livscyklus (hvornår slutter et board) | `src/server/boards/index.ts:9`, `supabase/migrations/0002_board.sql:3` |
 | Honorarsats pr. partner pr. møde (binder meeting-fee) | `supabase/migrations/0009_partner_profile.sql:23`, `src/lib/payments/port.ts:10` |
 | Samtykketekst + ToS + endelig kategori-liste | `src/server/consent/index.ts:6` |

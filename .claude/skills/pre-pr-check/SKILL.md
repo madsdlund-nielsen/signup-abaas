@@ -24,10 +24,13 @@ npm run db:test:down
 ```
 
 ## Forhold til hooks
-- `.husky/pre-push` kører allerede lint-gaten (typecheck + unit) ved `git push`.
-- De opt-in Claude Code-hooks i `.claude/hooks/` (se README dér) kan gate push + PR-oprettelse,
-  hvis du selv tilføjer `.claude/settings.json`.
-- Denne skill er til en **manuel** kørsel, fx før du beder om en PR.
+- `.husky/pre-push` kører typecheck + unit ved `git push` (lint er ikke med). Hooket wires af
+  `npm install` via `prepare`-scriptet.
+- `.claude/settings.json` er checked in og aktiverer to Claude Code-hooks (se
+  `.claude/hooks/README.md`): `gate-on-push.sh` blokerer `git push`, og `run-pre-pr-gate.sh`
+  blokerer `mcp__github__create_pull_request`, begge når typecheck eller unit fejler.
+- Denne skill er til en **manuel** kørsel, fx før du beder om en PR. Den erstatter ikke
+  hooks: en PR oprettet via GitHub-MCP'en bliver gatet automatisk.
 
 ## Hvis noget fejler
 Ret koden/testen — omgå **ikke** med `--no-verify`. Hvis Docker mangler lokalt, dækker CI

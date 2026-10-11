@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Client } from "pg";
 import { describe, expect, it } from "vitest";
+import { NOTIFICATION_TYPES, allowedVariableKeys } from "@/server/notifications/catalog";
+import { validateTemplate } from "@/server/notifications/render";
 import { asPostgres } from "./helpers";
 
 /**
@@ -16,6 +18,7 @@ import { asPostgres } from "./helpers";
  */
 const DEMO_PREFIX = "d0000000-0000-4000-8000-%";
 const DEMO_RULE_ID = "d0000000-0000-4000-8000-000000000601";
+const DEMO_FEE_RULE_ID = "d0000000-0000-4000-8000-000000000602";
 
 /** Ejer-E fra tests/setup/seed.sql: har rollen ejer og — afgørende — intet board. */
 const OWNER_E = { id: "00000000-0000-0000-0000-00000000000e", email: "ejer-e@example.com" };
@@ -51,6 +54,7 @@ async function populatedCounts(client: Client): Promise<Record<string, number>> 
        (select count(*) from meeting_rating      where id::text like $1) as vurderinger,
        (select count(*) from payment_charge      where id::text like $1) as opkraevninger,
        (select count(*) from pricing_rule        where id::text like $1 and is_active) as demoregler,
+       (select count(*) from fee_rule            where id::text like $1) as honorarregler,
        (select count(*) from quiz_answer         where id::text like $1) as svar`,
     [DEMO_PREFIX],
   );
@@ -68,6 +72,7 @@ const EMPTY = {
   vurderinger: 0,
   opkraevninger: 0,
   demoregler: 0,
+  honorarregler: 0,
   svar: 0,
 };
 
@@ -82,6 +87,7 @@ const POPULATED = {
   vurderinger: 2,
   opkraevninger: 1,
   demoregler: 1,
+  honorarregler: 1,
   svar: 4,
 };
 
@@ -150,6 +156,8 @@ describe("demo-seed (supabase/seed/demo.sql)", () => {
       await client.query(SEED);
       const { rows } = await client.query("select count(*) as antal from pricing_rule");
       expect(Number(rows[0].antal)).toBe(0);
+      const fees = await client.query("select count(*) as antal from fee_rule");
+      expect(Number(fees.rows[0].antal)).toBe(0);
       expect(await populatedCounts(client)).toEqual(EMPTY);
     });
   });
@@ -218,19 +226,31 @@ describe("demo-seed — befolket tilstand for en eksisterende ejer (ADR 0043)", 
       expect(Number(registered[0].antal)).toBe(3);
 
       const { rows: charge } = await client.query(
-        `select amount_minor, currency, status, provider_charge_ref, pricing_rule_id
+        `select amount_minor, currency, status, provider_charge_ref, pricing_rule_id,
+                meeting_id, period_start::text as period_start, period_end::text as period_end,
+                frequency_weeks, partner_count
            from payment_charge where id::text like $1`,
         [DEMO_PREFIX],
       );
-      // (100 + 3 × 100) × 1,0 = 400 øre — åbenlyst falsk, og samme formel som createChargeForMeeting.
+      // (100 + 3 × 100) × 1,0 = 400 øre — åbenlyst falsk, og samme formel som createChargesForDuePeriods.
       expect(charge[0]).toMatchObject({ amount_minor: 400, currency: "DKK", status: "rapporteret", pricing_rule_id: DEMO_RULE_ID });
-      expect(charge[0].provider_charge_ref).toMatch(/^DEMO-CHARGE-/);
+      expect(charge[0].provider_charge_ref).toMatch(/^DEMO-SUB-/);
+      // Opkrævningen er pr. 4-ugers periode (B-19) og hænger ikke på et møde.
+      expect(charge[0]).toMatchObject({ meeting_id: null, frequency_weeks: 4, partner_count: 3 });
+      const { rows: span } = await client.query(
+        `select (period_end - period_start) as dage from payment_charge where id::text like $1`,
+        [DEMO_PREFIX],
+      );
+      expect(span[0].dage).toBe(28);
 
       const { rows: membership } = await client.query(
-        `select provider_customer_ref from membership where id::text like $1`,
+        `select provider_customer_ref, provider_subscription_ref, billing_anchor <= current_date as anker_i_fortiden
+           from membership where id::text like $1`,
         [DEMO_PREFIX],
       );
       expect(membership[0].provider_customer_ref).toMatch(/^DEMO-CUSTOMER-/);
+      expect(membership[0].provider_subscription_ref).toMatch(/^DEMO-SUB-/);
+      expect(membership[0].anker_i_fortiden).toBe(true);
 
       const { rows: lead } = await client.query(
         `select count(*) as antal from board_partner where board_id::text like $1 and is_lead`,
@@ -263,6 +283,66 @@ describe("demo-seed — befolket tilstand for en eksisterende ejer (ADR 0043)", 
     });
   });
 
+  it("seeder en åbenlyst falsk honorarregel (1 kr i timen) så opgørelsen kan klikkes", async () => {
+    await asPostgres(async (client) => {
+      await seedAsOwner(client, OWNER_E.email);
+      const { rows } = await client.query(
+        `select id, version, hourly_rate_minor, currency, vat_mode, absence_rule,
+                effective_from < now() as gaelder_allerede
+           from fee_rule where id::text like $1`,
+        [DEMO_PREFIX],
+      );
+      // 100 øre pr. time = 1 kr; moms og afbudsregel er IKKE besluttet af seed'et.
+      expect(rows).toEqual([
+        {
+          id: DEMO_FEE_RULE_ID,
+          version: 1,
+          hourly_rate_minor: 100,
+          currency: "DKK",
+          vat_mode: "ikke_fastlagt",
+          absence_rule: "ikke_fastlagt",
+          gaelder_allerede: true,
+        },
+      ]);
+
+      // Det afholdte demo-møde afregnes efter reglen: regelen gælder fra før mødet.
+      const { rows: covered } = await client.query(
+        `select count(*) as antal from meeting m
+          where m.id::text like $1 and m.status = 'afholdt'
+            and m.starts_at >= (select effective_from from fee_rule where id = $2)`,
+        [DEMO_PREFIX, DEMO_FEE_RULE_ID],
+      );
+      expect(Number(covered[0].antal)).toBe(1);
+    });
+  });
+
+  it("admin ser demo-opgørelsen i viewen: tre partnerlinjer på det afholdte og tre på det kommende møde", async () => {
+    await asPostgres(async (client) => {
+      await seedAsOwner(client, OWNER_E.email);
+      await client.query("set local role app_authenticated");
+      await client.query("select set_config('request.jwt.claim.sub', $1, true)", ["00000000-0000-0000-0000-00000000000d"]);
+      const { rows } = await client.query(
+        `select meeting_status, count(*) as antal from partner_fee_line
+          where meeting_id::text like $1 group by meeting_status`,
+        [DEMO_PREFIX],
+      );
+      const byStatus = Object.fromEntries(rows.map((r) => [r.meeting_status, Number(r.antal)]));
+      expect(byStatus).toEqual({ afholdt: 3, planlagt: 3 });
+    });
+  });
+
+  it("rører ikke honorarregler når en findes — og seeder ingen", async () => {
+    await asPostgres(async (client) => {
+      await client.query(
+        `insert into fee_rule (version, hourly_rate_minor, effective_from) values (1, 0, '2026-01-01T00:00:00Z')`,
+      );
+      await seedAsOwner(client, OWNER_E.email);
+      expect(await populatedCounts(client)).toEqual({ ...POPULATED, honorarregler: 0 });
+      const { rows } = await client.query("select count(*) as antal from fee_rule");
+      expect(Number(rows[0].antal)).toBe(1);
+    });
+  });
+
   it("fejler højlydt når e-mailen ikke findes i app_user", async () => {
     await asPostgres(async (client) => {
       await expect(seedAsOwner(client, "findes-ikke@example.com")).rejects.toThrow(/opret ejeren via \/signup/);
@@ -290,13 +370,103 @@ describe("demo-seed — befolket tilstand for en eksisterende ejer (ADR 0043)", 
     });
   });
 
-  it("demo-clean fjerner den befolkede tilstand, opkrævningen og demo-reglen", async () => {
+  it("demo-clean fjerner den befolkede tilstand, opkrævningen og demo-reglerne", async () => {
     await asPostgres(async (client) => {
       await seedAsOwner(client, OWNER_E.email);
       await client.query(CLEAN);
       expect(await populatedCounts(client)).toEqual(EMPTY);
       const { rows } = await client.query("select count(*) as antal from pricing_rule where id = $1", [DEMO_RULE_ID]);
       expect(Number(rows[0].antal)).toBe(0);
+    });
+  });
+});
+
+/**
+ * Demo-skabeloner til notifikationsmotoren (fase 4.6, ADR 0057). Migration 0021 starter tom;
+ * seed'et må kun indsætte åbenlyst falske `[DEMO]`-tekster, og de skal være skrevet mod
+ * kataloget — ellers ville en demo-udsendelse fejle på «ukendt variabel».
+ */
+describe("demo-seed: notifikationsskabeloner", () => {
+  async function templates(client: Client) {
+    const { rows } = await client.query(
+      `select id, type_key, channel, status, subject, body from notification_template
+        where id::text like $1 order by type_key, channel`,
+      [DEMO_PREFIX],
+    );
+    return rows as Array<{
+      id: string;
+      type_key: string;
+      channel: "email" | "sms";
+      status: string;
+      subject: string | null;
+      body: string;
+    }>;
+  }
+
+  it("indsætter én live demo-skabelon pr. beskedtype og kanal i kataloget", async () => {
+    await asPostgres(async (client) => {
+      await client.query(SEED);
+      const rows = await templates(client);
+      expect(rows).toHaveLength(6);
+      expect(rows.every((row) => row.status === "live")).toBe(true);
+      const pairs = rows.map((row) => `${row.type_key}:${row.channel}`);
+      for (const type of NOTIFICATION_TYPES) {
+        for (const channel of type.channels) expect(pairs, type.key).toContain(`${type.key}:${channel}`);
+      }
+    });
+  });
+
+  it("tekster og emner er åbenlyst falske ([DEMO])", async () => {
+    await asPostgres(async (client) => {
+      await client.query(SEED);
+      for (const row of await templates(client)) {
+        expect(row.body.startsWith("[DEMO]"), row.id).toBe(true);
+        if (row.channel === "email") expect(row.subject?.startsWith("[DEMO]"), row.id).toBe(true);
+      }
+    });
+  });
+
+  it("hver demo-skabelon er gyldig mod kataloget — ingen ukendte variabler eller syntaksfejl", async () => {
+    await asPostgres(async (client) => {
+      await client.query(SEED);
+      for (const row of await templates(client)) {
+        const type = NOTIFICATION_TYPES.find((t) => t.key === row.type_key)!;
+        const problems = validateTemplate(
+          { channel: row.channel, subject: row.subject, body: row.body },
+          allowedVariableKeys(type),
+        );
+        expect(problems, `${row.type_key}:${row.channel}`).toEqual([]);
+      }
+    });
+  });
+
+  it("kan køres to gange uden dubletter, og overskriver aldrig en eksisterende skabelon", async () => {
+    await asPostgres(async (client) => {
+      await client.query(
+        `insert into notification_template (type_key, channel, version, status, subject, body, published_at)
+         values ('meeting-changed', 'email', 1, 'live', 'Rigtigt emne', 'Rigtig tekst', now())`,
+      );
+      await client.query(SEED);
+      await client.query(SEED);
+      const rows = await templates(client);
+      expect(rows).toHaveLength(5); // alle undtagen meeting-changed:email, som allerede havde en live
+      expect(rows.some((row) => row.type_key === "meeting-changed")).toBe(false);
+    });
+  });
+
+  it("demo-clean fjerner dem — også de publicerede, som ellers er uforanderlige", async () => {
+    await asPostgres(async (client) => {
+      await client.query(SEED);
+      await client.query(CLEAN);
+      expect(await templates(client)).toEqual([]);
+      // Undtagelsen gælder kun demo-id-navnerummet: en rigtig publiceret version kan ikke slettes.
+      await client.query(
+        `insert into notification_template (id, type_key, channel, version, status, subject, body, published_at)
+         values ('a1000000-0000-4000-8000-000000001999', 'payment-failed', 'email', 1, 'live', 's', 'b', now())`,
+      );
+      await expect(
+        client.query("delete from notification_template where id = 'a1000000-0000-4000-8000-000000001999'"),
+      ).rejects.toThrow(/kan ikke slettes/);
     });
   });
 });

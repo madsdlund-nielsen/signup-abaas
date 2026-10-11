@@ -27,3 +27,17 @@ export function readGateConfig(env: Record<string, string | undefined> = process
 export function isGateActive(config: GateConfig): boolean {
   return config.enabled && config.passwordHash !== null && config.cookieSecret !== null;
 }
+
+/**
+ * Ruter der er undtaget adgangsporten. KUN to, og begge med en grund:
+ *   - `/gate` er porten selv.
+ *   - `/vurdering/<token>` er den signerede engangsrute til mødevurdering (B-21, ADR 0060). Et
+ *     link i en mail rammer en modtager der aldrig har tastet den delte adgangskode; rutens
+ *     egen autorisation er tokenets HMAC-signatur, så porten har intet at bidrage med dér.
+ *
+ * Præfikset har afsluttende skråstreg, så `/vurderingfoo` og `/vurdering` ikke slipper igennem.
+ * Hver ny undtagelse er en bevidst åbning af en auth-fri vej og kræver en ADR.
+ */
+export function isGateExempt(pathname: string): boolean {
+  return pathname === "/gate" || pathname.startsWith("/vurdering/");
+}

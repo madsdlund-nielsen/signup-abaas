@@ -41,6 +41,10 @@ export default defineConfig({
           environment: "node",
           include: ["tests/db/**/*.test.ts"],
           globalSetup: ["tests/setup/db-global.ts"],
+          // Én testfil ad gangen (ADR 0063): filerne deler én database, og parallelle
+          // transaktioner der indsætter samme unikke nøgler (fx demo-seed og skabelontestene)
+          // deadlocker. Isolation er vigtigere end de få sekunder parallelisme sparede.
+          fileParallelism: false,
         },
       },
     ],
@@ -49,8 +53,8 @@ export default defineConfig({
     // meningsfuld, ikke-flaky tærskel. Tærsklen håndhæves i CI (ADR 0028).
     // Tærskeltallene er revideret i ADR 0040: Vitest 5 gør AST-aware remapping til
     // standard i v8-provideren, så tælleenheden skiftede og de gamle 70/70/70/60 målte
-    // ikke længere det samme. Functions bliver på 70 indtil OptionsSection.tsx er testet
-    // (backlog B-16).
+    // ikke længere det samme. OptionsSection.tsx er testet (backlog B-16), så functions
+    // følger de øvrige tærskler op til 75.
     coverage: {
       provider: "v8",
       include: ["src/components/**", "src/server/flags/**", "src/server/auth/**"],
@@ -67,7 +71,7 @@ export default defineConfig({
         "src/server/auth/actions.ts",
       ],
       reporter: ["text", "html"],
-      thresholds: { lines: 75, functions: 70, statements: 75, branches: 70 },
+      thresholds: { lines: 75, functions: 75, statements: 75, branches: 70 },
     },
   },
 });

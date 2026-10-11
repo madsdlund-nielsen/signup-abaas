@@ -15,17 +15,32 @@ vi.mock("@/server/auth/supabase-server", () => ({
   createServerSupabase: async () => mocked.service,
 }));
 
+// Notifikationen fra webhooken (B-40) fanges her; selve motoren testes i notification-*.test.ts.
+const notified = vi.hoisted(() => [] as Array<{ meetingId: string; change: string; key: string }>);
+vi.mock("@/server/notifications/meetings", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/server/notifications/meetings")>();
+  return {
+    ...actual,
+    scheduleMeetingChangedNotification: (_service: unknown, meetingId: string, change: string, key: string) => {
+      notified.push({ meetingId, change, key });
+    },
+  };
+});
+
 describe("booking-port uden konfiguration (backend-stub — kaster, foregiver aldrig)", () => {
   const stub = createBookingProvider({});
 
-  it("alle fire operationer kaster NotConfiguredError", async () => {
+  it("alle fem operationer kaster NotConfiguredError", async () => {
     await expect(
       stub.createMultiHostMeeting({
-        ownerUserId: "o",
-        partnerUserIds: ["p"],
-        startsAt: "2026-09-01T10:00:00Z",
-        durationMinutes: 60,
+        eventTypeId: 7,
+        start: "2026-09-01T10:00:00Z",
+        attendee: { name: "Ejer", email: "ejer@example.com", timeZone: "Europe/Copenhagen" },
+        metadata: {},
       }),
+    ).rejects.toBeInstanceOf(NotConfiguredError);
+    await expect(
+      stub.upsertBoardEventType({ title: "Board", slug: "board", lengthInMinutes: 60, hostUserIds: [1] }),
     ).rejects.toBeInstanceOf(NotConfiguredError);
     await expect(stub.rescheduleMeeting("uid", "2026-09-02T10:00:00Z")).rejects.toBeInstanceOf(
       NotConfiguredError,
@@ -39,7 +54,7 @@ describe("booking-port uden konfiguration (backend-stub — kaster, foregiver al
       createBookingProvider({ FLAG_BOOKING: "true" }).cancelMeeting("uid"),
     ).rejects.toBeInstanceOf(NotConfiguredError);
     await expect(
-      createBookingProvider({ CALCOM_API_KEY: "nøgle", CALCOM_EVENT_TYPE_ID: "7" }).cancelMeeting("uid"),
+      createBookingProvider({ CALCOM_API_KEY: "nøgle", CALCOM_TEAM_ID: "7" }).cancelMeeting("uid"),
     ).rejects.toBeInstanceOf(NotConfiguredError);
   });
 });
@@ -172,5 +187,31 @@ describe("webhook-idempotens må betyde 'præcis én gang', ikke 'højst én gan
 
     expect(response.status).toBe(200);
     expect(calls).toEqual(["insert:meeting_webhook_event", "update:meeting"]);
+  });
+
+  it("aflysning i Cal.coms egen UI giver partnerne besked — med samme nøgle som appens aflysning (B-40)", async () => {
+    configure();
+    notified.length = 0;
+    mocked.service = fakeService(null).service;
+
+    const { body, signature } = signedCancel();
+    expect((await post(body, signature)).status).toBe(200);
+    // Nøglen er tilstandsbaseret: appens egen aflysning (som Cal.com ekkoer) giver samme nøgle,
+    // så partnerne får én besked, ikke to.
+    expect(notified).toEqual([{ meetingId: "m1", change: "aflyst", key: "endelig" }]);
+  });
+
+  it("flytning i Cal.com giver besked med det nye tidspunkt som nøgle; uden tidspunkt ingen besked", async () => {
+    configure();
+    notified.length = 0;
+    mocked.service = fakeService(null).service;
+
+    const sign = (payload: Record<string, unknown>) => {
+      const body = JSON.stringify({ triggerEvent: "BOOKING_RESCHEDULED", createdAt: "2026-08-26T10:00:00Z", payload });
+      return { body, signature: createHmac("sha256", "s3cret").update(body).digest("hex") };
+    };
+    const moved = sign({ uid: "cal-uid-2", rescheduleUid: "cal-uid-1", startTime: "2026-11-02T09:00:00+00:00" });
+    expect((await post(moved.body, moved.signature)).status).toBe(200);
+    expect(notified).toEqual([{ meetingId: "m1", change: "flyttet", key: "2026-11-02T09:00:00.000Z" }]);
   });
 });

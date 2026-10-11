@@ -13,11 +13,12 @@
 
 ## Leverancekriterier (Definition of Done for fase 3)
 
-> **Status: BETINGET LUKKET 2026-08-26.** 8 af 9 punkter er verificeret og krydset af.
-> Punkt 5 er **omskrevet, ikke afkrydset**: kriteriet beskrev den model fasen blev bygget
-> efter, og den er siden ændret (ADR 0034). Liveverifikation mod Alunta/QuickPay udestår
-> til konti findes — checkliste i `docs/fase-3-rapport.md` §7, som er en gate før
-> **produktion**, ikke før fase 4. Begrundelse: rapportens §5.
+> **Status: BETINGET LUKKET 2026-08-26; modelrettelsen (B-19) leveret 2026-10-10 (ADR 0056).**
+> Punkt 5 var **omskrevet, ikke afkrydset**, fordi kriteriet beskrev den model fasen blev
+> bygget efter og den siden er ændret (ADR 0034). Koden følger nu den nye model og punktet er
+> krydset af. Liveverifikation mod Alunta/QuickPay udestår til konti findes — checkliste i
+> `docs/fase-3-rapport.md` §7, som er en gate før **produktion**, ikke før fase 4. Aluntas
+> manglende 4-ugers kadence (B-35) er et åbent Mads-punkt.
 
 - [x] Betalingsmekanikken bygget mod porten i `src/lib/payments/` — **ingen direkte
       SDK-kald uden for adapteren**. Interfacet forbliver leverandørneutralt.
@@ -29,12 +30,11 @@
       frekvens (4 / 8 / 12 uger).
 - [x] Checkout-mekanik via porten (kortregistrering + charge-grundlag); MobilePay
       afventer Alunta-verifikation (`TODO(mads)`).
-- [ ] ⚠ **KRITERIET ER FORÆLDET — ikke afkrydset.** Det lød: *"Varierende
-      betalingsfrekvenser implementeret: kort registreres ved booking, træk sker ved
-      afholdelse."* Modellen er siden ændret til et **fast abonnement der forfalder
-      hver 4. uge**, hvor størrelsen afhænger af antal rådgivere og mødefrekvens
-      (ADR 0034). Koden implementerer stadig den gamle model — rework spores som
-      `docs/backlog.md` B-19 og skal ske før betaling går live.
+- [x] **Fast abonnement hver 4. uge** (ADR 0034, bygget i ADR 0056): opkrævningen er koblet fra
+      møderne og oprettes pr. 28-dages periode af en planlagt kørsel, idempotent via
+      `unique (membership_id, period_start)`. Beløbet beregnes af den aktive prisregel ud fra
+      rådgiverantal og frekvens på periodens start. Ingen proratering (ikke besluttet).
+      ⚠ Alunta fakturerer kun i måneder — 4-ugers-kadencen hos leverandøren er B-35 (Mads).
 - [x] Webhook → `membership` i Supabase. Signaturverificeret og **idempotent**.
 - [x] Op- og nedgradering af abonnement virker (frekvens og boardstørrelse).
 - [x] Betalingsstatus synlig for ejer; fejlede træk håndteres og logges via
@@ -69,7 +69,7 @@
 
 ### 3.3 Prisberegner (ejer-vendt)
 - Beregner pris ud fra 2-3 partnere × frekvens (4/8/12 uger).
-- Vis prisen transparent — hvad der betales, hvornår, og pr. møde.
+- Vis prisen transparent — hvad der betales, hvornår, og pr. 4. uge.
 - Sprogbrug: **"varierende betalingsfrekvenser"**, aldrig "pay-per-meeting".
 - Åbner samtidig for at board-anbefalingens infobar kan vise pris i stedet for
   kompetence-delta (fase 1.5 byggede kompetence-delta, fordi prisen manglede — se
@@ -77,8 +77,9 @@
 
 ### 3.4 Checkout
 - Alunta-checkout med kort + MobilePay som betalingsmetoder.
-- Kortregistrering ved booking; **træk først ved afholdt møde** (kobling til
-  mødestatus fra fase 2).
+- Kortregistrering via checkout; abonnementet forfalder **hver 4. uge fra kortregistreringen**
+  (ADR 0034/0056) — uafhængigt af mødestatus. (Den tidligere "træk først ved afholdt møde" er
+  udgået.)
 - Stylet med design-tokens: firkantet, navy/guld, Open Sans.
 
 ### 3.5 Webhooks → membership
@@ -95,11 +96,11 @@
 - Skift af frekvens (4 ↔ 8 ↔ 12 uger) og boardstørrelse (2 ↔ 3 partnere).
 - Boardstørrelsen skal respektere fase 1's invariant: 2-3 partnere, mindst 1 intern
   (`src/server/matching/algorithm.ts`).
-- **Ingen proratering** (rettet 2026-08-04, ADR 0030): med træk-pr-afholdelse findes
-  ingen forudbetaling at proratere — §5.9 siger selv *"meeting-fee justeres tilsvarende
-  ved næste afholdelse"*. Ny pris/frekvens/boardstørrelse slår igennem ved næste
-  afholdte møde, fordi beløbet beregnes ved afholdelses-flippet. Det tidligere
-  prorateringskrav her var abonnements-tænkning der ikke matcher betalingsmodellen.
+- **Ingen proratering** (ADR 0056): ny pris/frekvens/boardstørrelse slår igennem ved
+  **næste 4-ugers periode**, fordi beløbet beregnes på periodens start; den allerede
+  oprettede opkrævning røres aldrig. Om en ændring midt i en periode skal afregnes
+  forholdsmæssigt er ikke besluttet — `// TODO(ejer)`, `docs/stub-register.md`.
+  (Fra 2026-08-04 til 2026-10-10 gjaldt "ved næste afholdte møde", ADR 0030.)
 - ⚠ Regnskabssystem (e-conomic vs. Dinero) er uafklaret → byg ikke
   bogføringsintegration endnu; porten i `src/lib/accounting/` holdes på stub.
 
@@ -131,6 +132,15 @@
 > **Flag:** startpris/frekvensfaktorer (ejer — struktur uden værdier), moms (ejer — rå øre),
 > fejlet træk vs. honorar (ejer — kun registrering), prisregel-pinning for eksisterende aftaler
 > (ejer — spec-tro default: ny pris ved næste afholdelse). Samlet i `docs/stub-register.md`.
+
+> **Opdatering (2026-10-10, ADR 0056 / B-19):** opkrævningen er flyttet fra afholdelses-flippet til
+> en planlagt kørsel pr. 4-ugers periode. Migration `0020`: `membership.billing_anchor` /
+> `cancelled_at` / `provider_subscription_ref`; `payment_charge.period_start/period_end`
+> (+ `frequency_weeks`, `partner_count` som audit), `meeting_id` nullable (gamle rækker bevaret),
+> `unique (membership_id, period_start)`. `createChargesForDuePeriods` (Netlify scheduled function
+> → `/api/cron/charge-periods`, `CRON_SECRET`) opretter perioder; `syncPendingSubscriptions` sætter
+> abonnementets pris hos Alunta (`PUT /subscriptions/{uuid}/price`). `/betaling` viser abonnementet
+> og opkrævninger pr. periode. **Fund:** Alunta kender kun månedsintervaller → B-35.
 
 ## Uafklarede punkter berørt i fase 3 (flag, beslut ikke)
 

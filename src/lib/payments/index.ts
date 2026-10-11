@@ -2,14 +2,14 @@ import { isDemoMode, isEnabled } from "@/server/flags";
 import { NotConfiguredError } from "../errors";
 import { AluntaPaymentProvider } from "./alunta";
 import { DemoPaymentProvider } from "./demo";
-import type { CardRegistration, CheckoutSession, PaymentProvider, UsageChargeRequest } from "./port";
+import type { CardRegistration, CheckoutSession, PaymentProvider, SubscriptionRequest } from "./port";
 
 export type {
   CardRegistration,
   CheckoutSession,
   PaymentFrequencyWeeks,
   PaymentProvider,
-  UsageChargeRequest,
+  SubscriptionRequest,
 } from "./port";
 
 interface PaymentConfig {
@@ -36,14 +36,14 @@ function isConfigured(c: PaymentConfig): boolean {
   return Boolean(c.aluntaApiKey && c.aluntaPlanId);
 }
 
-/** Stub: kaster NotConfiguredError ved ægte backend-kald (intet kort/forbrug uden nøgler). */
+/** Stub: kaster NotConfiguredError ved ægte backend-kald (intet kort/abonnement uden nøgler). */
 class StubPaymentProvider implements PaymentProvider {
   readonly name = "stub";
   async registerCard(_reg: CardRegistration): Promise<CheckoutSession> {
     throw new NotConfiguredError("alunta", "registerCard");
   }
-  async reportUsageCharge(_req: UsageChargeRequest): Promise<{ id: string }> {
-    throw new NotConfiguredError("alunta", "reportUsageCharge");
+  async upsertSubscription(_req: SubscriptionRequest): Promise<{ id: string }> {
+    throw new NotConfiguredError("alunta", "upsertSubscription");
   }
 }
 

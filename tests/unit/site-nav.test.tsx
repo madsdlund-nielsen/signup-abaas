@@ -26,27 +26,27 @@ describe("SiteNavLinks — rolle-afhængige indgange", () => {
 
   it("ejer ser møder, men hverken partner- eller admin-indgangen", () => {
     const { container } = render(<SiteNavLinks user={user(["ejer"])} />);
-    expect(hrefs(container)).toEqual(["/dashboard", "/moeder"]);
+    expect(hrefs(container)).toEqual(["/dashboard", "/moeder", "/konto"]);
   });
 
   it("partner ser partner-indgangen, ikke møder eller admin", () => {
     const { container } = render(<SiteNavLinks user={user(["partner"])} />);
-    expect(hrefs(container)).toEqual(["/dashboard", "/partner"]);
+    expect(hrefs(container)).toEqual(["/dashboard", "/partner", "/konto"]);
   });
 
   it("admin ser admin-indgangen", () => {
     const { container } = render(<SiteNavLinks user={user(["admin"])} />);
-    expect(hrefs(container)).toEqual(["/dashboard", "/admin"]);
+    expect(hrefs(container)).toEqual(["/dashboard", "/admin", "/konto"]);
   });
 
   it("flere roller giver flere indgange, i fast rækkefølge", () => {
     const { container } = render(<SiteNavLinks user={user(["ejer", "partner", "admin"])} />);
-    expect(hrefs(container)).toEqual(["/dashboard", "/moeder", "/partner", "/admin"]);
+    expect(hrefs(container)).toEqual(["/dashboard", "/moeder", "/partner", "/admin", "/konto"]);
   });
 
-  it("en bruger uden roller får kun dashboard — aldrig en indgang den ikke må se", () => {
+  it("en bruger uden roller får kun dashboard og egen konto — aldrig en indgang den ikke må se", () => {
     const { container } = render(<SiteNavLinks user={user([])} />);
-    expect(hrefs(container)).toEqual(["/dashboard"]);
+    expect(hrefs(container)).toEqual(["/dashboard", "/konto"]);
   });
 });
 

@@ -790,6 +790,13 @@ a.btn-primary {
   border-top: 1px solid var(--color-grey-bg);
 }
 
+/* Rolle-sektion på dashboardet (fase 5.4): søskende adskilles af samme tynde regel som
+   .section-rule, men den første står uden regel under sidehovedet. */
+.dash-section + .dash-section {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-grey-bg);
+}
+
 /* Tom tilstand: ærlig og rolig, ikke en fejl. */
 .empty {
   padding: var(--space-5);
@@ -811,6 +818,32 @@ a.btn-primary {
   color: var(--text-on-dark-soft);
 }
 
+/* Nøgletal (driftsoverblik, fase 5.4): tal først, tynd vægt, ingen bokse. Tallet bærer
+   hierarkiet — labelen er versal-UI under en tynd regel, som resten af admin-fladen. */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+}
+.stat {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-grey-bg);
+}
+.stat__value {
+  margin: 0;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: var(--fw-light);
+  color: var(--color-navy);
+}
+.stat__label {
+  margin: 0;
+  font-size: var(--fs-label);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
 /* Handlingspunkter fra AI-opsummeringen (fase 4.4): nummereret og redaktionel — ingen bokse. */
 .summary-actions {
   margin: 0;
@@ -823,6 +856,144 @@ a.btn-primary {
 /* Tabellen skal kunne rulle vandret på små skærme uden at sprænge siden. */
 .table-wrap {
   overflow-x: auto;
+}
+
+/* --- Notifikationsskabeloner (fase 4.6, ADR 0057) -----------------------------
+   Statusmærket bærer det eksplicitte krav "admin skal aldrig være i tvivl om hvad der er
+   live": LIVE er guldfyldt, UDKAST er en navy kontur. Teksten gentager altid tilstanden —
+   farven forstærker, den bærer ikke alene. Ingen rød i paletten (jf. .form__notice). */
+.status-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid currentColor;
+  border-radius: var(--radius);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.status-badge--live {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-white);
+}
+.status-badge--draft {
+  color: var(--color-navy);
+}
+.status-badge--none {
+  color: var(--color-slate);
+}
+.status-badge--archived {
+  color: var(--color-text-muted);
+  border-color: var(--color-grey-bg);
+}
+
+/* Badge-linje i tabelcelle: flere mærker pr. kanal under hinanden. */
+.badge-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.badge-list__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* En kanals redigeringsflade: regel over, overskrift + mærker på én linje. */
+.template-channel {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-grey-bg);
+}
+.template-channel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.template-channel__head > * {
+  margin: 0;
+}
+
+/* Editor til venstre, preview til højre; stables under 720 px. */
+.template-editor {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-5);
+  align-items: start;
+}
+
+/* Variabel-chips: firkantede, kun en tynd kontur. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.chip {
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  color: var(--color-navy);
+  border: 1px solid var(--color-slate);
+  border-radius: var(--radius);
+  font: var(--fw-medium) var(--fs-label) / 1.2 var(--font-base);
+  cursor: pointer;
+}
+.chip:hover {
+  border-color: var(--color-gold);
+}
+
+/* Preview: grå flade, så den læses som "et eksempel", ikke som en del af formularen. */
+.preview {
+  padding: var(--space-4);
+  background: var(--color-grey-bg);
+  color: var(--color-text);
+}
+.preview > * {
+  margin: 0;
+}
+.preview > * + * {
+  margin-top: var(--space-3);
+}
+.preview__label {
+  display: block;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-slate);
+}
+.preview__subject {
+  font-weight: var(--fw-semibold);
+  color: var(--color-navy);
+}
+.preview__body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.preview__meta {
+  font-size: var(--fs-label);
+  color: var(--color-text-muted);
+}
+/* Flettet værdi: en guld-understregning viser hvad der er indsat. */
+.preview__value {
+  border-bottom: 1px solid var(--color-gold);
+  color: var(--color-navy);
+}
+/* Alt der ville forhindre en udsendelse: fyldt guld, så det ikke kan overses og aldrig er tomt. */
+.preview__problem {
+  padding: 0 var(--space-1);
+  background: var(--color-gold);
+  color: var(--color-white);
+  font-weight: var(--fw-bold);
+}
+.preview__problems {
+  padding-left: var(--space-4);
+  font-size: var(--fs-label);
+  color: var(--color-navy);
 }
 
 /* --- Fokuserede opgaver: auth, adgangsport, onboarding -----------------------
@@ -847,4 +1018,162 @@ a.btn-primary {
   margin: 0 auto var(--space-5);
   width: 96px;
   height: 96px;
+}
+
+/* --- Ugeoversigt (partner-tilgængelighed, fase 5.3) ---------------------------
+   Syv kolonner, mandag-søndag. Tynde skillelinjer frem for bokse; guld kun som
+   sparsom accent på selve tidsvinduet. Under 900 px stables dagene, så en
+   telefon aldrig scroller vandret. */
+.weekgrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-top: 1px solid var(--color-slate);
+}
+.weekgrid__day {
+  padding: var(--space-3);
+  border-right: 1px solid var(--color-grey-bg);
+  border-bottom: 1px solid var(--color-grey-bg);
+  min-height: 120px;
+}
+.weekgrid__day:first-child {
+  border-left: 1px solid var(--color-grey-bg);
+}
+.weekgrid__label {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-navy);
+}
+.weekgrid__none {
+  margin: 0;
+  color: var(--color-slate);
+}
+.weekgrid__slots {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.weekgrid__slot {
+  padding: var(--space-2) 0 var(--space-2) var(--space-2);
+  border-left: 3px solid var(--color-gold);
+  font-size: var(--fs-body);
+  color: var(--color-text);
+}
+.weekgrid__slot + .weekgrid__slot {
+  margin-top: var(--space-2);
+}
+.weekgrid__time {
+  display: block;
+  font-weight: var(--fw-medium);
+}
+.weekgrid__remove {
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  font: var(--fw-bold) var(--fs-nav) / 1.7 var(--font-base);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-slate);
+  cursor: pointer;
+}
+.weekgrid__remove:hover {
+  color: var(--color-navy);
+}
+@media (max-width: 900px) {
+  .weekgrid {
+    grid-template-columns: 1fr;
+  }
+  .weekgrid__day {
+    border-left: 1px solid var(--color-grey-bg);
+    min-height: 0;
+  }
+}
+
+/* --- Fælles ledige vinduer (ejerens bookingside, fase 5.3) --- */
+.slotlist {
+  margin: 0;
+  border-top: 1px solid var(--color-slate);
+}
+.slotlist__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-grey-bg);
+}
+.slotlist__day {
+  min-width: 14em;
+  font-weight: var(--fw-bold);
+  color: var(--color-navy);
+  text-transform: capitalize;
+}
+.slotlist__times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+.slotlist__time {
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
+}
+.slotlist__note {
+  color: var(--color-text-muted);
+}
+
+/* --- Honoraropgørelse (fase 5.1/5.2): tal først, derefter linjerne ---------------
+   Nøgletallene står som tynd, stor navy-tekst med en versal etiket over — samme hierarki som
+   resten af fladen (tynde overskrifter, versal-UI), ingen bokse eller badges. */
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+.figure__label {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.figure__value {
+  margin: 0;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: var(--fw-light);
+  color: var(--color-navy);
+}
+.figure__note {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-label);
+  color: var(--color-text-muted);
+}
+
+/* Periodevælger: forrige / måned / næste. */
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.pager__current {
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--letter-spacing-ui);
+  text-transform: uppercase;
+  color: var(--color-navy);
+}
+
+/* Beløbskolonner højrestilles; totalrækken bæres af en tyk navy linje, ikke en farveflade. */
+.table__cell--num,
+.table__head--num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.table__row--total {
+  border-top: 1px solid var(--color-navy);
 }

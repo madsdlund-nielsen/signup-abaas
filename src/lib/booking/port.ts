@@ -1,11 +1,41 @@
+/** Ejerens kontaktoplysninger — Cal.com-attendee er ét objekt, ikke et bruger-id (ADR 0046). */
+export interface BookingAttendee {
+  name: string;
+  email: string;
+  /** IANA-tidszone, fx "Europe/Copenhagen". */
+  timeZone: string;
+}
+
+/**
+ * Book et møde mod boardets collective event type. Værterne (2-3 partnere) hører til event
+ * typen, ikke til bookingen — de navngives derfor ikke her (ADR 0046, B-23).
+ */
 export interface MultiHostMeetingRequest {
-  ownerUserId: string;
-  /** 2-3 partnere på boardet (auth-bruger-id'er — kobles fra kataloget via app_user_id, ADR 0025). */
-  partnerUserIds: string[];
-  /** ISO 8601-starttidspunkt. */
-  startsAt: string;
-  /** Møde 60 min + 15 min betalt forberedelse håndteres i domænet. */
-  durationMinutes: number;
+  /** Boardets collective event type hos leverandøren (`board.calcom_event_type_id`, migration 0019). */
+  eventTypeId: number;
+  /** ISO 8601-starttidspunkt. Mødelængden (60 min; +15 min forberedelse i domænet) ligger på event typen. */
+  start: string;
+  attendee: BookingAttendee;
+  /** Fri nøgle/værdi-metadata hos leverandøren (fx ABaaS' møde-/board-id til fejlsøgning). Kun strenge. */
+  metadata: Record<string, string>;
+}
+
+/** Opret/opdatér boardets collective event type (ét pr. board). */
+export interface BoardEventTypeRequest {
+  /** Eksisterende event type hos leverandøren → opdatér hosts/titel. Null/udeladt → opret. */
+  eventTypeId?: number | null;
+  title: string;
+  /** URL-venlig, unik slug hos leverandøren. */
+  slug: string;
+  /** Mødelængde i minutter (domænets 60 — afgøres af kalderen, ikke adapteren). */
+  lengthInMinutes: number;
+  /** Partnernes Cal.com-bruger-id'er (`partner_profile.calcom_user_id`, Teams-sæder). */
+  hostUserIds: number[];
+}
+
+export interface BoardEventType {
+  /** Leverandørens event type-id — gemmes i `board.calcom_event_type_id`. */
+  eventTypeId: number;
 }
 
 export interface ScheduledMeeting {
@@ -20,18 +50,18 @@ export interface ScheduledMeeting {
 
 /**
  * Booking/scheduling. Leverandør: Cal.com, **Teams-plan** (ADR 0046) — Platform-planen med
- * managed users + Atoms er deprecated og lukket for nye kunder.
+ * managed users + Atoms er deprecated og lukket for nye kunder. Multi-host = ét COLLECTIVE
+ * event type pr. board (B-23): `upsertBoardEventType` opretter det, `createMultiHostMeeting`
+ * booker mod det med ejeren som eneste attendee.
  *
- * ⚠ TODO(mads) — docs/backlog.md B-23: denne port modellerer værter PR. BOOKING, men API v2
- * har intet `hosts`-felt; værter hører til event typen. Multi-host skal bygges som ét
- * COLLECTIVE event type pr. board, og `ownerUserId` skal være ejerens kontaktoplysninger
- * ({ name, email, timeZone }), ikke et auth-id. Kontrakten nedenfor overlever ikke den rework.
- *
- * TODO(mads): resten af liveverifikationen når nøgler lander — EU-residens på Teams (L-7) og
- * native mødeoptagelse (L-8) er begge uverificerede. Se docs/spikes/multi-host.md.
+ * TODO(mads): liveverifikation når nøgler lander — felt-kontrakten er bygget mod API v2's
+ * dokumenterede form, men aldrig kørt mod en konto (L-1, L-3, L-10 i docs/spikes/multi-host.md).
+ * EU-residens på Teams (L-7) og native mødeoptagelse (L-8) er begge uverificerede.
  */
 export interface BookingProvider {
   readonly name: string;
+  /** Opret (eller opdatér hosts på) boardets collective event type. Idempotent pr. `eventTypeId`. */
+  upsertBoardEventType(req: BoardEventTypeRequest): Promise<BoardEventType>;
   createMultiHostMeeting(req: MultiHostMeetingRequest): Promise<ScheduledMeeting>;
   /** Flyt en eksisterende booking (leverandør-uid) til nyt starttidspunkt. */
   rescheduleMeeting(uid: string, startsAt: string): Promise<ScheduledMeeting>;

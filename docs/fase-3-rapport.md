@@ -4,7 +4,8 @@
 > fasen lukkes **betinget** med ét kendt, registreret afvig. Samme form som
 > `docs/fase-0/1/2-rapport.md`.
 >
-> Lukket (betinget) 2026-08-26.
+> Lukket (betinget) 2026-08-26. **Opdatering 2026-10-10:** modelrettelsen B-19 er leveret
+> (ADR 0056) — se §5. Tekst i §1-§4 beskriver fase 3 som leveret dengang (pr. afholdt møde).
 
 ## 1. Hvad Fase 3 leverede (🟢)
 
@@ -63,6 +64,9 @@ Fasen lukkes derfor betinget, med afviget navngivet frem for skjult:
 
 - **DoD-punkt 5 er omskrevet**, ikke afkrydset — kriteriet beskrev den gamle model.
 - **Rework spores som `docs/backlog.md` B-19** og skal ske før betaling går live.
+  **→ Leveret 2026-10-10 (ADR 0056):** opkrævning pr. 28-dages periode i stedet for pr. møde,
+  planlagt kørsel, abonnements-adapter, `/betaling` pr. periode. DoD-punkt 5 er nu afkrydset.
+  Ved genlæsning af Aluntas spec fandtes at **Alunta kun fakturerer i måneder** (B-35, Mads).
 - Det haster ikke for MVP'en: `FLAG_PAYMENTS` er slået fra, ingen prisregel findes, ingen
   Alunta-nøgler er sat. **Modulet kan ikke opkræve nogen.**
 
@@ -72,7 +76,8 @@ Checklisten står i **§7** og er en gate før produktion, ikke før fase 4.
 ## 6. Blokerer produktion — ejer/Mads
 
 - **Prisregler** — Andreas og Mette skal fastlægge satserne; uden dem kan intet beregnes.
-- **B-19** — modelrettelsen fra usage til 4-ugers abonnement.
+- ~~B-19 — modelrettelsen fra usage til 4-ugers abonnement~~ → leveret (ADR 0056).
+- **B-35** — Alunta kan ikke fakturere hver 4. uge (kun måneder): vælg kadence-løsning.
 - **Alunta-DPA + QuickPay-DPA** — `docs/gdpr/leverandoer-register.md`.
 - **Netlify Functions-region = EU** — uændret fra fase 1.
 - **§4-nuancen:** kunden ser én samlet periodefaktura, ikke et træk pr. møde. **Ejerne bør
@@ -85,8 +90,10 @@ skøn. Kør i **test_mode** først.
 
 | # | Skal verificeres | Rammer |
 |---|---|---|
-| P-1 | Alunta-planen oprettet som **abonnement med 4-ugers interval** (ADR 0034), ikke usage-plan | `ALUNTA_PLAN_ID` |
-| P-2 | Checkout-session → kortregistrering → `checkout.completed` kobler membership ↔ Alunta-kunde | `memberships/actions.ts` |
+| P-1 | Alunta-planen oprettet som **flat-rate-abonnement** (ADR 0034/0056), ikke usage-plan. 🔴 Intervallet i Alunta er i **måneder** — 4-ugers findes ikke (B-35) | `ALUNTA_PLAN_ID` |
+| P-2 | Checkout-session → kortregistrering → `checkout.completed` kobler membership ↔ Alunta-kunde **og abonnement** (`subscription.uuid`) og sætter `billing_anchor` | `webhooks/alunta/route.ts` |
+| P-9 | `PUT /subscriptions/{uuid}/price` accepteres for planen, og prisændringen træder i kraft i Aluntas næste periode (kan ligge én periode bagud ift. vores `payment_charge`) | `lib/payments/alunta.ts` |
+| P-10 | Netlify scheduled function `charge-periods` kører (dagligt, `CRON_SECRET` sat) og en dobbeltkørsel ikke giver dubletter | `netlify/functions/charge-periods.ts` |
 | P-3 | **Signatur-header og -algoritme**: at headeren hedder `Signature` og er HMAC-SHA256 hex over rå body | `verifyAluntaSignature` |
 | P-4 | **Genlevering:** at Alunta faktisk genleverer ved ikke-2xx (op til 8 gange/~24 t) — ADR 0029's rollback hviler på det | `webhooks/alunta/route.ts` |
 | P-5 | `invoice.paid` afregner de rigtige charges; `invoice.payment_failed` sætter årsag | `charges/webhook.ts` |

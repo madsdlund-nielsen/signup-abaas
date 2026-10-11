@@ -15,8 +15,7 @@ import { summarise, type PartnerRatingSummary, type RatingSummaryRow } from "./s
 export { summarise } from "./summary";
 export type { PartnerRatingSummary, RatingSummaryRow } from "./summary";
 
-export const RATING_MIN = 1;
-export const RATING_MAX = 5;
+export { RATING_MAX, RATING_MIN } from "./score";
 
 export interface Rating {
   id: string;

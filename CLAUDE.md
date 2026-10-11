@@ -205,8 +205,8 @@ Abonnementets STØRRELSE afhænger af antal rådgivere på boardet og mødefrekv
 (4 / 8 / 12 uger). Beslutning: Mads, 2026-08-26 — se **ADR 0034**.
 
 ⚠ **Dette erstatter den tidligere model** ("kort registreres ved booking, træk sker ved
-afholdelse"), som fase 3 er bygget efter. Koden opkræver i dag pr. afholdt møde og skal
-rettes — se `docs/backlog.md` B-19. Brug ikke ordet "varierende betalingsfrekvenser"
+afholdelse"), som fase 3 oprindeligt blev bygget efter. Koden følger nu modellen — se
+ADR 0056 (B-19 lukket). Brug ikke ordet "varierende betalingsfrekvenser"
 om selve opkrævningen længere; frekvensen er fast (4 uger), det er PRISEN der varierer.
 
 ---
@@ -240,9 +240,9 @@ bygges **skærm-først**: skærmen med demo-data → Mads klikker og designer �
 den rigtige adapter droppes ind. Skærmen er produktionskode fra første commit; kun
 datakilden skifter. Rækkefølgen bestemmer Mads ved at klikke.
 
-**Skærm-først-kandidater (hver sin lille PR):** AI-opsummering på `/moeder/[id]` ·
-notifikationsoversigt · partner-honorar · partner-tilgængelighed · rolle-dashboards ·
-admin-drift.
+**Skærm-først-kandidater:** alle seks er bygget (AI-opsummering på `/moeder/[id]`,
+notifikationsoversigt, partner-honorar, partner-tilgængelighed, rolle-dashboards, admin-drift —
+ADR 0048, 0051-0053, 0055). Næste skridt er at koble de rigtige adaptere på, når nøglerne lander.
 
 Fase-dokumenterne `docs/fase-0.md` … `docs/fase-6.md` og `docs/fase-0-eksekvering.md` er
 **opslagsværk** for scope, krav og de uafklarede punkter pr. område — de slettes ikke, og
@@ -264,8 +264,14 @@ de gater ikke længere. Status pr. fase:
 - **Fase 3 — Betaling:** prisberegner, prisregler i admin, Alunta-checkout
   (kortregistrering + MobilePay), webhook → `membership`, varierende
   betalingsfrekvenser, op/nedgradering.
-- **Fase 4 — Forberedelse, rating, AI & notifikationer.**
-- **Fase 5 — Honorar + tilgængelighed + dashboard.**
+- **Fase 4 — Forberedelse, rating, AI & notifikationer: BYGGET, IKKE LUKKET (skærm-først).**
+  Forberedelse, signerede rating-links, notifikationsmotor + skabeloner, Ordbogen-adaptere og
+  gemt resumé er bygget; afventer leverandørnøgler, samtykke til optagelse og ejerbeslutninger.
+  Rapport: `docs/fase-4-rapport.md`.
+- **Fase 5 — Honorar + tilgængelighed + dashboard: BYGGET, IKKE LUKKET (skærm-først).**
+  Honorarmotor (sats og moms som konfiguration), tilgængelighed, rolle-dashboards og juridisk
+  interface er bygget; afventer ejerbeslutninger (sats, moms, regnskabssystem, ToS) og
+  Cal.com-synk af tilgængelighed. Rapport: `docs/fase-5-rapport.md`.
 - **Fase 6 — Verifikation & dokumentation.**
 - **Senere (flag):** branded RealtimeKit-videolag (kun hvis Cal Video underleverer),
   valgbar mødelængde.

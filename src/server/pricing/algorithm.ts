@@ -1,12 +1,15 @@
 /**
- * Prisberegning (Fase 3, ADR 0030). Byggespec §4/§5.9: meeting-fee skalerer med
- * boardstørrelse og frekvens. Formlen er MEKANIK — værdierne kommer fra den aktive
+ * Prisberegning (Fase 3, ADR 0030; omlagt til abonnement pr. 4. uge i ADR 0034/0056).
+ * Byggespec §4/§5.9: prisen skalerer med boardstørrelse og frekvens. Formlen er uændret —
+ * men beløbet er nu abonnementet PR. FAKTURERINGSPERIODE (28 dage), ikke et møde. Navnene
+ * `computeMeetingFee`/`MeetingFee` er bevaret så eksisterende kald ikke brydes. Formlen er
+ * MEKANIK — værdierne kommer fra den aktive
  * prisregel som admin har indtastet. Der findes ingen tal her (stub-politik).
  *
  * BEVIDST REN: ingen Supabase-, env- eller React-afhængigheder — unit-testbar uden DB,
  * og kan køre client-side til den live prisberegner (§5.9).
  *
- *   meeting_fee = round((base + antal_partnere × per_partner) × faktor_for_frekvens)
+ *   beløb_pr_periode = round((base + antal_partnere × per_partner) × faktor_for_frekvens)
  *
  * TODO(ejer): moms (§12 pkt. 14) — beløb er rå øre uden momslogik.
  */
@@ -25,7 +28,7 @@ export interface PricingRuleInput {
 }
 
 export interface MeetingFeeBreakdown {
-  /** Grundpris pr. møde (øre). */
+  /** Grundpris pr. periode (øre). */
   baseAmountMinor: number;
   partnerCount: number;
   perPartnerAmountMinor: number;
@@ -39,7 +42,7 @@ export interface MeetingFeeBreakdown {
 }
 
 export interface MeetingFee {
-  /** Endeligt meeting-fee i øre, afrundet. */
+  /** Endeligt beløb pr. faktureringsperiode i øre, afrundet. */
   amountMinor: number;
   currency: string;
   /** Reglens version — audit-reference til payment_charge. */
@@ -59,7 +62,7 @@ export function factorFor(rule: PricingRuleInput, frequencyWeeks: FrequencyWeeks
   }
 }
 
-/** Beregn meeting-fee. Kaster ved ugyldigt input — hellere højlydt end et forkert beløb. */
+/** Beregn abonnementsbeløbet pr. periode. Kaster ved ugyldigt input — hellere højlydt end et forkert beløb. */
 export function computeMeetingFee(
   rule: PricingRuleInput,
   partnerCount: number,

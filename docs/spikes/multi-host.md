@@ -37,7 +37,7 @@ EU-residens og — hvis muligt — native mødeoptagelse.
 
 ## Kontofri forberedelse (gjort/kan gøres nu)
 - `BookingProvider`/`VideoProvider`-porte findes allerede (stubs kaster `NotConfiguredError`).
-- `MultiHostMeetingRequest` modellerer ejer + partner-værter + varighed.
+- `MultiHostMeetingRequest` er `{ eventTypeId, start, attendee, metadata }` (værterne bor på boardets collective event type, `upsertBoardEventType`) — reworket 2026-10-10, B-23.
 - Den rigtige Cal.com-adapter udfyldes bag porten når plan/EU er afklaret.
 
 ## Beslutnings-gate
@@ -59,8 +59,8 @@ fortsat en gate før der lægges produktionsdata ind.
 
 | # | Skal verificeres | Hvorfor det ikke kunne gøres nu | Rammer |
 |---|---|---|---|
-| L-1 | **Multi-host:** 2-3 partnere som værter + ejer som attendee på ét event, mod boardets **collective** team event type (ADR 0046) | Kræver konto | `createMultiHostMeeting` (`src/lib/booking/calcom.ts`) |
-| ~~L-2~~ | ✅ **LUKKET 2026-09-15 uden konto** (ADR 0046). Svaret er "ingen af delene": `POST /bookings` har **intet `hosts`-felt** — værter hører til event typen — og `attendee` er **ét objekt** med `{name, email, timeZone}`, ikke et bruger-id. Gættet var forkert, og ingen plan kan købe os ud af det | Besvaret af leverandørens API-reference; krævede ingen konto | `createMultiHostMeeting`, `readBoardBookingInfo` → rework sporet som `docs/backlog.md` **B-23** |
+| L-1 | **Multi-host:** 2-3 partnere som værter + ejer som attendee på ét event, mod boardets **collective** team event type (ADR 0046) | Kræver konto. Adapteren er reworket (B-23, 2026-10-10) og sender nu `{eventTypeId, start, attendee, metadata}` — kun mock-testet | `createMultiHostMeeting` (`src/lib/booking/calcom.ts`) |
+| ~~L-2~~ | ✅ **LUKKET 2026-09-15 uden konto** (ADR 0046). Svaret er "ingen af delene": `POST /bookings` har **intet `hosts`-felt** — værter hører til event typen — og `attendee` er **ét objekt** med `{name, email, timeZone}`, ikke et bruger-id. Gættet var forkert, og ingen plan kan købe os ud af det | Besvaret af leverandørens API-reference; krævede ingen konto | `createMultiHostMeeting`, `readBoardBookingInfo` → reworket (B-23 lukket 2026-10-10, ADR 0046 Implementering) |
 | L-3 | **Join-URL-mapping:** `meetingUrl` vs. `metadata.videoCallUrl` på den valgte plan | Vi læser begge og falder tilbage til `""` — feltnavnet er uverificeret | `toScheduled`, `meeting.video_join_url` |
 | L-4 | **Webhook-payloadens form:** feltnavnene `triggerEvent`, `payload.uid`, `payload.rescheduleUid`, `payload.startTime`, `payload.videoCallUrl` | Parseren afviser ukendt form med 200, så en forkert antagelse ville vise sig som "ingen webhooks virker" | `parseCalcomEvent`, `mapEventToMutation` |
 | L-5 | **Signatur-header og -algoritme:** at headeren hedder `x-cal-signature-256` og er HMAC-SHA256 hex over rå body | Forkert antagelse = alle webhooks afvises med 401 (fail-closed, så sikkert — men dødt) | `verifyCalcomSignature` |
@@ -68,6 +68,7 @@ fortsat en gate før der lægges produktionsdata ind.
 | L-7 | **EU-residens** på **Teams** — og om `apiUrl` skal være `cal.eu` eller self-host | Plan-valget (ADR 0046) svarer **ikke** på dataresidens; den del af STOP-gaten består | `CALCOM_API_URL`, `docs/gdpr/leverandoer-register.md` |
 | L-8 | **Native mødeoptagelse** på **Teams** — eller dokumentér at det mangler | Ønske, ikke skal-krav. Optagelse må ikke bygges uden samtykkeflow (ejer) | ikke bygget |
 | L-9 | **Reschedule-semantik:** at Cal.com udsteder en NY uid ved flytning, og sender den gamle som `rescheduleUid` | Hele reschedule-mapningen hviler på den antagelse | `mapEventToMutation` |
+| L-10 | **Team-event-type-endpointet:** `POST/PATCH /v2/teams/{teamId}/event-types` — at `schedulingType: "collective"` er den rigtige værdi, at `hosts: [{userId}]` er formen, at `title`/`slug`/`lengthInMinutes` er de rigtige feltnavne, at svaret har `data.id`, og at `cal-api-version: 2024-06-14` er den rigtige header. Dertil at `userId` er Cal.com-team-brugerens id (`partner_profile.calcom_user_id`) | Kræver konto. Feltsættet er begrænset til det ADR 0046 navngiver + de påkrævede; versionen er et gæt (ikke angivet i ADR/spike) | `buildEventTypeRequest`, `upsertBoardEventType` |
 
 **Når checklisten køres:** ADR 0046 dækker plan-valget og booking-modellen. Skriv en
 opfølgende ADR med konklusionen på den faktiske kørsel (L-1, L-3 … L-9) + begrænsninger,

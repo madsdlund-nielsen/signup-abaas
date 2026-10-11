@@ -28,7 +28,7 @@ export default function AdminHome() {
           </>
         }
         title="Administration"
-        lead="Taksonomi, quiz, katalog og priser. Alt her er autoritativt: det ejere og partnere møder, forfattes på denne flade."
+        lead="Taksonomi, quiz, katalog, priser og honorar. Alt her er autoritativt: det ejere og partnere møder, forfattes på denne flade."
       />
       <PageBody>
         <div className="panel-grid">
@@ -48,9 +48,19 @@ export default function AdminHome() {
             href="/admin/partners"
           />
           <AdminEntry
+            title="Boards"
+            body="Sammensætning (tilføj, fjern, udskift, lead) og Cal.com-koblingen: ét collective event type pr. board."
+            href="/admin/boards"
+          />
+          <AdminEntry
             title="Prisregler"
             body="Versionerede satser. Uden en aktiv version kan der ikke beregnes en pris."
             href="/admin/priser"
+          />
+          <AdminEntry
+            title="Honorar"
+            body="Versioneret honorarsats og opgørelse pr. partner pr. måned, med CSV-eksport. Uden en regel beregnes intet beløb."
+            href="/admin/honorar"
           />
           <AdminEntry
             title="Vurderinger"
@@ -61,6 +71,16 @@ export default function AdminHome() {
             title="Notifikationer"
             body="Hvilke beskeder platformen skylder at sende, og hvor langt e-mail og SMS er fra at kunne sende dem."
             href="/admin/notifikationer"
+          />
+          <AdminEntry
+            title="Drift"
+            body="Boards, partnere, medlemskaber, betalingstræk, møder og webhooks — og hvilke integrationer der kører rigtigt, som demo eller som stub."
+            href="/admin/drift"
+          />
+          <AdminEntry
+            title="Juridisk"
+            body="Indsigtsudtræk (GDPR art. 15), samtykke, juridiske dokumenter og henvisning til sletteflowet."
+            href="/admin/juridisk"
           />
         </div>
       </PageBody>
