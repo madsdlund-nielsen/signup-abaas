@@ -175,6 +175,53 @@ describe("sendNotification — render-problemer sender aldrig", () => {
   });
 });
 
+describe("sendNotification — modtagerens navn fra kontoen (ADR 0061)", () => {
+  it("fylder {{modtager_navn}} fra kontoens visningsnavn", async () => {
+    const { deps, store, email } = setup();
+    store.names.set(OWNER, "[DEMO] Eva Ejer");
+    store.setLive("email", "Kære {{modtager_navn}}");
+    const [outcome] = await sendNotification(input(), deps);
+    expect(outcome).toMatchObject({ status: "sendt" });
+    expect(email.sent[0]?.body).toBe("Kære [DEMO] Eva Ejer");
+  });
+
+  it("en modtager uden navn giver fejlet — aldrig et tomt eller opfundet navn", async () => {
+    const { deps, store, email } = setup();
+    store.setLive("email", "Kære {{modtager_navn}}");
+    const [outcome] = await sendNotification(input(), deps);
+    expect(outcome).toMatchObject({
+      status: "fejlet",
+      reason: expect.stringMatching(/«modtager_navn» har ingen værdi/),
+    });
+    expect(email.sent).toEqual([]);
+  });
+
+  it("slår kun navnet op når skabelonen bruger det", async () => {
+    const { deps, store } = setup();
+    store.names.set(OWNER, "[DEMO] Eva Ejer");
+    store.setLive("email", "[DEMO] uden navn");
+    await sendNotification(input(), deps);
+    expect(store.nameLookups).toBe(0);
+  });
+
+  it("en værdi kalderen selv leverer går forud for kontoens", async () => {
+    const { deps, store, email } = setup();
+    store.names.set(OWNER, "[DEMO] Konto Navn");
+    store.setLive("email", "Kære {{modtager_navn}}");
+    await sendNotification(input({ variables: { ...input().variables, modtager_navn: "[DEMO] Kalder" } }), deps);
+    expect(email.sent[0]?.body).toBe("Kære [DEMO] Kalder");
+  });
+
+  it("navnet escapes i HTML-delen af mailen", async () => {
+    const { deps, store, email } = setup();
+    store.names.set(OWNER, "<b>[DEMO]</b>");
+    store.setLive("email", "Kære {{modtager_navn}}");
+    await sendNotification(input(), deps);
+    expect(email.sent[0]?.html).not.toContain("<b>[DEMO]</b>");
+    expect(email.sent[0]?.html).toContain("&lt;b&gt;");
+  });
+});
+
 describe("sendNotification — idempotens", () => {
   it("samme besked til samme modtager sendes aldrig to gange", async () => {
     const { deps, store, email } = setup();

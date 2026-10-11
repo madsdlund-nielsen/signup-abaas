@@ -56,7 +56,7 @@ export function ConsentLogGap() {
       <p className="empty">
         Ingen samtykkelog at eksportere. Samtykke gemmes i dag kun som en cookie i personens egen browser
         (opt-in, kun &quot;nødvendig&quot; er aktiv som standard) — der er hverken en tabel eller et
-        bevis for hvem der har sagt ja til hvad og hvornår. Det er et hul, ikke en tom eksport.
+        bevis for hvem der har sagt ja til hvad og hvornår. Det er et hul, ikke en tom eksport. Undtagelsen er SMS-samtykket: tilstand og tidspunkt står på kontoen og er med i indsigtsudtrækket — men uden historik over tidligere valg.
       </p>
     </div>
   );

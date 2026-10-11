@@ -7,7 +7,8 @@ import {
 } from "@/lib/booking/calcom";
 import { DEMO_EVENT_TYPE_ID } from "@/lib/booking";
 import { NotConfiguredError } from "@/lib/errors";
-import { ownerAttendee, resolveEventTypeId, OWNER_TIME_ZONE } from "@/server/meetings/booking-info";
+import { DEFAULT_TIME_ZONE } from "@/server/account/validation";
+import { ownerAttendee, resolveEventTypeId } from "@/server/meetings/booking-info";
 
 /**
  * Cal.com-adapterens request-mapping (ADR 0046, B-23) — mod den dokumenterede API v2-form:
@@ -168,12 +169,24 @@ describe("CalComBookingProvider.upsertBoardEventType", () => {
 });
 
 describe("booking-info (server)", () => {
-  it("ejeren er attendee med e-mail som navn og en eksplicit tidszone", () => {
-    expect(ownerAttendee("ejer@example.com")).toEqual({
-      name: "ejer@example.com",
-      email: "ejer@example.com",
-      timeZone: OWNER_TIME_ZONE,
-    });
+  it("ejeren er attendee med kontoens navn og tidszone", () => {
+    expect(
+      ownerAttendee({ email: "ejer@example.com", displayName: "Eva Ejer", timeZone: "America/Nuuk" }),
+    ).toEqual({ name: "Eva Ejer", email: "ejer@example.com", timeZone: "America/Nuuk" });
+  });
+
+  it("uden navn bruges e-mailadressen (Cal.com kræver et navn), og ingen opfindes", () => {
+    for (const displayName of [null, "", "   "]) {
+      expect(ownerAttendee({ email: "ejer@example.com", displayName, timeZone: "Europe/Copenhagen" }).name).toBe(
+        "ejer@example.com",
+      );
+    }
+  });
+
+  it("uden tidszone på rækken falder attendee'en tilbage til kontoens standardzone", () => {
+    expect(ownerAttendee({ email: "ejer@example.com", displayName: "E", timeZone: null }).timeZone).toBe(
+      DEFAULT_TIME_ZONE,
+    );
   });
 
   it("resolveEventTypeId: gemt id vinder uanset provider", () => {

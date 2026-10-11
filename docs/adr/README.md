@@ -90,6 +90,7 @@ det gjort sådan?", så skriv en ADR.
 | 0057 | Notifikationsskabeloner som versioneret data, motor med idempotensnøgle, og en log uden persondata | Accepteret | 4 |
 | 0058 | Ordbogen/OdinCore-adaptere: fælles klient og nøgle, synkron transskription, samtykke fejler lukket | Accepteret | 4 |
 | 0059 | Mødeopsummering som gemt artefakt (`meeting_summary`), genereret i baggrunden; RLS ejer + admin | Accepteret | 4 |
+| 0061 | Kontoprofil: navn, telefon, tidszone og SMS-samtykke som kolonner på `app_user` (lukker hullerne fra 0046 og 0057) | Accepteret | 2 + 4 |
 
 > Note: `docs/fase-0-eksekvering.md` omtaler "ADR 0001 (hosting)", "0002 (auth)" osv.
 > — det er illustrative numre. Faktisk nummerering følger "næste ledige nummer", så

@@ -57,12 +57,21 @@ export interface NotificationStore {
   claimDelivery(input: ClaimInput): Promise<ClaimResult>;
   /** Opdatér rækken — både undervejs (forsøgstælleren) og når udfaldet er kendt. */
   updateDelivery(deliveryId: string, patch: DeliveryPatch): Promise<void>;
-  /** Slå modtagerens adresse op. Adressen forlader aldrig dette kald — den logges ikke. */
+  /**
+   * Slå modtagerens adresse op. Adressen forlader aldrig dette kald — den logges ikke. SMS kræver
+   * BÅDE et nummer og et registreret SMS-samtykke (`app_user.sms_opt_in`, ADR 0061); mangler
+   * en af delene, er svaret en begrundelse frem for en adresse.
+   */
   resolveRecipient(userId: string, channel: NotificationChannelKey): Promise<RecipientAddress>;
+  /** Modtagerens navn (kontoens `display_name`), eller null hvis hun ikke har angivet et. */
+  resolveRecipientName(userId: string): Promise<string | null>;
 }
 
 /** Et claim uden forsøg ældre end dette regnes som forladt (kørslen døde før afsendelsen). */
 export const STALE_CLAIM_MS = 10 * 60 * 1000;
+
+/** Loggen når en SMS ikke kan sendes fordi nummer eller samtykke mangler (ingen persondata). */
+export const NO_SMS_CONSENT_REASON = "intet SMS-samtykke/telefonnummer";
 
 /** Postgres' kode for brud på en unik constraint. */
 const UNIQUE_VIOLATION = "23505";
@@ -159,10 +168,16 @@ export function createSupabaseNotificationStore(service: SupabaseClient): Notifi
 
     async resolveRecipient(userId, channel) {
       if (channel === "sms") {
-        // TODO(ejer): telefonnumre findes ikke i datamodellen (`app_user` har kun e-mail).
-        // Hvor de indsamles (profil/onboarding), og med hvilket samtykke, er ejerens/jurasagen
-        // — der bygges ikke et felt uden den beslutning (docs/stub-register.md).
-        return { address: null, reason: "intet telefonnummer registreret (feltet findes ikke endnu)" };
+        const { data, error } = await service
+          .from("app_user")
+          .select("phone_e164, sms_opt_in")
+          .eq("id", userId)
+          .maybeSingle();
+        if (error) throw new Error(`Kunne ikke læse modtageren: ${error.message}`);
+        const row = data as { phone_e164: string | null; sms_opt_in: boolean | null } | null;
+        // Begge dele: et nummer uden samtykke (gemt, men ikke givet til SMS) bruges ikke.
+        if (!row?.sms_opt_in || !row.phone_e164) return { address: null, reason: NO_SMS_CONSENT_REASON };
+        return { address: row.phone_e164 };
       }
       const { data, error } = await service
         .from("app_user")
@@ -172,6 +187,17 @@ export function createSupabaseNotificationStore(service: SupabaseClient): Notifi
       if (error) throw new Error(`Kunne ikke læse modtageren: ${error.message}`);
       const email = (data as { email: string | null } | null)?.email;
       return email ? { address: email } : { address: null, reason: "modtageren har ingen e-mailadresse" };
+    },
+
+    async resolveRecipientName(userId) {
+      const { data, error } = await service
+        .from("app_user")
+        .select("display_name")
+        .eq("id", userId)
+        .maybeSingle();
+      if (error) throw new Error(`Kunne ikke læse modtageren: ${error.message}`);
+      const name = (data as { display_name: string | null } | null)?.display_name?.trim();
+      return name ? name : null;
     },
   };
 }

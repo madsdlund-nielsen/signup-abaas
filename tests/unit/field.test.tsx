@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render } from "@testing-library/react";
+import { fireEvent, render } from "@testing-library/react";
 import { Field } from "@/components/Field";
 import { AuthForm } from "@/components/AuthForm";
 
@@ -38,6 +38,30 @@ describe("AuthForm-skal", () => {
     expect(getByRole("textbox", { name: "E-mail" })).toBeTruthy();
     // Fejlnotitsen (role=alert) vises kun når action returnerer { error }.
     expect(queryByRole("alert")).toBeNull();
+  });
+});
+
+describe("AuthForm — bekræftelse efter en vellykket handling", () => {
+  it("viser { notice } som status (ikke som fejl) og lader fejl gå forud", async () => {
+    const ok = render(
+      <AuthForm action={async () => ({ notice: "Din konto er gemt." })} submitLabel="Gem">
+        <Field name="x" label="X" />
+      </AuthForm>,
+    );
+    fireEvent.submit(ok.container.querySelector("form")!);
+    const status = await ok.findByRole("status");
+    expect(status.textContent).toBe("Din konto er gemt.");
+    expect(ok.queryByRole("alert")).toBeNull();
+    ok.unmount();
+
+    const both = render(
+      <AuthForm action={async () => ({ error: "Fejl.", notice: "Gemt." })} submitLabel="Gem">
+        <Field name="x" label="X" />
+      </AuthForm>,
+    );
+    fireEvent.submit(both.container.querySelector("form")!);
+    expect((await both.findByRole("alert")).textContent).toBe("Fejl.");
+    expect(both.queryByRole("status")).toBeNull();
   });
 });
 

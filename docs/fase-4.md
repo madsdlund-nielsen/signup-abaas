@@ -75,7 +75,7 @@ preview og LIVE/UDKAST-markering, motoren (`engine.ts`: reservér → live skabe
 med retry → log → analytics), Resend- og inMobile-adaptere og e-mail/SMS-demo. Aflysning/flytning
 er koblet på møde-handlingerne. **Udestår:** konti og nøgler (adaptere aldrig kørt live — inMobile
 er desuden uverificeret), ejerens udsendelsestidspunkter (så planlagte beskeder ikke sendes og
-ruten ikke er planlagt), skabelonteksten, telefonnumre (SMS kan ikke sendes). Signerede engangslinks til rating (B-21) er stadig ikke bygget.
+ruten ikke er planlagt), skabelonteksten, SMS-samtykketeksten (telefonnummer + opt-in findes nu på `/konto`, ADR 0061 — SMS sendes kun til dem der har krydset af). Signerede engangslinks til rating (B-21) er stadig ikke bygget.
 
 **4.3/4.4 — Ordbogen-adapterne er bygget 2026-10-10 (ADR 0058)** mod OdinCores offentlige
 OpenAPI-spec (`docs/spikes/ordbogen-api.md`): `src/lib/llm/ordbogen.ts` (`/v1/chat/completions`,

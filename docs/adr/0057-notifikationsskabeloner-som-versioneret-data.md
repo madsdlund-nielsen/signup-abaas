@@ -135,7 +135,9 @@ katalogets `schedule` er `null` — og det er den, til ejeren beslutter. En besk
     og derefter planlægning af ruten (Netlify scheduled function).
   - TODO(ejer): skabelonteksten — forudsætter ToS/samtykke. TODO(ejer): skal ejeren også have en
     bekræftelse ved aflysning/flytning (i dag kun partnerne)?
-  - TODO(ejer): telefonnumre — hvor indsamles de, og med hvilket samtykke.
+  - ~~TODO(ejer): telefonnumre — hvor indsamles de, og med hvilket samtykke.~~ → telefonnummer og
+    SMS-opt-in findes på kontoen (`/konto`, ADR 0061); samtykketeksten er stadig ejerens. Pkt. 3's
+    «ingen modtagernavn-variabel» er afløst af `{{modtager_navn}}` (ADR 0061 pkt. 6).
   - TODO(mads): verificér inMobile-adapteren live; bekræft Resend-domænets region (`eu-west-1`).
   - ~~Kobl `notifyPaymentFailed` på det fejlede træk~~ → koblet i Alunta-webhookens `invoice.payment_failed` (B-41, 2026-10-10).
   - ~~Backlog B-40: Cal.com-webhookens aflysning/flytning sender ingen besked.~~ → koblet med tilstandsbaseret idempotensnøgle (2026-10-10).

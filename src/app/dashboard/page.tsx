@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -184,7 +185,10 @@ export default async function DashboardPage() {
           </DashboardSection>
         ) : null}
 
-        <div className="section-rule">
+        <div className="section-rule row-form">
+          <Link className="btn-secondary" href="/konto">
+            Din konto
+          </Link>
           <form action={signOutAction}>
             <PrimaryButton type="submit">Log ud</PrimaryButton>
           </form>

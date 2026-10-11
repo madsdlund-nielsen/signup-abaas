@@ -5,23 +5,30 @@
 
 import { DEMO_EVENT_TYPE_ID, type BookingAttendee, type BookingProvider } from "@/lib/booking";
 import { NotConfiguredError } from "@/lib/errors";
+import { DEFAULT_TIME_ZONE } from "@/server/account/validation";
 
 /** Mødelængde hos Cal.com (byggespec §4: 60 min; de 15 min forberedelse er domænets, ikke kalenderens). */
 export const MEETING_LENGTH_MINUTES = 60;
 
-/**
- * Cal.com kræver en tidszone på attendee. Vi gemmer ingen pr. ejer endnu, og alle ejere er danske.
- * TODO(mads): gem ejerens tidszone (profil/onboarding) frem for at antage København.
- */
-export const OWNER_TIME_ZONE = "Europe/Copenhagen";
+/** Ejerens kontoprofil, som Cal.com-attendee'en bygges af (`app_user`, 0024 / ADR 0061). */
+export interface OwnerAccount {
+  email: string;
+  displayName: string | null;
+  timeZone: string | null;
+}
 
 /**
- * Ejeren som Cal.com-attendee. Navn: vi indsamler ikke et ejernavn (app_user har kun e-mail),
- * så e-mailadressen bruges — Cal.com kræver et ikke-tomt navn, og et opfundet navn ville være
- * et gæt. TODO(mads): indsaml ejerens navn ved onboarding.
+ * Ejeren som Cal.com-attendee. Navn og tidszone kommer fra kontoprofilen (`/konto`):
+ * Cal.com kræver et ikke-tomt navn, så en ejer der ikke har angivet et får e-mailadressen —
+ * som før profilen fandtes — frem for et opfundet navn. Tidszonen er altid sat på kontoen
+ * (kolonnen har en default); `DEFAULT_TIME_ZONE` er kun værn mod en række uden værdi.
  */
-export function ownerAttendee(email: string): BookingAttendee {
-  return { name: email, email, timeZone: OWNER_TIME_ZONE };
+export function ownerAttendee(owner: OwnerAccount): BookingAttendee {
+  return {
+    name: owner.displayName?.trim() || owner.email,
+    email: owner.email,
+    timeZone: owner.timeZone || DEFAULT_TIME_ZONE,
+  };
 }
 
 /**

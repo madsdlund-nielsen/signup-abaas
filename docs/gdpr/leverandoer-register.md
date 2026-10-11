@@ -10,7 +10,7 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
 | Leverandør | Rolle i appen | Persondata behandlet | Region | EU-residens | DPA | Flag |
 |---|---|---|---|---|---|---|
 | **Supabase** | DB + auth — sandhedskilde | Navn, e-mail, roller, al forretningsdata | EU — eu-north-1 (Stockholm) | ✅ EU (eu-north-1, ADR 0013) | 🔴 afventer underskrift (Supabase DPA findes) | — |
-| **Cal.com** | Booking (multi-host) — **Teams-plan** (ADR 0046) | Navne, e-mails, mødetider. Ejere/kunder er *attendees* (`navn, e-mail, tidszone`), ikke brugere | 🔴 afventer verifikation | 🔴 afventer (punkt 5) — plan-valget svarer **ikke** på residens; `apiUrl` er udskiftelig (`cal.eu`/self-host) | 🔴 afventer underskrift | `booking` |
+| **Cal.com** | Booking (multi-host) — **Teams-plan** (ADR 0046) | Navne, e-mails, mødetider. Ejere/kunder er *attendees* (`navn, e-mail, tidszone` — navn og tidszone fra kontoprofilen, ADR 0061), ikke brugere | 🔴 afventer verifikation | 🔴 afventer (punkt 5) — plan-valget svarer **ikke** på residens; `apiUrl` er udskiftelig (`cal.eu`/self-host) | 🔴 afventer underskrift | `booking` |
 | **Cal Video** | Multi-party video + optagelse | Billede/lyd af møder | 🔴 afventer verifikation | 🔴 afventer (punkt 6) — følger Cal.com; native optagelse på Teams er uverificeret | dækket af Cal.com-aftalen | `video` |
 | **Alunta** | Betaling ind — abonnement/fakturering (ADR 0023) | Navn, e-mail, medlemskabs- og faktureringsmetadata (ikke kortdata — de bor hos gatewayen) | DK (dansk udbyder) | 🟡 dansk udbyder; hosting ikke formelt verificeret | 🔴 afventer underskrift | `payments` |
 | **QuickPay** (betalings**gateway**) | Kortregistrering + træk bag Aluntas checkout (ADR 0034) | Kortdata, navn, betalingsmetadata | DK | 🟡 dansk udbyder; hosting ikke formelt verificeret | 🔴 afventer underskrift | `payments` |
@@ -20,7 +20,7 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
 | **Ordbogen** (chat.dk / Odin-LLM, nu **odincore.ai**) — endpoint `api.odincore.ai` (alias `api.ordbogen.ai`), `/v1/chat/completions` | AI-mødeopfølgning (ADR 0024, 0058) | Mødeindhold/transskript (kan indeholde PII) | DK — dansk datacenter (oplyst for chat.dk; 🟡 for selve API'et ikke stadfæstet i spec'en — bekræftes skriftligt, `docs/spikes/ordbogen-api.md` #8) | ✅ DK (ADR 0024) | ✅ **håndteret uden for repoet** (Mads, 2026-09-15) — spores ikke herfra | `aiFollowup` |
 | **Ordbogen** (ordbogen.ai → **odincore.ai**) — endpoint `api.odincore.ai`, `/v1/audio/transcriptions` | Lyd → tekst (ADR 0024, 0058). 🔴 Sendes kun med registreret samtykke til optagelse (fail-closed) | Mødeoptagelse/-tekst | DK — dansk datacenter (som ovenfor: API-region bekræftes) | ✅ DK (ADR 0024) | ✅ **håndteret uden for repoet** (samme aftale som Odin-LLM) | `transcription` |
 | **Resend** | Transaktionsmails (notifikationsmotoren, ADR 0057) | E-mailadresser, mailindhold (aflysning/flytning, påmindelse, rating, fejlet betaling) | EU (Dublin, `eu-west-1`) — **vælges på afsenderdomænet i Resend-UI'et, ikke i API-kaldet** | ✅ EU (Dublin) — 🔴 TODO(mads): bekræft at domænet er oprettet i `eu-west-1` | 🔴 afventer underskrift (Resend DPA findes) | `email` |
-| **inMobile** | SMS (notifikationsmotoren, ADR 0057) | Telefonnumre, beskedindhold — ⚠ telefonnumre findes endnu ikke i datamodellen, så ingen SMS sendes | DK | ✅ DK | 🔴 afventer underskrift | `sms` |
+| **inMobile** | SMS (notifikationsmotoren, ADR 0057) | Telefonnumre (E.164) og beskedindhold — **kun for brugere der har givet SMS-samtykke** (`app_user.sms_opt_in`, `/konto`, ADR 0061); et gemt nummer uden samtykke sendes aldrig. Samtykketeksten er en pladsholder (TODO(ejer)) | DK | ✅ DK | 🔴 afventer underskrift | `sms` |
 | **PostHog** | Analytics + fejlovervågning | Pseudonyme events, evt. IP/enhed | EU (eu.posthog.com) | ✅ EU | 🔴 afventer underskrift (PostHog DPA findes) | `analytics` |
 | **Netlify** (hosting) | SSR, logs, cron | Request-/session-metadata, logs | EU — Frankfurt (`fra`) | 🟡 kræver UI-region-valg + Pro-plan (ADR 0012) | 🔴 afventer underskrift (Netlify DPA findes) | — |
 | **GitHub Actions** | CI/CD | Kildekode (ingen prod-PII), CI-metadata | Global | n/a (ingen prod-persondata) | dækket af GitHub-vilkår | — |
@@ -42,6 +42,9 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
   nødvendig databehandling for ydelsen; analytics (PostHog) kræver samtykke
   (`analytics`-kategorien i `src/server/consent`).
 - **Dataminimering:** adaptere sender kun de felter en operation kræver (se porte i `src/lib`).
+  Telefonnummeret forlader aldrig Supabase uden SMS-samtykke: motoren slår det kun op til en
+  SMS-udsendelse og kræver både nummer og `sms_opt_in` (ADR 0061). Kontoens navn flettes kun ind
+  i en besked til personen selv (`{{modtager_navn}}`).
 - **Udsendelseslog (ADR 0057):** `notification_delivery` indeholder en bruger-reference
   (`recipient_user_id`), aldrig en e-mailadresse eller et telefonnummer — adressen slås op i det
   øjeblik der sendes og gemmes ikke. Fejltekster skrubbes for adresser før de logges eller sendes

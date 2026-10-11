@@ -109,6 +109,8 @@ præcis det. En admin-policy på `app_user` er en migration og kan komme når ta
     forudsætter samtykketeksten. Først derefter kan en CSV-eksport bygges.
   - TODO(ejer): ToS og honoraraftale.
   - TODO(mads): PostHog-driftstatus (kræver live nøgle); persistent revisionslog over udtræk
-    (tabel + RLS); en admin-select-policy på `app_user` hvis "ejere uden board" skal tælles.
+    (tabel + RLS); ~~en admin-select-policy på `app_user`~~ → findes siden 0024 (ADR 0061), men
+  driftsskærmen tæller endnu ikke ejere via den.
+  Indsigtsudtrækket (`person`) har siden ADR 0061 også navn, telefon, tidszone og SMS-samtykke.
   - ~~Honorar kobles på driftsskærmen, når honorarskiven lander.~~ → koblet på (ADR 0055).
   - Sletteaction: egen skive efter ejer/jura-afklaring af opbevaringspligt.
