@@ -8,6 +8,8 @@ export interface AuthFormState {
   error?: string;
   /** Bekræftelse efter en vellykket handling (fx «Gemt.») — vist som status, ikke som fejl. */
   notice?: string;
+  /** Handlingen lykkedes, men en følgevirkning gjorde ikke (fx Cal.com-hosts). Vist som advarsel. */
+  warning?: string;
 }
 
 export type AuthAction = (prev: AuthFormState, formData: FormData) => Promise<AuthFormState>;
@@ -36,6 +38,11 @@ export function AuthForm({
       {state.error ? (
         <p className="form__notice" role="alert">
           {state.error}
+        </p>
+      ) : null}
+      {state.warning ? (
+        <p className="form__notice" role="alert">
+          {state.warning}
         </p>
       ) : null}
       {!state.error && state.notice ? (

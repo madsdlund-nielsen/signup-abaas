@@ -1,6 +1,6 @@
 import { Client } from "pg";
 
-const DB_URL =
+export const DB_URL =
   process.env.TEST_DATABASE_URL ??
   process.env.DATABASE_URL ??
   "postgresql://postgres:postgres@localhost:5432/abaas_test";

@@ -36,6 +36,10 @@ function emptyRaw(overrides: Partial<RawSubjectData> = {}): RawSubjectData {
     quizAnswers: [],
     quizOptions: [],
     quizQuestions: [],
+    boardChanges: [],
+    meetingSummaries: [],
+    notificationDeliveries: [],
+    ratingLinks: [],
     ...overrides,
   };
 }
@@ -263,6 +267,126 @@ describe("composeSubjectAccessExport — partner", () => {
 
   it("har intet ejer-afsnit når personen ikke er ejer", () => {
     expect(doc.ejer).toBeNull();
+  });
+});
+
+describe("composeSubjectAccessExport — revisionsspor, resuméer, udsendelser og links (B-65)", () => {
+  const change = (over: Partial<RawSubjectData["boardChanges"][number]>) => ({
+    id: "bc",
+    board_id: "b1",
+    actor_id: "u1",
+    actor_role: "ejer",
+    action: "tilfoej",
+    partner_id: "p1",
+    replaced_partner_id: null,
+    calcom_sync: "opdateret",
+    created_at: "2026-02-03T00:00:00Z",
+    ...over,
+  });
+  const raw = emptyRaw({
+    ...ownerRaw,
+    partnerNames: [
+      { id: "p1", name: "Partner Et" },
+      { id: "p2", name: "Partner To" },
+    ],
+    boardChanges: [
+      change({ id: "bc2", actor_id: "admin-9", actor_role: "admin", action: "udskift", replaced_partner_id: "p2", created_at: "2026-02-05T00:00:00Z" }),
+      change({ id: "bc1" }),
+    ],
+    meetingSummaries: [
+      { id: "s1", meeting_id: "m1", status: "klar", summary: "Resumé", action_items: ["Ring"], provider: "demo", model: "m", generated_at: "2026-03-02T00:00:00Z", created_at: "2026-03-02T00:00:00Z" },
+    ],
+    notificationDeliveries: [
+      { id: "nd1", type_key: "moede-bekraeftet", channel: "email", related_id: "m1", status: "sendt", provider_ref: "DEMO-1", created_at: "2026-02-21T00:00:00Z" },
+    ],
+    ratingLinks: [
+      { id: "rl1", meeting_id: "m1", rater_user_id: "u1", rater_partner_profile_id: null, expires_at: "2026-03-10T00:00:00Z", used_at: null, created_at: "2026-03-02T00:00:00Z" },
+    ],
+  });
+  const doc = composeSubjectAccessExport(raw, META) as Record<string, any>;
+
+  it("ejerens board bærer alle ændringer, ældste først — med rolle, men aldrig en andens aktør-id", () => {
+    const changes = doc.ejer.boards[0].aendringer;
+    expect(changes.map((c: { handling: string }) => c.handling)).toEqual(["tilfoej", "udskift"]);
+    expect(changes[0]).toMatchObject({ udfoert_af_rolle: "ejer", udfoert_af_dig: true, partner: "Partner Et" });
+    expect(changes[1]).toMatchObject({
+      udfoert_af_rolle: "admin",
+      udfoert_af_dig: false,
+      partner: "Partner Et",
+      udskiftet_partner: "Partner To",
+      calcom_synkronisering: "opdateret",
+    });
+    expect(JSON.stringify(doc)).not.toContain("admin-9");
+  });
+
+  it("de ændringer personen selv har udført står under board_aendringer_udfoert", () => {
+    expect(doc.board_aendringer_udfoert).toHaveLength(1);
+    expect(doc.board_aendringer_udfoert[0]).toMatchObject({ board_id: "b1", handling: "tilfoej", udfoert_af_dig: true });
+  });
+
+  it("en bruger uden ejer-/partnerrolle (fx admin) får stadig sine udførte ændringer", () => {
+    const adminDoc = composeSubjectAccessExport(
+      emptyRaw({
+        user: { id: "admin-9", email: "admin@example.invalid", created_at: "2026-01-01T00:00:00Z" },
+        boardChanges: raw.boardChanges,
+        partnerNames: raw.partnerNames,
+      }),
+      META,
+    ) as Record<string, any>;
+    expect(adminDoc.ejer).toBeNull();
+    expect(adminDoc.board_aendringer_udfoert.map((c: { handling: string }) => c.handling)).toEqual(["udskift"]);
+  });
+
+  it("en partner ser ændringer der handler om vedkommende (tilføjet eller udskiftet), uden aktør-id", () => {
+    const partnerDoc = composeSubjectAccessExport(
+      emptyRaw({
+        user: { id: "u2", email: "partner@example.invalid", created_at: "2026-01-01T00:00:00Z" },
+        partnerProfile: { id: "p2", name: "Partner To" },
+        boardChanges: raw.boardChanges,
+        partnerNames: raw.partnerNames,
+      }),
+      META,
+    ) as Record<string, any>;
+    expect(partnerDoc.partner.board_aendringer_om_dig).toHaveLength(1);
+    expect(partnerDoc.partner.board_aendringer_om_dig[0]).toMatchObject({ handling: "udskift", udfoert_af_rolle: "admin" });
+    expect(JSON.stringify(partnerDoc)).not.toContain("admin-9");
+  });
+
+  it("AI-resuméet står på mødet, og et møde uden resumé er null", () => {
+    expect(doc.ejer.boards[0].moeder[0].resume).toEqual({
+      status: "klar",
+      resume: "Resumé",
+      handlingspunkter: ["Ring"],
+      udbyder: "demo",
+      model: "m",
+      genereret: "2026-03-02T00:00:00Z",
+    });
+    const without = composeSubjectAccessExport({ ...raw, meetingSummaries: [] }, META) as Record<string, any>;
+    expect(without.ejer.boards[0].moeder[0].resume).toBeNull();
+  });
+
+  it("udsendte beskeder og vurderingslinks er med — kun metadata, aldrig et token eller en tekst", () => {
+    expect(doc.beskeder_sendt_til_dig).toEqual([
+      { type: "moede-bekraeftet", kanal: "email", status: "sendt", relateret_id: "m1", udbyder_reference: "DEMO-1", oprettet: "2026-02-21T00:00:00Z" },
+    ]);
+    expect(doc.vurderingslinks).toEqual([
+      { moede_id: "m1", som: "ejer", udloeber: "2026-03-10T00:00:00Z", brugt: null, oprettet: "2026-03-02T00:00:00Z" },
+    ]);
+  });
+
+  it("afgrænsningen nævner det der stadig ikke er med: andre aktørers identitet, transskripter og beskedtekster", () => {
+    const text = (doc.afgraensning.ikke_inkluderet as string[]).join("\n");
+    expect(text).toMatch(/Andre aktørers identitet/);
+    expect(text).toMatch(/Transskripter/);
+    expect(text).toMatch(/Teksten i udsendte beskeder/);
+    expect(text).not.toMatch(/AI-resuméer og transskripter — er endnu ikke gemt/);
+  });
+
+  it("en person uden noget af det giver tomme lister, ikke manglende nøgler", () => {
+    const bare = composeSubjectAccessExport(emptyRaw(), META) as Record<string, any>;
+    expect(bare.board_aendringer_udfoert).toEqual([]);
+    expect(bare.beskeder_sendt_til_dig).toEqual([]);
+    expect(bare.vurderingslinks).toEqual([]);
   });
 });
 

@@ -46,7 +46,64 @@ export function createFakeDb(initial: Tables): FakeDb {
   const db: FakeDb = { client: null as unknown as SupabaseClient, tables, touched: [], failures: {} };
   let nextId = 1;
 
+  /**
+   * `change_board_composition` (0026): samme kontrakt som SQL-funktionen — alt eller intet, optimistisk
+   * medlemstjek, invarianter på det færdige board, og revisionsrækken med den pessimistiske
+   * `calcom_sync`. Selve funktionen (rækkelås, rollback, revoke) prøves mod rigtig Postgres i
+   * tests/db/board-composition-fn.test.ts; her står den kun så skrivestierne kan køres uden netværk.
+   */
+  function changeBoardComposition(args: Record<string, unknown>): { data: unknown; error: { message: string; code?: string } | null } {
+    const failure = db.failures["rpc.change_board_composition"];
+    if (failure) return { data: null, error: typeof failure === "string" ? { message: failure } : failure };
+
+    const boardId = args.p_board_id as string;
+    const add = (args.p_add as string[]) ?? [];
+    const remove = (args.p_remove as string[]) ?? [];
+    const leadId = args.p_lead_id as string | null;
+    const current = tables.board_partner.filter((r) => r.board_id === boardId);
+    const expected = [...((args.p_expected_partner_ids as string[]) ?? [])].sort().join(",");
+    if (current.map((r) => r.partner_id as string).sort().join(",") !== expected) {
+      return { data: null, error: { message: "Boardet blev ændret af en anden imens — genindlæs og prøv igen.", code: "40001" } };
+    }
+    const nextIds = [...current.map((r) => r.partner_id as string).filter((id) => !remove.includes(id)), ...add];
+    const profile = (id: string) => tables.partner_profile.find((p) => p.id === id);
+    const leadOk = leadId != null && nextIds.includes(leadId) && profile(leadId)?.is_internal === true;
+    const problem =
+      nextIds.length < 2 || nextIds.length > 3
+        ? "Et board skal bestå af 2-3 partnere."
+        : !nextIds.some((id) => profile(id)?.is_internal)
+          ? "Et board skal have mindst én intern partner."
+          : !leadOk
+            ? "Kun en intern partner kan være lead."
+            : null;
+    if (problem) return { data: null, error: { message: problem } };
+
+    tables.board_partner = tables.board_partner.filter(
+      (r) => r.board_id !== boardId || !remove.includes(r.partner_id as string),
+    );
+    for (const id of add) tables.board_partner.push({ board_id: boardId, partner_id: id, is_lead: false });
+    for (const row of tables.board_partner) if (row.board_id === boardId) row.is_lead = row.partner_id === leadId;
+
+    const id = `gen-${nextId++}`;
+    tables.board_change.push({
+      id,
+      board_id: boardId,
+      actor_id: args.p_actor_id,
+      actor_role: args.p_actor_role,
+      action: args.p_action,
+      partner_id: args.p_partner_id,
+      replaced_partner_id: args.p_replaced_partner_id,
+      calcom_sync: args.p_action === "saet_lead" ? "sprunget_over" : "fejlet",
+    });
+    return { data: id, error: null };
+  }
+
   db.client = {
+    async rpc(fn: string, args: Record<string, unknown>) {
+      db.touched.push(`rpc:${fn}`);
+      if (fn !== "change_board_composition") throw new Error(`Ukendt rpc i fake: ${fn}`);
+      return changeBoardComposition(args);
+    },
     from(table: string) {
       db.touched.push(table);
       const filters: Array<(row: Row) => boolean> = [];
