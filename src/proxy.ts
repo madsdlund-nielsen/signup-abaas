@@ -8,6 +8,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+import { readBrowserAnalyticsConfig } from "@/lib/analytics/browser-config";
 import { isSupabaseBrowserConfigured, readSupabaseAuthConfig } from "@/server/auth/supabase-config";
 import { GATE_COOKIE, isGateActive, isGateExempt, readGateConfig } from "@/server/gate";
 import { verifyToken } from "@/server/gate/token";
@@ -27,6 +28,8 @@ function cspResponder(request: NextRequest): () => NextResponse {
   const csp = buildCsp({
     nonce: generateNonce(),
     isDev: process.env.NODE_ENV === "development",
+    // PostHog EU åbnes kun når banneret findes (ADR 0072) — samme betingelse som rodlayoutet.
+    posthog: readBrowserAnalyticsConfig() !== null,
     upgradeInsecure:
       request.nextUrl.protocol === "https:" || request.headers.get("x-forwarded-proto") === "https",
   });

@@ -42,6 +42,8 @@ beforeEach(() => {
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "");
   vi.stubEnv("APP_GATE_ENABLED", "");
   vi.stubEnv("CSP_REPORT_ONLY", "");
+  vi.stubEnv("FLAG_ANALYTICS", "");
+  vi.stubEnv("NEXT_PUBLIC_POSTHOG_KEY", "");
 });
 
 afterEach(() => {
@@ -55,6 +57,21 @@ describe("proxy — CSP", () => {
     expect(csp).toContain("script-src 'self' 'nonce-");
     expect(csp).toContain("'strict-dynamic'");
     expect(csp).toContain("upgrade-insecure-requests"); // https-request
+  });
+
+  it("åbner kun PostHog EU når browser-analytics er slået til (FLAG_ANALYTICS + nøgle) — ADR 0072", async () => {
+    const csp = async () => (await proxy(request())).headers.get("content-security-policy") ?? "";
+    expect(await csp()).not.toContain("posthog");
+
+    vi.stubEnv("FLAG_ANALYTICS", "true");
+    expect(await csp()).not.toContain("posthog"); // flag uden browser-nøgle
+    vi.stubEnv("FLAG_ANALYTICS", "");
+    vi.stubEnv("NEXT_PUBLIC_POSTHOG_KEY", "phc_test");
+    expect(await csp()).not.toContain("posthog"); // nøgle uden flag
+
+    vi.stubEnv("FLAG_ANALYTICS", "true");
+    const open = await csp();
+    expect(open).toContain("connect-src 'self' https://eu.i.posthog.com https://eu-assets.i.posthog.com");
   });
 
   it("giver Next den samme politik på request-headeren, så nonce'n stemples på scripts", async () => {

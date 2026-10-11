@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { POSTHOG_ASSETS_HOST, POSTHOG_BROWSER_HOST } from "@/lib/analytics/browser-config";
 import {
   buildCsp,
   cspHeaderName,
@@ -8,6 +9,8 @@ import {
   NO_REFERRER_SOURCE,
   DEFAULT_REFERRER_SOURCE,
   PERMISSIONS_POLICY,
+  POSTHOG_ASSETS_ORIGIN,
+  POSTHOG_INGEST_ORIGIN,
   staticHeaderRules,
 } from "@/server/security/headers";
 
@@ -70,6 +73,27 @@ describe("buildCsp", () => {
     expect(new Set(hosts)).toEqual(new Set(["https://fonts.googleapis.com", "https://fonts.gstatic.com"]));
     expect(directive(csp, "img-src")).toContain("https:");
     expect(directive(csp, "font-src")).toEqual(["'self'", "https://fonts.gstatic.com"]);
+  });
+
+  it("PostHog EU åbnes kun med `posthog` (ADR 0072) — og kun for ingest og statiske filer", () => {
+    const med = buildCsp({ nonce, posthog: true });
+    expect(directive(med, "connect-src")).toEqual(["'self'", POSTHOG_INGEST_ORIGIN, POSTHOG_ASSETS_ORIGIN]);
+    expect(directive(med, "script-src")).toContain(POSTHOG_ASSETS_ORIGIN);
+    expect(directive(med, "script-src")).not.toContain("'unsafe-inline'");
+    // Intet andet direktiv åbnes: ingen iframes, ingen billeder, ingen formularer.
+    expect(directive(med, "frame-src")).toEqual(["'none'"]);
+    expect(directive(med, "form-action")).toEqual(["'self'"]);
+    expect(directive(med, "img-src")).toEqual(directive(csp, "img-src"));
+    // Uden flaget er politikken uændret.
+    expect(directive(csp, "connect-src")).toEqual(["'self'"]);
+    expect(csp).not.toContain("posthog");
+  });
+
+  it("PostHog-domænerne i CSP'en er de samme som adapterens (EU-hosts, ikke US)", () => {
+    expect(POSTHOG_INGEST_ORIGIN).toBe(POSTHOG_BROWSER_HOST);
+    expect(POSTHOG_ASSETS_ORIGIN).toBe(POSTHOG_ASSETS_HOST);
+    expect(POSTHOG_BROWSER_HOST).toBe("https://eu.i.posthog.com");
+    expect(POSTHOG_ASSETS_HOST).toBe("https://eu-assets.i.posthog.com");
   });
 
   it("upgrade-insecure-requests kun når bedt om (ellers brydes localhost over http)", () => {

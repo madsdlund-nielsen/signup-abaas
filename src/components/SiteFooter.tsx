@@ -1,15 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { CookieSettingsLink } from "./CookieSettingsLink";
+
 /**
  * Afsenderfod på charcoal. Bruger kortform 05 — mærket med navnelinjen — fordi foden er det
  * ene sted i UI'et hvor mærket står som afsender frem for som navigation, og hvor der er
  * plads til dens 320 px-minimum (designmanual v1.2, side 08).
  *
+ * `cookieSettings` viser «Cookie-indstillinger», der genåbner cookie-banneret (ADR 0072). Rodlayoutet
+ * sætter den kun når banneret findes (browser-analytics slået til) — ellers er der intet at åbne.
+ *
  * Guld optræder ikke her ud over inde i selve mærket: manualens guldbudget er ca. 5 % af en
  * flade, og en fod med guldlinks ville bruge det på det mindst betydningsfulde sted på siden.
  */
-export function SiteFooter() {
+export function SiteFooter({ cookieSettings = false }: { cookieSettings?: boolean }) {
   return (
     <footer className="sitefooter">
       <div className="sitefooter__inner">
@@ -35,7 +40,10 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="sitefooter__base">
-        <p className="sitefooter__colophon">SignUp Academy · CVR DK-38913557</p>
+        <div className="sitefooter__bar">
+          <p className="sitefooter__colophon">SignUp Academy · CVR DK-38913557</p>
+          {cookieSettings && <CookieSettingsLink />}
+        </div>
       </div>
     </footer>
   );

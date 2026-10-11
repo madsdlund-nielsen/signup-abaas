@@ -51,6 +51,10 @@ på mørke fotos og luftige lysegrå indholdssektioner.
 - Hero: sitet bruger foto med overlay-gradient. ABaaS har endnu intet hero-foto — charcoal
   indtil et asset findes (`--overlay-hero` er klar).
 
+- Cookie-banner (ADR 0072): fast hvid bjælke nederst med tynd navy kant, ikke en modal. De to valg
+  er **ens** `.btn-secondary`-knapper — ingen guld, ingen fremhævning (ingen dark patterns). Guld er
+  brandets accent, ikke et skub mod «Tillad».
+
 ## Do / Don't
 DO: tynde store overskrifter i navy/hvid · alt fladt & firkantet · guld sparsomt
 · whitespace · versal-UI med letter-spacing i nav, knapper og eyebrows.
