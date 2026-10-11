@@ -179,7 +179,7 @@
 .field__input:focus,
 .field__select:focus,
 .field__textarea:focus {
-  outline: 2px solid var(--color-gold);
+  outline: 2px solid var(--color-navy);
   outline-offset: 0;
   border-color: var(--color-gold);
 }
@@ -467,7 +467,7 @@
   color: var(--color-navy);
 }
 .board-infobar__detail {
-  color: var(--color-slate);
+  color: var(--color-text-muted);
   font-size: var(--fs-label);
 }
 
@@ -883,7 +883,7 @@ a.btn-primary {
   color: var(--color-navy);
 }
 .status-badge--none {
-  color: var(--color-slate);
+  color: var(--color-text-muted);
 }
 .status-badge--archived {
   color: var(--color-text-muted);
@@ -964,7 +964,7 @@ a.btn-primary {
   font-weight: var(--fw-bold);
   letter-spacing: var(--letter-spacing-ui);
   text-transform: uppercase;
-  color: var(--color-slate);
+  color: var(--color-text-muted);
 }
 .preview__subject {
   font-weight: var(--fw-semibold);
@@ -1048,7 +1048,7 @@ a.btn-primary {
 }
 .weekgrid__none {
   margin: 0;
-  color: var(--color-slate);
+  color: var(--color-text-muted);
 }
 .weekgrid__slots {
   margin: 0;
@@ -1076,7 +1076,7 @@ a.btn-primary {
   font: var(--fw-bold) var(--fs-nav) / 1.7 var(--font-base);
   letter-spacing: var(--letter-spacing-ui);
   text-transform: uppercase;
-  color: var(--color-slate);
+  color: var(--color-text-muted);
   cursor: pointer;
 }
 .weekgrid__remove:hover {

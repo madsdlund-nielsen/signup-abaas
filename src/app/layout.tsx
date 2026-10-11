@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import type { ReactNode } from "react";
 import "@/styles/design-tokens.css";
 import "@/styles/globals.css";
@@ -20,10 +21,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+/**
+ * Layoutet er async KUN for at vente på en request (`connection()`), ikke på data. CSP-nonce'n
+ * (src/proxy.ts, ADR 0070) findes først pr. request, og Next sætter den kun på de scripts og
+ * styles det selv genererer under dynamisk rendering — en statisk prærenderet side ville sende
+ * scripts uden nonce, som en nonce-CSP så blokerer. Det koster ingen netværkstur (til forskel
+ * fra sessionen, ADR 0050) og ændrer ikke at nav'en streames bag sin Suspense-grænse.
+ */
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  await connection();
   return (
     <html lang="da">
       <body>
+        <a className="skiplink" href="#main">
+          Spring til indhold
+        </a>
         {/* Samme krom som signupacademy.com: tynd navy kontaktbar over header-baren (ADR 0044). */}
         <TopBar>
           <a href="mailto:info@signupacademy.com">info@signupacademy.com</a>

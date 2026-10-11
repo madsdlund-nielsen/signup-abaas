@@ -44,7 +44,7 @@ export function PageHeader({
  */
 export function PageBody({ children }: { children: ReactNode }) {
   return (
-    <main className="pagebody">
+    <main id="main" className="pagebody">
       <div className="pagebody__inner stack">{children}</div>
     </main>
   );

@@ -50,6 +50,18 @@
   `0002`. Kør en `pg_tables`-mod-`pg_policies`-gennemgang, stol ikke på øjemål.
 - Webhooks: signaturverifikation og idempotens på både Cal.com og Alunta.
 - Autorisation testet pr. rolle, ikke kun i UI-laget.
+- Browser-sikkerhed og tilgængelighed — **status 2026-10-11 (ADR 0070):**
+  - [x] Sikkerhedsheadere: HSTS, `nosniff`, `X-Frame-Options`/`frame-ancestors`,
+        `Referrer-Policy` (rating-ruten bevarer `no-referrer`), `Permissions-Policy`
+        (kamera/mikrofon/lokation slået fra), og **nonce-CSP håndhævet** i proxyen — 0 CSP-
+        overtrædelser i Chromium mod `next start`. Nødbremse: `CSP_REPORT_ONLY=true`.
+  - [x] Fejlsider: `not-found`, `error` (med «Prøv igen»), `global-error` — ingen stacktraces.
+  - [x] Tilgængelighedsgate i CI: axe-core mod de vigtigste komponenter + WCAG-kontrast regnet
+        på tokens. Rettet: `<main>` på forside/styleguide, landmark på kontaktbaren, «Spring til
+        indhold», global fokusmarkering, slate-tekst under AA.
+  - [ ] Åbent: guld-kontrasten (B-80, Mads), Google Fonts (B-81), `img-src https:` (B-82),
+        `style-src-attr` (B-83), verifikation på Netlify + checkout-redirect (B-84),
+        cookie-banner/PostHog i CSP og manuel skærmlæsertest (B-85).
 
 ### 6.3 GDPR-verifikation
 - Gennemgå leverandør→region→status-tabellen i `docs/gdpr/leverandoer-register.md`;
