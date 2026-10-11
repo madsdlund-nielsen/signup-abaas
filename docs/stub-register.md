@@ -48,7 +48,7 @@ have gjort.
 |---|---|---|---|
 | `src/lib/email/` (Resend) | `FLAG_EMAIL` | **Adapteren ER skrevet** (rå fetch mod `POST /emails`, ADR 0057) men aldrig kørt mod en konto. Låses op af: Resend-konto, afsenderdomæne oprettet i regionen **`eu-west-1`** (Irland/Dublin — vælges i Resend-UI'et, ikke i API-kaldet), `RESEND_API_KEY` + `RESEND_FROM_ADDRESS` + `FLAG_EMAIL`, DPA. Bruges også til Supabase-SMTP (fase 1-opfølgning). TODO(mads): bekræft domænets region | Mads |
 | `src/lib/sms/` (inMobile) | `FLAG_SMS` | **Adapteren er skrevet mod bedste forståelse af inMobile API v4 og aldrig verificeret** — endpoint, Basic-auth og feltnavne er markeret `TODO(mads): verificér mod inMobile live` i `inmobile.ts`. Låses op af: konto + `INMOBILE_API_KEY` + `INMOBILE_SENDER` + `FLAG_SMS`, DPA, **og telefonnumre (se Beslutnings-pladsholdere)** | Mads |
-| `src/lib/analytics/` (PostHog EU) | `FLAG_ANALYTICS` | Live projektnøgle | Mads |
+| `src/lib/analytics/` (PostHog EU, skrive-siden) | `FLAG_ANALYTICS` | Live projektnøgle (`POSTHOG_KEY`) | Mads |
 
 ## Auth
 
@@ -89,7 +89,7 @@ deterministiske frem for plausible — se `docs/stub-politik.md`.
 | `src/components/Dashboard.tsx` (`RatingsPanel`) | **Partnerens egne vurderinger vises ikke på dashboardet** — panelet siger det højt. RLS (0015) lader kun den der afgav en vurdering og admin læse `meeting_rating`; den vurderede partner ser den ikke, og der er bevidst ikke bygget en ny læsevej (ADR 0055) | Hvad vurderinger skal bruges til, og om en partner må se sine egne (gennemsnit/antal)? Svaret låser op for en view-læsevej som `partner_fee_line` (§4.2, B-07) | Ejer |
 | `src/server/dashboard/index.ts` (`getLeadBoardNeeds`) | **Lead-partneren ser ejerens kompetencebehov** (kun tag-id'er) via service-role bag et lead-tjek — ikke via RLS. Hvem der er lead afgøres af `board_partner.is_lead` i data, uanset flaget `leadPartner` (ADR 0055) | (1) Lead-tildeling og -rotation (§12 pkt. 15). (2) Skal ejeren informeres om at boardets lead ser ejerens behov? Vilkår/privatlivstekst (ToS) | Ejer |
 | `src/server/pricing/algorithm.ts` | Beløb er rå øre uden momslogik | Moms på partner-honorar/beløbsvisning (§12 pkt. 14) | Ejer |
-| `src/app/admin/drift/page.tsx` (PostHog-driftstatus) | **Ingen fejlrate/seneste fejl vises** — kun et link til PostHog (EU). Analytics-porten er en stub og har ingen query-grænseflade (ADR 0053) | Live PostHog-projektnøgle + en læse-adapter bag analytics-porten. Ingen falske tal før da | Mads |
+| `src/lib/ops-metrics/` (PostHog-driftstatus på `/admin/drift`) | **Bygget, afventer nøgle** (ADR 0066): rigtig læse-adapter mod PostHogs Query API, demo og stub. Uden nøgle siger sektionen "Ikke koblet på — mangler PostHog-læsenøgle"; ingen tal, ingen nuller. HogQL-forespørgslerne og property-navnene (`person_id`, `$exception_types`/`$exception_type`) er aldrig kørt mod et rigtigt projekt — `TODO(mads): verificér live` i `posthog.ts` | Personal API key med kun `query:read` + projekt-id (`POSTHOG_PERSONAL_API_KEY`, `POSTHOG_PROJECT_ID`, `FLAG_ANALYTICS`) — se `docs/accounts-to-create.md`; derefter live-verifikation | Mads |
 | `src/server/admin/legal.ts` (ToS + honoraraftale) | Begge står som **"Ikke udarbejdet — afventer ejer"** på `/admin/juridisk`. Interfacet er bygget, indholdet findes ikke | ToS og honoraraftale (CLAUDE.md, uafklarede punkter); honoraraftalen hænger sammen med honorarsats/moms (§12) | Ejer |
 | `src/server/consent/` (samtykkelog) | **Der findes ingen samtykketabel** — samtykke er en typet kerne + en cookie i browseren; ingen bevis for hvem der sagde ja til hvad og hvornår. `/admin/juridisk` siger det højt og tilbyder ingen tom CSV (ADR 0053) | Samtykketekst + kategori-liste (ejer); derefter en `consent_event`-tabel med RLS og en CSV-eksport. Må ikke stubbes (samtykke) | Ejer |
 | `src/server/admin/subject-access.ts` (indsigtsudtræk) | **Modtagne vurderinger af en partner er udeladt** af partnerens udtræk, og udtrækket nævner det selv (`afgraensning`). Der er ingen persistent revisionslog over hvem der har hentet et udtræk — kun én logline uden persondata | Jura: må modtagne vurderinger med (evt. uden afgiver)? Plus en revisionstabel (migration + RLS) | Ejer / Mads |
@@ -107,4 +107,4 @@ Til afgrænsning, så gennemgangen i fase 6 ikke leder efter dem:
 - **Adgangsporten** (ADR 0020) er fuldt implementeret, blot ikke aktiveret — de tre
   `APP_GATE_*`-env-vars er ikke sat. Det er en driftstilstand, ikke en stub.
 - **Dashboards** (fase 5.4, ADR 0055) er bygget. Hullerne i dem (partnerens ratings, lead-
-  tildeling, PostHog-driftstatus) står i tabellerne ovenfor.
+  tildeling) står i tabellerne ovenfor. PostHog-driftstatus er bygget og afventer kun nøglen.

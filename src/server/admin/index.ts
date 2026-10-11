@@ -13,6 +13,8 @@ export type {
   MissingRegistrations,
   PlatformCounts,
 } from "./ops-summary";
+export { getPostHogOps, EVENT_WINDOW_HOURS, ACTIVE_WINDOW_DAYS } from "./posthog-ops";
+export type { PostHogOps } from "./posthog-ops";
 export { getIntegrationOverview, listIntegrations } from "./integrations";
 export type { IntegrationMode, IntegrationOverview, IntegrationStatus } from "./integrations";
 export { NOT_INCLUDED } from "./subject-access";
