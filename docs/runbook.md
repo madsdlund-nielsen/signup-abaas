@@ -95,6 +95,35 @@ Ruterne og deres beskyttelse står i `docs/reference/routes.md`; miljøvariabler
 | Mistanke om at en bruger ser andres data | `docs/reference/schema.md` (RLS pr. tabel, policies) | Alle tabeller har RLS (genereret oversigt). Policy-testene i `tests/db/` har negative cases. Er der tvivl: stands adgangen (`/admin/klar`, adgangsporten) og kontakt Mads | Mads |
 | En ejer vil have sine data udleveret | `/admin/juridisk` | Indsigtsudtræk (GDPR art. 15) for en e-mailadresse. Der er endnu **ingen sletteknap** — sletning er en egen opgave efter ejer/jura-afklaring (`docs/gdpr/sletteflow.md`) | admin / Mads |
 
+## Login og e-mail (Supabase Auth) — invitation og glemt adgangskode
+
+Invitation og «glemt adgangskode» virker kun i produktion når **mailskabelonerne og URL'erne er sat i
+Supabase-dashboardet** (ADR 0073). Det er en manuel opgave — koden kan ikke sætte dem. `TODO(mads)`:
+
+1. **Authentication → URL Configuration → Site URL** = appens produktionsadresse (samme som
+   `NEXT_PUBLIC_APP_URL`, fx `https://<domæne>`). Skabelonerne bygger linket af `{{ .SiteURL }}`, så en
+   forkert Site URL giver links til det forkerte sted. *Redirect URLs* behøver ikke ændres: flowet
+   bruger ikke `redirectTo`.
+2. **Authentication → Email Templates → «Invite user»**: erstat emne og indhold med
+   `supabase/templates/invite.html` (emne: «Du er inviteret til Advisory Board Unlimited»).
+3. **Authentication → Email Templates → «Reset password»**: erstat med `supabase/templates/recovery.html`
+   (emne: «Vælg en ny adgangskode»).
+4. «Confirm signup» og «Change email address» **røres ikke** endnu — ejerens signup bruger Supabases
+   standard-link. (`/auth/confirm` understøtter `type=signup` og `type=email_change`, hvis de senere
+   flyttes over.)
+5. Tjek bagefter med en rigtig invitation: linket i mailen skal begynde med appens adresse og
+   `/auth/confirm?token_hash=…&type=invite`, ikke med `….supabase.co/auth/v1/verify`.
+
+Mails afleveres først i produktion når Supabase-SMTP peger på Resend (`docs/accounts-to-create.md`,
+ADR 0057).
+
+| Symptom | Hvor man ser det | Hvad man gør | Hvem |
+|---|---|---|---|
+| Partneren lander på forsiden uden at kunne logge ind efter invitationen | Åbn linket i mailen: peger det på `….supabase.co/auth/v1/verify`? | Skabelonen «Invite user» er ikke indsat — se trin 2 ovenfor | Mads |
+| Linket giver «Linket er ugyldigt eller udløbet» | `/login?fejl=ugyldigt-link`; Netlify-log: `[auth] verifyOtp (…) fejlede` | Engangstoken er brugt eller udløbet (1 time). Virksomhedsmail med link-scanner kan have åbnet det først. Send en ny invitation (admin → partner) eller brug «Glemt adgangskode» | admin |
+| «Glemt adgangskode» siger altid at mailen er sendt, men intet kommer | Resend-dashboardet; Supabase → Authentication → Logs | Svaret er med vilje ens for kendte og ukendte adresser. Tjek SMTP-opsætningen og at «Reset password»-skabelonen er indsat | Mads |
+| «Din session er udløbet» på «Vælg adgangskode» | `/konto/adgangskode` | Siden kræver en session fra et link eller et login. Bed om et nyt link på `/glemt-adgangskode` | brugeren |
+
 ## Analytics (PostHog)
 
 | Symptom | Hvor man ser det | Hvad man gør | Hvem |

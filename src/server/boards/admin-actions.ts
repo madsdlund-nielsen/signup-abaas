@@ -16,6 +16,7 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { BoardActionState } from "@/components/BoardActionForm";
@@ -103,17 +104,30 @@ export async function adminRemoveBoardPartner(
   }));
 }
 
-/** Udskift én partner med en anden. Lead'en går til den indkommende, hvis vedkommende er intern. */
+/**
+ * Udskift én partner med en anden. Lead'en går til den indkommende, hvis vedkommende er intern.
+ *
+ * Ved succes redirectes til boardet med `?skiftet=<ind>&fra=<ud>` (B-71): «Udskift X»-sektionen,
+ * som formularen står i, findes kun mens X sidder på boardet — og forsvinder i samme øjeblik
+ * skiftet lykkes, så formularens egen besked aldrig nåede at blive set. Statuslinjen bor i stedet
+ * på siden. En Cal.com-advarsel overlever redirecten af sig selv: editoren viser den ud fra
+ * revisionssporet (`hostsOutOfSync`), ikke ud fra formularens svar. `redirect` kaster, så den står
+ * uden for runAdminChange's try/catch.
+ */
 export async function adminSwapBoardPartner(
   _prev: BoardActionState,
   formData: FormData,
 ): Promise<BoardActionState> {
-  return runAdminChange(formData, (data) => {
+  const result = await runAdminChange(formData, (data) => {
     const outgoingId = required(data, "outgoing", "Udgående partner er påkrævet.");
     const incomingId = required(data, "incoming", "Vælg en partner at udskifte med.");
     if (outgoingId === incomingId) throw new Error("Vælg en anden partner end den udgående.");
     return { change: { kind: "udskift", outgoingId, incomingId }, done: "Partneren er udskiftet." };
   });
+  if (result.error) return result;
+
+  const params = new URLSearchParams({ skiftet: field(formData, "incoming"), fra: field(formData, "outgoing") });
+  redirect(`/admin/boards/${encodeURIComponent(field(formData, "board_id"))}?${params.toString()}`);
 }
 
 /** Udpeg lead-partner. Bag `leadPartner` (tildelingsregler uafklaret); kun en intern kan være lead. */

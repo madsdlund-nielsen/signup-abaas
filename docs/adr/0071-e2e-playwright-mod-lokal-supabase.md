@@ -71,7 +71,7 @@ mod rigtig Supabase (auth-skema, rolle-grants, PostgREST-skemacache, GoTrue), og
 - Positive: migrationerne 0001-0027 er verificeret rene mod rigtig Supabase (Postgres 17); RLS er
   aktiv på alle 30 tabeller med mindst én policy hver; hele rejsen er klikket igennem; webhook-
   idempotens er bevist mod en rigtig database; en ny fejltype (`supabase db reset` før PostgREST er
-  klar) er fanget i opsætningen. Fundene er i `docs/backlog.md` (B-70, B-71) eller rettet (se
+  klar) er fanget i opsætningen. Fundene er rettet (B-70, B-71 → ADR 0073; se
   `docs/fase-6.md` § 6.1-status).
 - Negative/pris: en ny tung afhængighed (Docker + images, nogle GB) og en suite der tager ~2
   minutter oven på build. Specs er koblet via delt tilstand; en ny rejse skal placeres i rækkefølgen.

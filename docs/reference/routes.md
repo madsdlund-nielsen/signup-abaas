@@ -10,7 +10,7 @@ Adgangen er **udledt af koden**: guards i selve filen eller i et overliggende `l
 
 Undtaget porten (`isGateExempt`): `/gate`, `/vurdering/`. *Udenfor proxyen* = ruten når aldrig porten (fx `/api/`, som i stedet bærer sin egen signatur eller hemmelighed).
 
-## Sider (35)
+## Sider (37)
 
 | Rute | Fil | Adgang | Udledning | Adgangsport |
 |---|---|---|---|---|
@@ -37,7 +37,9 @@ Undtaget porten (`isGateExempt`): `/gate`, `/vurdering/`. *Udenfor proxyen* = ru
 | `/check-email` | `src/app/(auth)/check-email/page.tsx` | ingen guard fundet i filen — offentlig eller beskyttet andetsteds | usikker | bag porten |
 | `/dashboard` | `src/app/dashboard/page.tsx` | login (indholdet forgrener på rolle: admin, ejer, partner) | kode | bag porten |
 | `/gate` | `src/app/gate/page.tsx` | ingen guard fundet i filen — offentlig eller beskyttet andetsteds | usikker | undtaget |
+| `/glemt-adgangskode` | `src/app/(auth)/glemt-adgangskode/page.tsx` | ingen guard fundet i filen — offentlig eller beskyttet andetsteds | usikker | bag porten |
 | `/konto` | `src/app/konto/page.tsx` | login | kode | bag porten |
+| `/konto/adgangskode` | `src/app/konto/adgangskode/page.tsx` | login | kode | bag porten |
 | `/login` | `src/app/(auth)/login/page.tsx` | ingen guard fundet i filen — offentlig eller beskyttet andetsteds | usikker | bag porten |
 | `/moeder` | `src/app/moeder/page.tsx` | login + rolle ejer | kode | bag porten |
 | `/moeder/[id]` | `src/app/moeder/[id]/page.tsx` | login (indholdet forgrener på rolle: ejer, partner) | kode | bag porten |
@@ -50,7 +52,7 @@ Undtaget porten (`isGateExempt`): `/gate`, `/vurdering/`. *Udenfor proxyen* = ru
 | `/styleguide` | `src/app/styleguide/page.tsx` | ingen guard fundet i filen — offentlig eller beskyttet andetsteds | usikker | bag porten |
 | `/vurdering/[token]` | `src/app/vurdering/[token]/page.tsx` | engangstoken i URL (kontrolleres på serveren) | usikker | undtaget |
 
-## Route handlers (7)
+## Route handlers (8)
 
 | Rute | Metoder | Fil | Adgang | Udledning | Adgangsport | Planlagt af |
 |---|---|---|---|---|---|---|
@@ -61,6 +63,7 @@ Undtaget porten (`isGateExempt`): `/gate`, `/vurdering/`. *Udenfor proxyen* = ru
 | `/api/cron/summaries` | POST | `src/app/api/cron/summaries/route.ts` | cron (header x-cron-secret mod CRON_SECRET) | kode | udenfor proxyen | summaries (`*/15 * * * *`) |
 | `/api/webhooks/alunta` | POST | `src/app/api/webhooks/alunta/route.ts` | webhook (signatur verificeres før alt andet) | kode | udenfor proxyen |  |
 | `/api/webhooks/calcom` | POST | `src/app/api/webhooks/calcom/route.ts` | webhook (signatur verificeres før alt andet) | kode | udenfor proxyen |  |
+| `/auth/confirm` | GET | `src/app/auth/confirm/route.ts` | engangstoken i URL (indløses på serveren med verifyOtp) | usikker | bag porten |  |
 
 ## Planlagte funktioner (2)
 

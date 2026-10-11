@@ -49,6 +49,15 @@ describe("classifyHandler", () => {
   });
 });
 
+describe("classifyHandler — engangstoken fra mail (ADR 0073)", () => {
+  it("genkender verifyOtp som et engangstoken, ikke som en uklar rute", () => {
+    expect(classifyHandler("auth/confirm/route.ts", "await supabase.auth.verifyOtp({ type, token_hash })")).toMatchObject({
+      kind: "token",
+      certain: false,
+    });
+  });
+});
+
 describe("classifyPage", () => {
   const guarded = 'const user = await getCurrentUser(); if (!user) redirect("/login");';
 
@@ -76,6 +85,8 @@ describe("classifyPage", () => {
 
   it("markerer en tokenrute", () => {
     expect(classifyPage("vurdering/[token]/page.tsx", "x").kind).toBe("token");
+    // En omdirigering til login med forklaring (`?fejl=`) er også et loginkrav.
+    expect(classifyPage("konto/adgangskode/page.tsx", 'if (!user) redirect("/login?fejl=ny-adgangskode");').kind).toBe("login");
   });
 });
 

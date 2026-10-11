@@ -49,16 +49,18 @@
 **Status 2026-10-11 (ADR 0071, `docs/e2e.md`) — delvist udført, intet afkrydset.** Rejserne er
 automatiseret med Playwright mod et produktions-build og en lokal Supabase-stak, på demo-adaptere:
 
-- **Grønt (58 tests, ca. 2 min):** ejer (signup → bekræft e-mail → quiz → board → møde → abonnement
+- **Grønt (63 tests, ca. 2 min):** ejer (signup → bekræft e-mail → quiz → board → møde → abonnement
   + demo-kort → dashboard), admin (prisregel, honorarregel, skabelon udkast → LIVE, udskift partner,
-  invitation, drift, juridisk indsigtsudtræk), partner/lead-partner (login, profil uden tags,
+  invitation, drift, juridisk indsigtsudtræk), partner/lead-partner (invitation → vælg adgangskode → portal, profil uden tags,
   registrér afholdt + note, honorar, tilgængelighed → booking respekterer den), auth-fri vurdering
   (engangsbrug, forfalsket token), negative adgangstests (UI + RLS mod rigtig PostgREST), webhook-
-  signatur og -idempotens (Cal.com, Alunta).
+  signatur og -idempotens (Cal.com, Alunta), og glemt adgangskode (anmod → mail → ny adgangskode → login).
 - **Migrationerne 0001-0027 anvendes rent mod rigtig Supabase** (Postgres 17) fra en tom database;
   RLS er slået til på alle 30 tabeller, og hver har mindst én policy.
-- **Fund:** B-70 (inviteret partner kan ikke sætte adgangskode — blokerer partner-login i
-  produktion), B-71 (ingen bekræftelse efter board-udskiftning i admin). Rettet undervejs: en
+- **Fund (begge rettet, ADR 0073):** B-70 (inviteret partner kunne ikke sætte adgangskode, og ingen
+  kunne nulstille sin — nu `/auth/confirm`, `/konto/adgangskode` og `/glemt-adgangskode`; kræver at
+  Mads indsætter mailskabelonerne i Supabase-dashboardet, `docs/runbook.md`), B-71 (ingen bekræftelse
+  efter board-udskiftning i admin). Rettet undervejs: en
   partner kunne registrere et fremtidigt møde som «afholdt» og dermed få honorar for et møde der
   ikke var holdt (`src/server/meetings/registration.ts`).
 - **Stadig åbent under 6.1:** «verificér at Supabase er sandhedskilde» for rigtige Cal.com/Alunta-

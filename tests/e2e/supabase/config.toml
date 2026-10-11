@@ -244,10 +244,17 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# Invitations- og nulstillingsmails peger på appens egen /auth/confirm (B-70, ADR 0073). Filerne er
+# kopier af dem Mads indsætter i produktions-dashboardet (supabase/templates/, docs/runbook.md) — CLI'en
+# kan ikke følge et symlink ud af projektet, så tests/unit/auth-email-templates.test.ts holder dem ens.
+# Bekræftelsesmailen (signup) er bevidst uændret.
+[auth.email.template.invite]
+subject = "Du er inviteret til Advisory Board Unlimited"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.recovery]
+subject = "Vælg en ny adgangskode"
+content_path = "./supabase/templates/recovery.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

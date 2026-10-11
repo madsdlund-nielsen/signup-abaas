@@ -28,10 +28,10 @@ export default async function AdminBoardEditPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ udskift?: string }>;
+  searchParams: Promise<{ udskift?: string; skiftet?: string; fra?: string }>;
 }) {
   const { id } = await params;
-  const { udskift } = await searchParams;
+  const { udskift, skiftet, fra } = await searchParams;
   const [board, tags] = await Promise.all([getAdminBoardDetail(id), listTags()]);
   if (!board) notFound();
 
@@ -53,6 +53,7 @@ export default async function AdminBoardEditPage({
           // TODO(ejer): lead-partner regler — manuel markering bag flaget, som på ejerens side.
           showLead={isEnabled("leadPartner")}
           swapOutgoingId={udskift ?? null}
+          swapped={skiftet && fra ? { incomingId: skiftet, outgoingId: fra } : null}
           actions={{
             add: adminAddBoardPartner,
             remove: adminRemoveBoardPartner,

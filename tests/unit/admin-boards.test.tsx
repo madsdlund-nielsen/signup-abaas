@@ -73,13 +73,17 @@ function actions(overrides: Partial<AdminBoardEditorActions> = {}): AdminBoardEd
   return { add: ok, remove: ok, swap: ok, setLead: ok, syncHosts: async () => ({}), ...overrides };
 }
 
-function renderEditor(board: AdminBoardDetail, extra: { showLead?: boolean; swapOutgoingId?: string | null } = {}) {
+function renderEditor(
+  board: AdminBoardDetail,
+  extra: { showLead?: boolean; swapOutgoingId?: string | null; swapped?: { incomingId: string; outgoingId: string } | null } = {},
+) {
   return render(
     <AdminBoardEditor
       board={board}
       tagLabels={TAGS}
       showLead={extra.showLead ?? false}
       swapOutgoingId={extra.swapOutgoingId ?? null}
+      swapped={extra.swapped ?? null}
       actions={actions()}
     />,
   );
@@ -200,6 +204,21 @@ describe("AdminBoardEditor", () => {
   it("udskift af den eksterne tillader alle kandidater", () => {
     renderEditor(detail(), { swapOutgoingId: "p-carl" });
     expect(screen.getAllByRole("button", { name: "Udskift med denne" })).toHaveLength(2);
+  });
+
+  it("bekræfter et netop gennemført skifte uden for udskift-sektionen (B-71)", () => {
+    // Anna er udskiftet med Carl: Carl sidder nu på boardet, Anna er ude, og «Udskift»-sektionen er væk.
+    const board = detail({ members: [member({ partnerId: "p-carl", name: "[DEMO] Carl", isInternal: false })] });
+    const { container } = renderEditor(board, { swapped: { incomingId: "p-carl", outgoingId: "p-anna" } });
+    const status = screen.getByRole("status");
+    expect(status.textContent).toContain("Partneren er udskiftet: [DEMO] Anna er erstattet af [DEMO] Carl");
+    expect(container.textContent).not.toContain("Udskift med denne");
+  });
+
+  it("påstår ikke et skifte der ikke er sket (ukendt eller uændret board)", () => {
+    // Den indkommende sidder ikke på boardet, eller den udgående sidder der stadig.
+    renderEditor(detail(), { swapped: { incomingId: "p-carl", outgoingId: "p-anna" } });
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("hosts-advarslen vises kun når hosts hænger efter; manglende sæder vises altid", () => {

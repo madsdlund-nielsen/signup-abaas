@@ -118,12 +118,15 @@ export function AdminBoardEditor({
   tagLabels,
   showLead,
   swapOutgoingId,
+  swapped = null,
   actions,
 }: {
   board: AdminBoardDetail;
   tagLabels: Record<string, string>;
   showLead: boolean;
   swapOutgoingId: string | null;
+  /** Det netop gennemførte skifte (fra `?skiftet=&fra=`), så siden kan bekræfte det (B-71). */
+  swapped?: { incomingId: string; outgoingId: string } | null;
   actions: AdminBoardEditorActions;
 }) {
   const memberIds = new Set(board.members.map((m) => m.partnerId));
@@ -161,8 +164,18 @@ export function AdminBoardEditor({
 
   const withoutSeat = board.members.filter((m) => !m.hasCalcomUser).map((m) => m.name);
 
+  // Bekræftelsen vises kun hvis den indkommende faktisk sidder på boardet — en gammel eller opfundet
+  // adresse kan ikke få siden til at påstå noget der ikke er sket. Navnene slås op i puljen.
+  const swapConfirmed = swapped && memberIds.has(swapped.incomingId) && !memberIds.has(swapped.outgoingId);
+
   return (
     <div className="stack">
+      {swapConfirmed ? (
+        <p className="form__notice" role="status">
+          Partneren er udskiftet: {nameOf(swapped.outgoingId)} er erstattet af {nameOf(swapped.incomingId)}. Ændringen står
+          under «Seneste ændringer».
+        </p>
+      ) : null}
       <div className="panel panel--flat">
         <p className="body">
           Ejer: {board.ownerLabel ?? "—"}

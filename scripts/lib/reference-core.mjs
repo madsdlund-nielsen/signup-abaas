@@ -51,7 +51,8 @@ function branchRolesIn(text, required) {
   return [...roles].sort();
 }
 
-const requiresLogin = (text) => /redirect\(\s*["']\/login["']\s*\)/.test(text) || /Ikke logget ind/.test(text);
+// Også `redirect("/login?fejl=…")`: en omdirigering med en forklaring er stadig et loginkrav.
+const requiresLogin = (text) => /redirect\(\s*["']\/login(?:\?[^"']*)?["']\s*\)/.test(text) || /Ikke logget ind/.test(text);
 
 /** Adgangsklassifikation for en route handler. */
 export function classifyHandler(path, text) {
@@ -64,6 +65,10 @@ export function classifyHandler(path, text) {
   const roles = rolesIn(text);
   if (roles.length > 0) {
     return { kind: "rolle", label: `login + rolle ${roles.join(", ")}`, certain: true };
+  }
+  if (/\bverifyOtp\s*\(/.test(text)) {
+    // /auth/confirm: åben indgang fra et mail-link; autorisationen er engangstokenet, som Supabase indløser.
+    return { kind: "token", label: "engangstoken i URL (indløses på serveren med verifyOtp)", certain: false };
   }
   if (/\bgetCurrentUser\s*\(/.test(text) || /requireRole\s*\(/.test(text)) {
     // Kun login er bekræftet i filen. En rolle kan være kontrolleret i en delegeret funktion.
