@@ -13,6 +13,7 @@ Test-runner er **Vitest** (ADR 0003), opdelt i tre projekter i `vitest.config.mt
 | Unit | jsdom | `tests/unit/` | Hver kodeændring (komponenter, flags, consent, rene funktioner) |
 | Integration | node | `tests/integration/` | Adapter-/modul-wiring uden netværk (fx adapter-registry) |
 | DB | node | `tests/db/` | Schema- og RLS-ændringer (mod lokal Postgres) |
+| E2E | Chromium (Playwright) | `tests/e2e/` | Rejser på tværs af lagene — `npm run test:e2e`, kræver Docker + lokal Supabase (`docs/e2e.md`, ADR 0071). Ikke i `npm test` |
 
 Kør:
 ```bash
