@@ -15,6 +15,7 @@ import {
   saveMeetingNote,
 } from "@/server/meetings/actions";
 import { getMyPartnerProfile } from "@/server/partners/portal";
+import { canRegisterStatus } from "@/server/meetings/registration";
 import { updateMyPartnerProfile } from "@/server/partners/self-actions";
 import { listTags } from "@/server/tags";
 import { PageBody, PageHeader } from "@/components/PageHeader";
@@ -205,14 +206,16 @@ export default async function PartnerPortalPage() {
                     ) : meeting.status !== "aflyst" ? (
                       <form className="row-form" action={registerMeetingStatus}>
                         <input type="hidden" name="meeting_id" value={meeting.id} />
-                        <button
-                          className="btn-secondary"
-                          type="submit"
-                          name="registered_status"
-                          value="afholdt"
-                        >
-                          Afholdt
-                        </button>
+                        {canRegisterStatus("afholdt", meeting.startsAt) ? (
+                          <button
+                            className="btn-secondary"
+                            type="submit"
+                            name="registered_status"
+                            value="afholdt"
+                          >
+                            Afholdt
+                          </button>
+                        ) : null}
                         <button
                           className="btn-secondary"
                           type="submit"
@@ -221,14 +224,16 @@ export default async function PartnerPortalPage() {
                         >
                           Forsinket afbud
                         </button>
-                        <button
-                          className="btn-secondary"
-                          type="submit"
-                          name="registered_status"
-                          value="udeblivelse"
-                        >
-                          Udeblivelse
-                        </button>
+                        {canRegisterStatus("udeblivelse", meeting.startsAt) ? (
+                          <button
+                            className="btn-secondary"
+                            type="submit"
+                            name="registered_status"
+                            value="udeblivelse"
+                          >
+                            Udeblivelse
+                          </button>
+                        ) : null}
                       </form>
                     ) : null}
                     {meeting.status === "afholdt" ? (

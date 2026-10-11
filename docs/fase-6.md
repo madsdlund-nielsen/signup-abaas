@@ -46,6 +46,26 @@
 - Bemærk fra fase 1: kun auth-flowet er hidtil verificeret i **produktion** — resten
   er verificeret lokalt og i CI (`docs/fase-1-rapport.md` §2). Den gæld indfries her.
 
+**Status 2026-10-11 (ADR 0071, `docs/e2e.md`) — delvist udført, intet afkrydset.** Rejserne er
+automatiseret med Playwright mod et produktions-build og en lokal Supabase-stak, på demo-adaptere:
+
+- **Grønt (58 tests, ca. 2 min):** ejer (signup → bekræft e-mail → quiz → board → møde → abonnement
+  + demo-kort → dashboard), admin (prisregel, honorarregel, skabelon udkast → LIVE, udskift partner,
+  invitation, drift, juridisk indsigtsudtræk), partner/lead-partner (login, profil uden tags,
+  registrér afholdt + note, honorar, tilgængelighed → booking respekterer den), auth-fri vurdering
+  (engangsbrug, forfalsket token), negative adgangstests (UI + RLS mod rigtig PostgREST), webhook-
+  signatur og -idempotens (Cal.com, Alunta).
+- **Migrationerne 0001-0027 anvendes rent mod rigtig Supabase** (Postgres 17) fra en tom database;
+  RLS er slået til på alle 30 tabeller, og hver har mindst én policy.
+- **Fund:** B-70 (inviteret partner kan ikke sætte adgangskode — blokerer partner-login i
+  produktion), B-71 (ingen bekræftelse efter board-udskiftning i admin). Rettet undervejs: en
+  partner kunne registrere et fremtidigt møde som «afholdt» og dermed få honorar for et møde der
+  ikke var holdt (`src/server/meetings/registration.ts`).
+- **Stadig åbent under 6.1:** «verificér at Supabase er sandhedskilde» for rigtige Cal.com/Alunta-
+  hændelser og lead-partnerens fulde rejse mod rigtige leverandører kræver konti — listen står i
+  `docs/e2e.md` § «Hvad der IKKE kan verificeres uden leverandørkonti». Rejsen er heller ikke kørt
+  mod **produktion** (kun auth-flowet er), og cookie-samtykket har endnu ingen UI at klikke på.
+
 ### 6.2 Sikkerhedsgennemgang
 - Secrets: intet i repo, alt i Netlify env vars (ADR 0008/0012).
 - RLS: hver forretningstabel har policies **og** negative tests (bevis at en

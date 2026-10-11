@@ -27,6 +27,9 @@
     "db:seed:demo:clean": "node --env-file-if-exists=.env.local scripts/seed-demo.mjs clean",
     "launch:check": "node --env-file-if-exists=.env.local scripts/launch-check.mjs",
     "docs:reference": "node scripts/gen-reference.mjs",
+    "e2e:db:up": "npx --yes supabase start --workdir tests/e2e",
+    "e2e:db:down": "npx --yes supabase stop --workdir tests/e2e --no-backup",
+    "test:e2e": "playwright test",
     "prepare": "husky"
   },
   "dependencies": {
@@ -38,6 +41,7 @@
   },
   "devDependencies": {
     "@netlify/plugin-nextjs": "^5.15.12",
+    "@playwright/test": "1.56.1",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^22.10.7",
     "@types/pg": "^8.11.10",

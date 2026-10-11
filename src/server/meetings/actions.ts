@@ -27,6 +27,7 @@ import {
 } from "@/server/notifications/meetings";
 import { ownerAttendee, resolveEventTypeId } from "./booking-info";
 import type { MeetingRegisteredStatus } from "./index";
+import { canRegisterStatus, NOT_STARTED_MESSAGE } from "./registration";
 
 interface ActionContext {
   service: SupabaseClient;
@@ -323,6 +324,17 @@ export async function registerMeetingStatus(formData: FormData): Promise<void> {
     .eq("app_user_id", user.id)
     .maybeSingle();
   if (!profile) throw new Error("Ingen katalogpost koblet til brugeren.");
+
+  // «Afholdt» og «udeblivelse» kræver at mødet er begyndt (fund fra e2e, fase 6.1).
+  const { data: meeting } = await service
+    .from("meeting")
+    .select("starts_at")
+    .eq("id", meetingId)
+    .maybeSingle();
+  if (!meeting) throw new Error("Møde ikke fundet.");
+  if (!canRegisterStatus(status as MeetingRegisteredStatus, (meeting as { starts_at: string }).starts_at)) {
+    throw new Error(NOT_STARTED_MESSAGE);
+  }
 
   const { data, error } = await service
     .from("meeting_partner")

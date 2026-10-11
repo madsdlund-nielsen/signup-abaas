@@ -1,0 +1,56 @@
+name: E2E
+
+# Ende-til-ende-verifikation af hele rejsen (fase 6.1, ADR 0071): en rigtig browser (Playwright) mod
+# et produktions-build der taler med en LOKAL Supabase-stak (supabase CLI i Docker) på demo-adaptere.
+#
+# Bevidst IKKE på hver PR: jobbet henter Supabase-images, bygger appen og kører ~50 browsertests
+# (ca. 10-15 min). Det kører manuelt og hver nat mod main. Kør det manuelt på en PR-gren før en merge
+# der rører rejsen (auth, booking, betaling, honorar, admin). Lokalt: docs/e2e.md.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  e2e:
+    name: E2E (Playwright + lokal Supabase)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Installér Chromium til Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Start lokal Supabase-stak
+        run: npm run e2e:db:up
+      - name: Kør e2e
+        run: npm run test:e2e
+        env:
+          CI: "true"
+      - name: Stop Supabase
+        if: always()
+        run: npm run e2e:db:down
+      - name: Upload rapport og skærmbilleder
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-rapport
+          path: |
+            playwright-report/
+            test-results/
+            tests/e2e/__screens__/
+          retention-days: 14
+          if-no-files-found: ignore
