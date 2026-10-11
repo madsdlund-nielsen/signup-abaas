@@ -4,8 +4,9 @@ import { NOT_INCLUDED } from "@/server/admin/subject-access";
 import type { LegalDocument } from "@/server/admin/legal";
 
 /**
- * Juridisk download-interface (fase 5.5, ADR 0053). Ren præsentation af fire ting:
- * indsigtsudtræk, samtykkelog (hullet), dokumenter og sletteflow.
+ * Juridisk download-interface (fase 5.5, ADR 0053). Ren præsentation af tre ting:
+ * indsigtsudtræk, samtykkelog (hullet) og dokumenter. Sletningen (art. 17) har sin egen
+ * komponent, `ErasurePanel` (ADR 0068).
  *
  * Interfacet bygges, ikke indholdet. Et dokument der ikke findes, står som "Ikke udarbejdet"
  * — aldrig som et link til noget tomt.
@@ -90,21 +91,6 @@ export function LegalDocumentTable({ documents }: { documents: readonly LegalDoc
           </tbody>
         </table>
       </div>
-    </div>
-  );
-}
-
-/** Sletning er destruktiv og har sin egen skive — her henvises kun til flowet. */
-export function ErasureReference() {
-  return (
-    <div className="stack">
-      <p className="eyebrow">Sletning</p>
-      <p className="body">
-        Sletteflowet er beskrevet i <code>docs/gdpr/sletteflow.md</code>. Der findes endnu ingen
-        admin-sletteaction: sletning er destruktiv, rører flere databehandlere og afhænger af
-        opbevaringspligt (bogføring, betalingsdata) som ejer/jura skal afklare. Den bygges som sin egen
-        skive.
-      </p>
     </div>
   );
 }

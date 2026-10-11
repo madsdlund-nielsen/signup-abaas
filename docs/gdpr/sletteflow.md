@@ -1,61 +1,115 @@
-# GDPR — sletteflow (data-subject erasure)
+# GDPR — sletteflow (art. 17, data-subject erasure)
 
-> Fase 0 / Trin 10. Skitse af hvordan en brugers persondata slettes på tværs af Supabase
-> (sandhedskilde) og hver ekstern sub-processor. Dette er arkitektur-skitsen; den faktiske
-> sletteknap + jura-tekster afventer ToS/ejer. Opbevaringspligt (fx bogføring) overstyrer
-> sletning og er en 🔴 ejer-/jura-beslutning.
+> Bygget i skive Q (ADR 0068); modstykket til indsigtsudtrækket (art. 15, ADR 0053). Flowet findes på
+> `/admin/juridisk` → «Sletning (art. 17)» og er **admin-udløst**: en admin slår en person op på e-mail, ser planen
+> og bekræfter. Selvbetjent sletning (en ejer sletter sin egen konto) er ikke bygget.
+> **Opbevaringspligt (🔴 ejer/jura) og slette-SLA (🔴 ejer) er IKKE afgjort** — flowet er derfor fail-closed:
+> en person med betalingsdata kan ikke slettes af det.
 
 ## Princip
 
-Sletning starter i **Supabase** (sandhedskilden) og fanner ud til eksterne behandlere via
-**adapter-porten**. Hver adapter får på sigt en `eraseDataSubject(ref)`-kapabilitet (samme
-mønster som de øvrige porte i `src/lib`), så domænet kan slette uden at kende leverandøren.
-Flowet skal være **idempotent** og efterlade en kvittering/log.
+Sletning starter i **Supabase** (sandhedskilden) og fanner ud til eksterne behandlere via **porte** i
+`src/lib/erasure/`. Supabase-delen er **én transaktion**; en ekstern behandlers fejl ruller den ikke tilbage, men
+registreres som «mangler» på kvitteringen. Flowet er **idempotent** og efterlader en **kvittering uden persondata**.
 
-## Rækkefølge
+## Flowet
 
-1. **Verificér anmodning** (autentificeret bruger eller admin på vegne af).
-2. **Supabase:** slet `app_user`-rækken → FK `on delete cascade` fjerner
-   `user_role_assignment`, `board` (ejet) og `board_partner`-medlemskaber. Mødenoter/
-   ratings (senere faser) ryddes samme vej.
-   Partnerens tilgængelighed (`partner_availability`, `partner_absence`, 0018) hænger på
-   `partner_profile` med `on delete cascade` og forsvinder, når katalogposten slettes.
-   Fraværsnoten kan indeholde helbredsoplysninger og er derfor privat (ADR 0052).
-   Rating-linkene (`rating_link`, 0023, ADR 0060) hænger på mødet, ejeren og partnerens katalogpost
-   med `on delete cascade` og forsvinder med dem; rækken holder kun referencer (aldrig tokenet,
-   som genskabes af id + `RATING_LINK_SECRET`) og er testet i `tests/db/rating-link-rls.test.ts`.
-   Udsendelseslogget (`notification_delivery`, 0021) hænger på `app_user` med `on delete cascade`
-   og forsvinder med brugeren; det indeholder alligevel ingen adresser (ADR 0057).
-   Kontoprofilen (navn, telefonnummer og tidszone, 0024/ADR 0061; SMS-samtykkekolonnerne er droppet i 0027/ADR 0065) er
-   kolonner på selve `app_user`-rækken og forsvinder med den.
-3. **Eksterne behandlere** (kun de aktive flag; via adapter):
+1. **Slå op** (`previewErasure`): admin skriver e-mailen. Rollen læses fra sessionen; service-role bygges først efter
+   admin-tjekket. Svaret er **planen** (`planErasure`) — der er intet skrevet endnu.
+2. **Planen** viser:
+   - hvad der **slettes** i Supabase (optalt) og hvad der **anonymiseres** (aktør nulstilles i `board_change`),
+   - hvad der **blokerer** (se nedenfor) — en blokeret plan har ingen bekræftelsesknap,
+   - hvilke boards en partner **fjernes fra** (med revisionsspor) og
+   - hvilke **eksterne behandlere** der får besked, automatisk eller manuelt.
+3. **Bekræft** (`confirmErasure`): admin skriver e-mailen igen; den skal matche kontoen. Derefter:
+   1. planen genberegnes — blokeringer afviser *før* noget skrives;
+   2. **`erase_data_subject`** (migration 0028) sletter alt i Supabase i én transaktion;
+   3. **Cal.com** opdateres (hosts + kommende bookinger);
+   4. **PostHog** og **Resend** via `eraseDataSubject`;
+   5. **Supabase Auth** (`auth.admin.deleteUser`) og kontoankeret — kun hvis hverken PostHog eller Resend fejlede;
+   6. **kvittering** skrives i `erasure_receipt`.
 
-| Leverandør | Hvad slettes/anonymiseres | Note |
+## Hvad der blokerer (fail-closed)
+
+| Blokering | Hvorfor | Hvad der skal ske |
 |---|---|---|
-| Cal.com | **Ejer/kunde:** aflys/anonymisér møder — de er *attendees* (navn = kontoens navn, ellers e-mail; tidszone, ADR 0061) og har ingen konto. **Partner:** fjern som host på boardets collective event type og som teammedlem (frigør sædet) | Teams-plan (ADR 0046). Ingen managed users at slette |
-| Cal Video | Slet optagelser knyttet til brugerens møder | 🔴 optagelse er ikke bygget (L-8). Retsgrundlaget er kontrakten (ADR 0065) — der er intet samtykke at trække tilbage, så sletning sker ved opsigelse/sletteanmodning |
-| Alunta | Slet/anonymisér kunde + medlemskab | 🔴 fakturadata kan være underlagt opbevaringspligt (jura) |
-| QuickPay (gateway) | Slet/anonymisér korttoken + betalingsmetadata | 🔴 transaktionsdata er typisk underlagt opbevaringspligt (jura) |
-| Nets (indløser) | Anmod om sletning/anonymisering af transaktions- og afregningsdata | 🔴 **indløsere er typisk underlagt lovpligtig opbevaring** (hvidvask/bogføring) — sletning kan være helt udelukket. TODO(ejer/jura) |
-| e-conomic / Dinero | **Slet IKKE** bogførte bilag (lovpligtig opbevaring, typ. 5 år) — afkobl PII hvor muligt | 🔴 TODO(ejer/jura) |
-| Ordbogen (Odin-LLM) | Ingen persistering hos LLM hvis stateless; slet resuméer i Supabase | verificér stateless-antagelsen ved opsætning |
-| Ordbogen (transskription) | Slet transskript + kildelyd | samme konto som LLM |
-| Resend | Tilføj til suppression / slet kontakt | |
-| inMobile | Slet telefonnummer | Nummeret når kun inMobile hvis brugeren har angivet et (ADR 0061, 0065); en bruger uden nummer har intet hos inMobile at slette |
-| PostHog | GDPR person-delete via `distinctId` | EU |
+| **Betalingsdata:** `membership`/`payment_charge` på et board personen ejer | 🔴 Opbevaringspligt (bogføring/betaling) er ikke afklaret — «Afventer afklaring af opbevaringspligt (TODO(ejer/jura))» | Ejer/jura definerer opbevaringsperioder og hvad der må anonymiseres |
+| **Honorargrundlag:** `meeting_partner.registered_status` på personens møder (som ejer: på boardet; som partner: partnerens egne) | Honorar er bogføringsbærende; en sletning ville fjerne grundlaget for en udbetaling | Som ovenfor |
+| **Boardets invarianter (B-68):** partnerens fjernelse efterlader et board under 2 partnere, uden intern, eller uden lead | `board_partner` cascader ellers stille; boardet skal holde 2-3 / ≥ 1 intern / præcis én lead | Admin udskifter partneren på boardet først (`/admin/boards/[id]`), derefter prøves igen. Skærmen nævner boardene |
+| **Selv:** en admin kan ikke slette sig selv | Ellers kunne den eneste admin låse platformen | En anden admin gør det |
+| **Sidste admin** | Ingen kunne administrere platformen | Giv en anden admin-rollen først |
 
-4. **Kvittér** sletningen (tidsstempel + hvilke systemer) og log uden PII.
+`erase_data_subject` gentager opbevaringspligt, selvsletning og sidste admin som **sidste værn** (et medlemskab kan
+opstå mellem plan og udførelse), og `change_board_composition` (0026) håndhæver boardets invarianter på det færdige board.
 
-> **Bemærk (ADR 0046):** kun **rådgivere og admin** har en Cal.com-brugerkonto. Ejere og
-> kunder booker som attendees med `{ navn, e-mail, tidszone }` og har intet at slette ud over
-> selve bookingerne. En partnersletning frigør desuden et betalt sæde.
+## Hvad der slettes i Supabase
+
+`app_user` er anker for resten. Funktionen sletter eksplicit de rækker der hænger på brugeren, og lader
+`on delete cascade` tage resten:
+
+| Gruppe | Tabeller |
+|---|---|
+| Konto | `user_role_assignment`, navn og telefon på `app_user` blankeres (e-mail beholdes som anker, se nedenfor) |
+| Ejer | `board` (ejet) → cascade: `board_partner`, `meeting` (→ `meeting_partner`, `meeting_note`, `meeting_agenda_item`, `meeting_prep_note`, `meeting_summary`, `meeting_rating`, `rating_link`), `membership` (blokeret hvis den findes), `board_change` på boardet |
+| Ejer | `quiz_answer`, `meeting_rating` (afgivet), `rating_link`, `notification_delivery` |
+| Partner | `partner_profile` → cascade: tags, `partner_availability`, `partner_absence` (fraværsnoten kan være helbredsoplysninger, ADR 0052), `meeting_partner`, `meeting_note`, `meeting_prep_note`, `meeting_rating` (afgivet **og modtaget**), `rating_link` |
+| Partner | `board_partner` fjernes først via `change_board_composition` (spor i `board_change`, `partner_id` nulstilles når profilen slettes) |
+| Anonymiseres | `board_change.actor_id` og `notification_template.published_by` sættes til null; rækkerne består som anonym historik |
+
+`tests/db/erasure.test.ts` låser listen af fremmednøgler til `app_user` og `partner_profile` fast — en ny tabel med
+persondata får testen til at fejle, så sletningen udvides bevidst.
+
+**Kontoankeret.** `app_user`-rækken (id + e-mail) beholdes blankeret til Auth-sletningen er gennemført. Så kan en
+genkørsel finde personen igen hvis PostHog eller Resend fejlede (id og e-mail er deres opslagsnøgler). Triggeren fra
+migration 0004 fjerner ankeret når `auth.users`-rækken slettes.
+
+## Eksterne behandlere
+
+Rigtig implementering **kun hvor API'et er dokumenteret** (ADR 0068). Resten er manuelle huller, der står på hver kvittering.
+
+| Leverandør | Hvad sker der | Status |
+|---|---|---|
+| PostHog (EU) | Person + hændelser + optagelser slettes: opslag via HogQL (`person_distinct_ids`), så `DELETE /api/projects/:id/persons/:uuid/?delete_events=true&delete_recordings=true` (distinct-id = bruger-id) | ✅ adapter (`src/lib/erasure/posthog.ts`); aldrig kørt mod en konto — TODO(mads): scope `person:write`. Appen kalder ikke `identify` endnu, så en person er normalt «intet at slette» |
+| Resend (EU, Dublin) | Kontakt slettes: `DELETE /contacts/{e-mail}`; 404 = intet at slette | ✅ adapter (`resend.ts`); vi opretter ikke kontakter. Mailloggen ligger hos Resend efter deres retention og kan ikke slettes via API — note på kvitteringen |
+| Cal.com | **Partner:** boardets hosts opdateres (`syncBoardHosts`) og revisionsrækken rettes. **Ejer:** kommende bookinger aflyses (`cancelMeeting`). Attendee-data på tidligere bookinger og partnerens team-sæde: **manuelt** | Hosts/aflysning bruger den eksisterende booking-port; resten har ingen verificeret API (ADR 0046). Fejl ruller ikke tilbage og kan ikke genkøres (møderne er væk) — rettes i Cal.com / «Opdatér hosts» |
+| Cal Video | Optagelser knyttet til personens møder | 🔴 optagelse er ikke bygget (L-8); intet at slette endnu |
+| Ordbogen (LLM, transskription) | Resuméer slettes i Supabase. Transskript/lyd gemmes ikke hos os; verificér stateless-antagelsen hos leverandøren | **Manuelt** (vises kun når personen har resuméer) |
+| inMobile | Telefonnummer og beskedlog slettes | **Manuelt** (vises kun når personen har et nummer) — ingen verificeret API |
+| Alunta, QuickPay, Nets | — | **Slettes aldrig af flowet.** En person med data dér har betalingsdata og er blokeret (opbevaringspligt, TODO(ejer/jura)) |
+| e-conomic / Dinero | — | **Slet IKKE** bogførte bilag (lovpligtig opbevaring). Ikke koblet på endnu (stub) |
+
+Stub-adapteren kaster `NotConfiguredError` og kvitteres som **«Ikke konfigureret»** — et synligt hul, aldrig en
+gennemført sletning. Demo-adapteren kvitterer `DEMO-ERASE-…`. Rigtige nøgler vinder altid over demo.
+
+## Kvittering (`erasure_receipt`, migration 0028)
+
+Kun: pseudonymt **id-hash** (SHA-256 af bruger-id'et), tidspunkt, udførende admin, **udfald** (`gennemfoert` | `delvist`),
+**systemer** (`system`, `status`, fast `detail`-tekst) og **mangler** (systemer der ikke er slettet automatisk: fejlet,
+ikke konfigureret, manuelt, udsat). **Ingen persondata** — fejltekster fra leverandører skrubbes. RLS: kun admin læser;
+ingen write-policies (service-role skriver). Vises på `/admin/juridisk` (seneste 10).
+
+- `gennemfoert`: Supabase og Supabase Auth er slettet. `mangler` kan stadig indeholde manuelle punkter.
+- `delvist`: Supabase-dataene er slettet, men PostHog/Resend/Auth fejlede; kontoen står blankeret (kun e-mail). Slå
+  personen op igen og bekræft — flowet er idempotent og gentager de eksterne skridt.
+
+## Idempotens
+
+- Er kontoen væk → «ingen konto» (intet kaldes). Dette er også svaret på en dobbelt-bekræftelse.
+- Står kontoen blankeret tilbage → `erase_data_subject` finder intet at slette, de eksterne skridt gentages, en ny
+  kvittering skrives.
+- `change_board_composition` låser boardet og afviser en forældet plan (`40001`); to samtidige sletninger af samme
+  person serialiseres på `app_user`-rækken.
 
 ## Afhængigheder (🔴 flag — beslut ikke)
 
-- **Opbevaringspligt vs. sletning:** bogføring (e-conomic/Dinero) og betalingsdata
-  (Alunta/QuickPay/**Nets**) kan være underlagt lovkrav der overstyrer sletning. Indløser-leddet
-  er det strammeste af dem. TODO(ejer/jura): definér opbevarings-
-  perioder og hvad der kan anonymiseres frem for slettes.
-- **Slette-vindue/SLA:** hvor hurtigt skal en anmodning effektueres? TODO(ejer).
-- Den rigtige `eraseDataSubject`-portmetode + UI bygges når de tilhørende adaptere udfyldes
-  (efter account-adgang).
+- **TODO(ejer/jura): opbevaringspligt vs. sletning.** Bogføring (e-conomic/Dinero), betalingsdata
+  (Alunta/QuickPay/**Nets**) og honorargrundlag kan være underlagt lovkrav der overstyrer sletning. Indløser-leddet
+  er det strammeste. Indtil det er afklaret, blokerer flowet — og hvad der kan **anonymiseres** frem for slettes (fx
+  `membership` uden persondata) er ikke afgjort. Det gælder også **modtagne vurderinger om en partner** (slettes i dag
+  med katalogposten, jf. ADR 0053).
+- **TODO(ejer): slette-SLA.** Hvor hurtigt skal en anmodning effektueres? Flowet er manuelt udløst af admin; der er
+  ingen frist, påmindelse eller kø.
+- **TODO(ejer): lead-partner-regler.** Fjernes en lead-partner, flytter `planBoardChange` leadet til den første
+  interne — en pladsholder, ikke en beslutning.
+- **TODO(mads):** verificér PostHog-scope og Resend-kontaktsletning live; find slette-API'er til Cal.com
+  (attendee/sæde), inMobile og Ordbogen; fase 6 afprøver flowet ende-til-ende mod rigtige systemer.

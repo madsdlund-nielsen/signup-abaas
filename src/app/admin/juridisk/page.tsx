@@ -1,15 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import {
-  ConsentLogGap,
-  ErasureReference,
-  LegalDocumentTable,
-  SubjectAccessForm,
-} from "@/components/LegalInterface";
+import { ErasurePanel } from "@/components/ErasurePanel";
+import { ErasureReceiptList } from "@/components/ErasureReceipts";
+import { ConsentLogGap, LegalDocumentTable, SubjectAccessForm } from "@/components/LegalInterface";
 import { PageBody, PageHeader } from "@/components/PageHeader";
 
 import { LEGAL_DOCUMENTS, subjectAccessErrorMessage } from "@/server/admin/legal";
+import { confirmErasure, previewErasure } from "@/server/erasure/actions";
+import { listErasureReceipts } from "@/server/erasure/receipts";
 
 export const metadata: Metadata = { title: "Juridisk — Admin" };
 export const dynamic = "force-dynamic";
@@ -21,6 +20,9 @@ export const dynamic = "force-dynamic";
  *
  * Interfacet bygges, ikke indholdet: ToS og honoraraftale er ejerens og står som
  * "Ikke udarbejdet". Siden læser ingen filer — docs/ bundles ikke på Netlify.
+ *
+ * Sletning (art. 17, ADR 0068) står ved siden af indsigtsudtrækket: slå op → plan → bekræft →
+ * kvittering. Opbevaringspligt og slette-SLA er ejer/jura (TODO(ejer/jura)) — flowet er fail-closed.
  */
 export default async function AdminLegalPage({
   searchParams,
@@ -29,6 +31,7 @@ export default async function AdminLegalPage({
 }) {
   const { fejl } = await searchParams;
   const code = Array.isArray(fejl) ? fejl[0] : fejl;
+  const receipts = await listErasureReceipts();
 
   return (
     <>
@@ -50,7 +53,11 @@ export default async function AdminLegalPage({
           <LegalDocumentTable documents={LEGAL_DOCUMENTS} />
         </section>
         <section className="section-rule">
-          <ErasureReference />
+          <ErasurePanel previewAction={previewErasure} confirmAction={confirmErasure} />
+        </section>
+        <section className="section-rule stack">
+          <p className="eyebrow">Seneste sletninger</p>
+          <ErasureReceiptList receipts={receipts} />
         </section>
       </PageBody>
     </>

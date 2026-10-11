@@ -3,7 +3,6 @@ import { render } from "@testing-library/react";
 
 import {
   ConsentLogGap,
-  ErasureReference,
   LegalDocumentTable,
   SubjectAccessForm,
 } from "@/components/LegalInterface";
@@ -198,10 +197,10 @@ describe("Juridisk interface", () => {
     expect(getByText("docs/gdpr/leverandoer-register.md")).toBeTruthy();
   });
 
-  it("henviser til sletteflowet og siger at der ikke er en sletteknap", () => {
-    const { container } = render(<ErasureReference />);
+  it("sletteflowet står i dokumentlisten som sti i repoet — selve sletningen har sin egen flade (ADR 0068)", () => {
+    const { container } = render(<LegalDocumentTable documents={LEGAL_DOCUMENTS} />);
     expect(container.textContent).toMatch(/docs\/gdpr\/sletteflow\.md/);
-    expect(container.textContent).toMatch(/ingen\s+admin-sletteaction/);
-    expect(container.querySelector("button")).toBeNull();
+    expect(container.textContent).toMatch(/opbevaringspligt og slette-SLA afventer ejer\/jura/);
+    expect(container.textContent).not.toMatch(/ingen sletteknap/);
   });
 });

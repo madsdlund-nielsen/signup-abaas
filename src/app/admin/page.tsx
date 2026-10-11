@@ -79,7 +79,7 @@ export default function AdminHome() {
           />
           <AdminEntry
             title="Juridisk"
-            body="Indsigtsudtræk (GDPR art. 15), samtykke, juridiske dokumenter og henvisning til sletteflowet."
+            body="Indsigtsudtræk (GDPR art. 15), sletning (art. 17), samtykke og juridiske dokumenter."
             href="/admin/juridisk"
           />
         </div>
