@@ -60,7 +60,9 @@ const CLIENT_MESSAGE =
   "Server-only modul i klient-laget. createServiceSupabase bypasser RLS, og @/lib bærer leverandørnøgler — ingen af delene må nå klient-bundlen. Brug en server-action eller `import type`.";
 
 const config = [
-  { ignores: ["node_modules/**", ".next/**", "out/**", "coverage/**"] },
+  // `*.d.mts` er typedeklarationer til scripts/lib/*.mjs (ADR 0069) — ren TypeScript, som
+  // Next-reglernes JS-parser ikke kan læse; `tsc` er deres kontrol.
+  { ignores: ["node_modules/**", ".next/**", "out/**", "coverage/**", "**/*.d.mts"] },
   ...next,
 
   // Adapter-grænsen: SDK'er kun i src/lib/**.

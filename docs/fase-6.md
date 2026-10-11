@@ -1,7 +1,8 @@
 # Fase 6 — Verifikation, dokumentation & overlevering
 
 > Mål: platformen er verificeret ende-til-ende, dokumentationen er komplet, og
-> ikke-tekniske ejere kan overtage driften. **Launch 1. oktober 2026.**
+> ikke-tekniske ejere kan overtage driften. **Launch: januar 2027** (udskudt fra 1. oktober
+> 2026 — Mads, 2026-08-26).
 > Forudsætter at fase 5 er grøn. Læs `CLAUDE.md` først.
 >
 > Bemærk: ADR'er er skrevet løbende siden fase 0 — denne fase *samler og
@@ -24,8 +25,12 @@
       (`docs/stub-register.md`). Ingen stub går i launch uden at nogen har sagt ja.
 - [ ] ADR-indekset i `docs/adr/README.md` er komplet og uden huller.
 - [ ] Kodegenereret referencedokumentation (typer, API-ruter, schema) genereret.
-- [ ] **Overleveringsdokument til Andreas og Mette** — én side, ikke-teknisk.
-- [ ] Runbook: hvad gør man når noget fejler (betaling, video, webhook, hosting).
+      *Delvist (2026-10-11):* ruter, skema (inkl. RLS og policies) og miljøvariabler genereres af
+      `npm run docs:reference` til `docs/reference/`; **typer** er ikke med. Ikke krydset af, før de er.
+- [x] **Overleveringsdokument til Andreas og Mette** — én side, ikke-teknisk
+      (`docs/overlevering.md`). Udarbejdet; endnu ikke gennemlæst af Andreas og Mette.
+- [x] Runbook: hvad gør man når noget fejler (betaling, video, webhook, hosting)
+      (`docs/runbook.md`). Kun det koden understøtter; opdatér den, når en adapter bygges.
 - [ ] Ejer-test gennemført og feedback lukket (ejer-test: udgangen af august).
 - [ ] Alle resterende uafklarede punkter er enten afklaret eller eksplicit
       parkeret med ejer-accept.
@@ -72,11 +77,22 @@
 - **`FLAG_DEMO` skal være slået fra** (ADR 0041). Bekræft at ingen adapter rapporterer
   `name = "demo"` mod produktions-env, og at `DemoBadge` ikke vises i headeren.
 
+**Værktøj (ADR 0069, 2026-10-11):** gennemgangen er nu en aflæsning, ikke en opgave med øjemål.
+`/admin/klar` viser den kørende konfiguration (pr. port rigtig/demo/stub, `FLAG_DEMO`, krævede
+hemmeligheder som sat/mangler, aktive regler, adgangsporten, øvrige flag mod deres dokumenterede
+hensigt og de åbne beslutninger), og `npm run launch:check` giver samme tjek fra terminalen plus
+TODO-markører, stub-register, backlog og ADR-indeks (exit 1 ved blokering). *Selve gennemgangen er
+ikke udført:* hver stub skal stadig accepteres af en ansvarlig (`accepted` i
+`src/server/admin/launch-data.json`), og hvert flag dokumenteres som bevidst tændt/slukket.
+
 ### 6.5 Dokumentation
 - ADR-indeks komplet; ingen beslutning uden ADR.
 - Generér kodereference (typer, API-ruter, schema) — **nu** er der overflader at
   generere fra, jf. noten i fase 0.
-- Opdatér `CLAUDE.md` så den beskriver systemet som det faktisk blev.
+  *Status 2026-10-11:* `npm run docs:reference` genererer `docs/reference/routes.md`, `schema.md` og
+  `env.md` (typer ikke). `-- --check` sammenligner med de committede filer; den er ikke koblet på CI
+  (begrundelse i ADR 0069).
+- Opdatér `CLAUDE.md` så den beskriver systemet som det faktisk blev. *(Ikke gjort.)*
 - Skriv `docs/fase-N-rapport.md` for de faser der mangler en, så den samlede
   beslutnings- og flag-historik står ét sted.
 
@@ -85,6 +101,8 @@
   hvem der har adgang til hvad, hvad der koster penge, hvem man ringer til.
 - Runbook: konkrete fejlscenarier og handling — fejlet betaling, video virker
   ikke, webhook-kø hober sig op, hosting nede.
+  *Skrevet 2026-10-11:* `docs/overlevering.md` (én side, ikke-teknisk) og `docs/runbook.md`
+  (pr. system: symptom → hvor man ser det → hvad man gør → hvem).
 - Adgangsoverblik: hvilke konti findes, hvem ejer dem (`docs/accounts-to-create.md`).
 - ⚠ Domæne (signupacademy.com) + DNS-adgang til Mads er uafklaret (ejer) — skal
   være løst før launch.

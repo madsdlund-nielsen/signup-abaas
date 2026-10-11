@@ -1,0 +1,389 @@
+{
+  "_laes_mig": "Ren datafil til go-live-tjeklisten (/admin/klar og npm run launch:check, ADR 0069). Ét sted for hvad der står mellem os og launch. En beslutning lukkes ved at slette dens post her (samme regel som backloggen); en bevidst parkering noteres i 'parked' med hvem og hvornår. Opfind aldrig en parkering: den skal komme fra den der har ansvaret.",
+  "generelleHemmeligheder": [
+    { "label": "Supabase-URL", "anyOf": ["NEXT_PUBLIC_SUPABASE_URL"], "formaal": "Adressen på databasen og login (offentlig by design)" },
+    { "label": "Supabase anon-nøgle", "anyOf": ["NEXT_PUBLIC_SUPABASE_ANON_KEY"], "formaal": "Klientnøgle til login (offentlig by design)" },
+    { "label": "Supabase service-role-nøgle", "anyOf": ["SUPABASE_SERVICE_ROLE_KEY"], "formaal": "Serversiden: webhooks, planlagte kørsler og skrivninger bag rollekontrol" },
+    { "label": "Appens adresse", "anyOf": ["NEXT_PUBLIC_APP_URL"], "formaal": "Absolutte links i mails, SMS og betalingens tilbage-adresser" },
+    { "label": "Fælles hemmelighed til planlagte kørsler", "anyOf": ["CRON_SECRET"], "formaal": "Beskytter opkrævnings-, resumé- og notifikationskørslerne; uden den kører de ikke" },
+    { "label": "Hemmelighed til vurderingslinks", "anyOf": ["RATING_LINK_SECRET"], "minLength": 32, "formaal": "Signerer engangslinks til mødevurdering; uden den er funktionen slået fra" }
+  ],
+  "porte": [
+    {
+      "key": "booking",
+      "realAdapterBuilt": true,
+      "demoAdapterBuilt": true,
+      "factoryKeys": [
+        { "label": "Cal.com API-nøgle", "anyOf": ["CALCOM_API_KEY"] }
+      ],
+      "otherKeys": [
+        { "label": "Cal.com team-id", "anyOf": ["CALCOM_TEAM_ID"] },
+        { "label": "Cal.com webhook-hemmelighed", "anyOf": ["CALCOM_WEBHOOK_SECRET"] }
+      ],
+      "accepted": null
+    },
+    {
+      "key": "video",
+      "realAdapterBuilt": false,
+      "demoAdapterBuilt": true,
+      "factoryKeys": [
+        { "label": "Cal Video API-nøgle", "anyOf": ["CALVIDEO_API_KEY"] }
+      ],
+      "otherKeys": [],
+      "accepted": null
+    },
+    {
+      "key": "payments",
+      "realAdapterBuilt": true,
+      "demoAdapterBuilt": true,
+      "factoryKeys": [
+        { "label": "Alunta API-nøgle", "anyOf": ["ALUNTA_API_KEY"] },
+        { "label": "Alunta plan-id", "anyOf": ["ALUNTA_PLAN_ID"] }
+      ],
+      "otherKeys": [
+        { "label": "Alunta webhook-hemmelighed", "anyOf": ["ALUNTA_WEBHOOK_SECRET"] }
+      ],
+      "accepted": null
+    },
+    {
+      "key": "accounting",
+      "realAdapterBuilt": false,
+      "demoAdapterBuilt": true,
+      "factoryKeys": [
+        { "label": "Regnskabssystemets API-nøgle", "anyOf": ["ACCOUNTING_API_KEY"] }
+      ],
+      "otherKeys": [],
+      "accepted": null
+    },
+    {
+      "key": "llm",
+      "realAdapterBuilt": true,
+      "demoAdapterBuilt": true,
+      "factoryKeys": [
+        { "label": "Ordbogen-nøgle (AI-opfølgning)", "anyOf": ["LLM_API_KEY", "ORDBOGEN_API_KEY"] }
+      ],
+      "otherKeys": [],
+      "accepted": null
+    },
+    {
+      "key": "transcription",
+      "realAdapterBuilt": true,
+      "demoAdapterBuilt": true,
+      "factoryKeys": [
+        { "label": "Ordbogen-nøgle (transskription)", "anyOf": ["TRANSCRIPTION_API_KEY", "ORDBOGEN_API_KEY"] }
+      ],
+      "otherKeys": [],
+      "accepted": null
+    },
+    {
+      "key": "email",
+      "realAdapterBuilt": true,
+      "demoAdapterBuilt": true,
+      "factoryKeys": [
+        { "label": "Resend API-nøgle", "anyOf": ["RESEND_API_KEY"] },
+        { "label": "Resend afsenderadresse", "anyOf": ["RESEND_FROM_ADDRESS"] }
+      ],
+      "otherKeys": [],
+      "accepted": null
+    },
+    {
+      "key": "sms",
+      "realAdapterBuilt": true,
+      "demoAdapterBuilt": true,
+      "factoryKeys": [
+        { "label": "inMobile API-nøgle", "anyOf": ["INMOBILE_API_KEY"] },
+        { "label": "inMobile afsender", "anyOf": ["INMOBILE_SENDER"] }
+      ],
+      "otherKeys": [],
+      "accepted": null
+    },
+    {
+      "key": "analytics",
+      "realAdapterBuilt": false,
+      "demoAdapterBuilt": false,
+      "factoryKeys": [
+        { "label": "PostHog projektnøgle", "anyOf": ["POSTHOG_KEY"] },
+        { "label": "PostHog host", "anyOf": ["POSTHOG_HOST"] }
+      ],
+      "otherKeys": [],
+      "accepted": null
+    }
+  ],
+  "oevrigeFlag": [
+    {
+      "flag": "inAppMessaging",
+      "env": "FLAG_INAPPMESSAGING",
+      "intent": "slukket",
+      "note": "Hele modulet er uafklaret; flaget er hårdkodet slukket i koden uanset miljø."
+    },
+    {
+      "flag": "leadPartner",
+      "env": "FLAG_LEADPARTNER",
+      "intent": "slukket",
+      "note": "Manuel lead-partner-markering er slukket, indtil ejeren fastsætter tildelings- og rotationsregler."
+    }
+  ],
+  "beslutninger": [
+    {
+      "id": "tos-honoraraftale",
+      "owner": "ejer",
+      "blocksLaunch": true,
+      "title": "Vilkår (ToS) og honoraraftale",
+      "consequence": "Kontrakten skal også dække samtykke til optagelse, AI og SMS. Skal foreligge før første møde.",
+      "source": "CLAUDE.md; docs/fase-6.md",
+      "parked": null
+    },
+    {
+      "id": "domaene-dns",
+      "owner": "ejer",
+      "blocksLaunch": true,
+      "title": "Domænet signupacademy.com og DNS-adgang til Mads",
+      "consequence": "Platformen kan ikke ligge på sit rigtige domæne.",
+      "source": "CLAUDE.md; docs/fase-6.md",
+      "parked": null
+    },
+    {
+      "id": "honorarsats",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Honorarsats pr. partner pr. møde",
+      "consequence": "Uden en regel beregnes intet honorar, og opgørelsen viser «ingen sats».",
+      "source": "CLAUDE.md; docs/stub-register.md",
+      "parked": null
+    },
+    {
+      "id": "startpris",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Startpris og mødepris (meeting-fee)",
+      "consequence": "Uden en aktiv prisregel kan der ikke beregnes en pris, og der kan ikke oprettes abonnementer.",
+      "source": "CLAUDE.md; docs/stub-register.md",
+      "parked": null
+    },
+    {
+      "id": "regnskabssystem",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Regnskabssystem: e-conomic eller Dinero",
+      "consequence": "Honorar eksporteres som CSV; der er ingen forbindelse til et regnskabssystem.",
+      "source": "CLAUDE.md; docs/accounts-to-create.md",
+      "parked": null
+    },
+    {
+      "id": "moms-honorar",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Moms på partner-honorar",
+      "consequence": "Beløb vises uden momsbehandling.",
+      "source": "CLAUDE.md; docs/stub-register.md",
+      "parked": null
+    },
+    {
+      "id": "honorar-udeblivelse",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Honorar ved udeblivelse eller sent afbud",
+      "consequence": "Sådanne linjer står som «afventer regel», uden beløb.",
+      "source": "CLAUDE.md; docs/stub-register.md",
+      "parked": null
+    },
+    {
+      "id": "aendre-aflyse-vindue",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Hvor sent må et møde flyttes eller aflyses",
+      "consequence": "Ejeren kan flytte og aflyse frit lige indtil mødet.",
+      "source": "CLAUDE.md; docs/stub-register.md",
+      "parked": null
+    },
+    {
+      "id": "notifikationstidspunkter",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Hvornår sendes mødepåmindelsen og anmodningen om vurdering",
+      "consequence": "Ingen planlagt besked sendes, før tidspunkterne er fastsat.",
+      "source": "docs/stub-register.md",
+      "parked": null
+    },
+    {
+      "id": "lead-partner",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Lead-partner: tildelings- og rotationsregler",
+      "consequence": "Lead sættes manuelt; flaget er slukket.",
+      "source": "CLAUDE.md; docs/stub-register.md",
+      "parked": null
+    },
+    {
+      "id": "matching-tiebreak",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Board-matching: hvem vælges ved lige gode kandidater",
+      "consequence": "Matchingen vælger neutralt (rækkefølge, navn), ikke efter rating eller tilgængelighed.",
+      "source": "CLAUDE.md; docs/stub-register.md",
+      "parked": null
+    },
+    {
+      "id": "note-synlighed",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Hvem må se mødenoter",
+      "consequence": "Standard er restriktiv: kun forfatteren og boardets ejer.",
+      "source": "CLAUDE.md; docs/stub-register.md",
+      "parked": null
+    },
+    {
+      "id": "board-livscyklus",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Hvornår slutter et board",
+      "consequence": "Et board lever, til nogen fjerner det.",
+      "source": "CLAUDE.md",
+      "parked": null
+    },
+    {
+      "id": "opsigelsesvarsel",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Opsigelsesvarsel og hvad der sker med en betalt periode",
+      "consequence": "Opsigelse stopper kun nye perioder; ingen refusion.",
+      "source": "docs/stub-register.md",
+      "parked": null
+    },
+    {
+      "id": "periode-aendringer",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Ændring midt i en periode, og perioder der blev sprunget over",
+      "consequence": "Ingen forholdsmæssig regulering og ingen efterfakturering.",
+      "source": "docs/stub-register.md",
+      "parked": null
+    },
+    {
+      "id": "fejlet-betaling-konsekvens",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Hvad en fejlet betaling betyder for honorar og adgang",
+      "consequence": "Et fejlet træk registreres, men har ingen konsekvens.",
+      "source": "docs/stub-register.md",
+      "parked": null
+    },
+    {
+      "id": "rating-linkets-levetid",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Hvor længe virker linket til at vurdere et møde",
+      "consequence": "Teknisk standard på 14 dage.",
+      "source": "docs/stub-register.md",
+      "parked": null
+    },
+    {
+      "id": "in-app-messaging",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Skal der være beskeder i platformen (in-app messaging)",
+      "consequence": "Modulet er ikke bygget og kan ikke tændes.",
+      "source": "CLAUDE.md",
+      "parked": null
+    },
+    {
+      "id": "noter-under-moede",
+      "owner": "ejer",
+      "blocksLaunch": false,
+      "title": "Noter under mødet",
+      "consequence": "Ikke afklaret hvad funktionen skal være.",
+      "source": "CLAUDE.md",
+      "parked": null
+    },
+    {
+      "id": "calcom-eu-residens",
+      "owner": "mads",
+      "blocksLaunch": true,
+      "title": "Cal.com EU-residens på Teams-planen",
+      "consequence": "Skal verificeres, før der lægges produktionsdata ind (spike L-7).",
+      "source": "CLAUDE.md; docs/spikes/multi-host.md",
+      "parked": null
+    },
+    {
+      "id": "calcom-optagelse",
+      "owner": "mads",
+      "blocksLaunch": false,
+      "title": "Kan Cal.com optage møder på Teams-planen",
+      "consequence": "Transskription og AI-resumé forudsætter en optagelse (spike L-8).",
+      "source": "CLAUDE.md; docs/spikes/multi-host.md",
+      "parked": null
+    },
+    {
+      "id": "calcom-multihost-live",
+      "owner": "mads",
+      "blocksLaunch": false,
+      "title": "Cal.com: resten af multi-host-verifikationen mod en rigtig konto",
+      "consequence": "Adapteren er aldrig kørt mod en konto (spike L-1, L-3, L-4, L-5).",
+      "source": "CLAUDE.md; docs/spikes/multi-host.md",
+      "parked": null
+    },
+    {
+      "id": "alunta-opsaetning",
+      "owner": "mads",
+      "blocksLaunch": false,
+      "title": "Alunta: plan, parameter, webhook-hemmelighed og test i test_mode",
+      "consequence": "Betalingen er aldrig kørt mod en rigtig konto.",
+      "source": "CLAUDE.md; docs/accounts-to-create.md",
+      "parked": null
+    },
+    {
+      "id": "alunta-kadence",
+      "owner": "mads",
+      "blocksLaunch": false,
+      "title": "Alunta kan ikke fakturere hver 4. uge, kun pr. måned",
+      "consequence": "Den aftalte kadence kan ikke afbildes direkte (B-35).",
+      "source": "docs/backlog.md",
+      "parked": null
+    },
+    {
+      "id": "netlify-region",
+      "owner": "mads",
+      "blocksLaunch": true,
+      "title": "Netlify Functions-region sat til EU (Frankfurt)",
+      "consequence": "Uden den kører serverkoden i USA, og EU-residens er ikke overholdt.",
+      "source": "netlify.toml; docs/fase-6.md",
+      "parked": null
+    },
+    {
+      "id": "resend-region",
+      "owner": "mads",
+      "blocksLaunch": false,
+      "title": "Resend: afsenderdomæne oprettet i EU-regionen",
+      "consequence": "Regionen vælges på domænet og kan ikke ændres bagefter.",
+      "source": ".env.example; docs/gdpr/leverandoer-register.md",
+      "parked": null
+    },
+    {
+      "id": "inmobile-verifikation",
+      "owner": "mads",
+      "blocksLaunch": false,
+      "title": "inMobile: adapteren er aldrig kørt mod en konto",
+      "consequence": "Endpoint og feltnavne er bedste forståelse af API'et.",
+      "source": ".env.example; docs/stub-register.md",
+      "parked": null
+    },
+    {
+      "id": "ordbogen-verifikation",
+      "owner": "mads",
+      "blocksLaunch": false,
+      "title": "Ordbogen: modelnavne og kald verificeret mod en rigtig nøgle",
+      "consequence": "Adapterne er bygget mod den offentlige spec, aldrig kørt.",
+      "source": ".env.example; docs/spikes/ordbogen-api.md",
+      "parked": null
+    },
+    {
+      "id": "ejer-test-udfald",
+      "owner": "mads",
+      "blocksLaunch": false,
+      "title": "Ejer-testen: blev den holdt, og hvad gav den",
+      "consequence": "Repoet registrerer ikke udfaldet; feedback er ikke trieret.",
+      "source": "CLAUDE.md; docs/fase-6.md",
+      "parked": null
+    }
+  ]
+}

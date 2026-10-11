@@ -889,6 +889,12 @@ a.btn-primary {
   color: var(--color-text-muted);
   border-color: var(--color-grey-bg);
 }
+/* Go-live-tjeklisten (ADR 0069): «blokerer» er navyfyldt, «klar» er den guldfyldte live-tone. */
+.status-badge--blocked {
+  background: var(--color-navy);
+  border-color: var(--color-navy);
+  color: var(--color-white);
+}
 
 /* Badge-linje i tabelcelle: flere mærker pr. kanal under hinanden. */
 .badge-list {

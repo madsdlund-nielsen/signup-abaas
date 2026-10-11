@@ -25,6 +25,8 @@
     "db:diff": "npx --yes supabase db diff",
     "db:seed:demo": "node --env-file-if-exists=.env.local scripts/seed-demo.mjs",
     "db:seed:demo:clean": "node --env-file-if-exists=.env.local scripts/seed-demo.mjs clean",
+    "launch:check": "node --env-file-if-exists=.env.local scripts/launch-check.mjs",
+    "docs:reference": "node scripts/gen-reference.mjs",
     "prepare": "husky"
   },
   "dependencies": {
