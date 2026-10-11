@@ -1,6 +1,6 @@
 # 0055 — Rolle-dashboards: hvad der læses hvordan, og lead-partnerens læsevej til ejerens behov
 
-- **Status:** Accepteret
+- **Status:** Accepteret — delvist erstattet af 0065 (spørgsmålet om at informere ejeren om lead-aflæsningen er dækket af kontrakten; lead-tildeling og vurderinger er uberørt)
 - **Dato:** 2026-10-10
 - **Fase:** 5 (5.4)
 - **Berører uafklaret punkt:** ja — lead-partner: tildelings- og rotationsregler (ejer); hvad

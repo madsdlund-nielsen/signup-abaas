@@ -3,7 +3,8 @@
  * `/api/cron/summaries` med service-role-klienten — aldrig ved sidevisning.
  *
  * For hvert afholdt møde uden `klar`-resumé:
- *   1. samtykke tjekkes (fejler lukket → `mangler_samtykke`, der hentes og sendes INTET),
+ *   1. grundlaget tjekkes (`getRecordingConsent`: kontrakten for et møde der findes; ellers fejler
+ *      det lukket → `mangler_samtykke`, der hentes og sendes INTET),
  *   2. optagelsen hentes (ingen → `mangler_optagelse`),
  *   3. rækken låses med en betinget status-overgang (idempotens: kun én kørsel vinder),
  *   4. lyd → transskription → LLM → resuméet gemmes. Transskriptet gemmes IKKE.
@@ -12,10 +13,10 @@
  * eller persondata i logs eller `error`-kolonnen — kun mødets id og en kort fejlkode.
  *
  * Demo (ADR 0041): når BÅDE transskription og LLM er demo-adaptere findes der ingen lyd og
- * intet samtykke at tage stilling til — demo-adapterne sender ingenting nogen steder og
+ * intet grundlag at tage stilling til — demo-adapterne sender ingenting nogen steder og
  * returnerer faste [DEMO]-tekster. Samtykke-/optagelsestjekket springes KUN over i den situation
  * (`isDemoPath`); så snart én af portene er rigtig (eller stub) gælder tjekket fuldt ud.
- * Samtykke stubbes aldrig: en rigtig adapter kan ikke nås uden det.
+ * Grundlaget stubbes aldrig: en rigtig adapter kan ikke nås uden det (ADR 0065).
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";

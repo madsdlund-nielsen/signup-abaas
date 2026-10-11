@@ -9,9 +9,7 @@ import {
   normaliseDisplayName,
   normalisePhone,
   parseProfileInput,
-  smsConsentStamp,
   timeZoneChoices,
-  type ValidProfile,
 } from "@/server/account/validation";
 
 /**
@@ -127,21 +125,21 @@ describe("timeZoneChoices", () => {
   });
 });
 
-const BASE = { displayName: "[DEMO] Eva Ejer", phone: "20 00 00 00", timeZone: "Europe/Copenhagen", smsOptIn: true };
+const BASE = { displayName: "[DEMO] Eva Ejer", phone: "20 00 00 00", timeZone: "Europe/Copenhagen" };
 
 describe("parseProfileInput", () => {
   it("normaliserer alle felter", () => {
     const result = parseProfileInput({ ...BASE, displayName: "  [DEMO]  Eva Ejer " });
     expect(result).toEqual({
       ok: true,
-      profile: { displayName: "[DEMO] Eva Ejer", phone: "+4520000000", timeZone: "Europe/Copenhagen", smsOptIn: true },
+      profile: { displayName: "[DEMO] Eva Ejer", phone: "+4520000000", timeZone: "Europe/Copenhagen" },
     });
   });
 
   it("navn og telefon er valgfrie: tomme felter bliver null", () => {
-    expect(parseProfileInput({ displayName: "", phone: "", timeZone: "UTC", smsOptIn: false })).toEqual({
+    expect(parseProfileInput({ displayName: "", phone: "", timeZone: "UTC" })).toEqual({
       ok: true,
-      profile: { displayName: null, phone: null, timeZone: "UTC", smsOptIn: false },
+      profile: { displayName: null, phone: null, timeZone: "UTC" },
     });
   });
 
@@ -163,18 +161,10 @@ describe("parseProfileInput", () => {
     expect(parseProfileInput({ ...BASE, timeZone: "" }).ok).toBe(false);
   });
 
-  it("NEGATIV: SMS-samtykke uden telefonnummer er en fejl — ikke et stille nej", () => {
-    expect(parseProfileInput({ ...BASE, phone: "" })).toEqual({
-      ok: false,
-      error: "Du har sagt ja til SMS, men ikke angivet et telefonnummer.",
-    });
-  });
-
-  it("et gemt nummer uden samtykke er lovligt (nummeret bruges bare ikke)", () => {
-    expect(parseProfileInput({ ...BASE, smsOptIn: false })).toMatchObject({
-      ok: true,
-      profile: { phone: "+4520000000", smsOptIn: false },
-    });
+  it("intet SMS-samtykke i profilen (ADR 0065): et nummer er nok, og der er ingen afkrydsning at give eller trække tilbage", () => {
+    const result = parseProfileInput(BASE);
+    expect(result).toMatchObject({ ok: true, profile: { phone: "+4520000000" } });
+    if (result.ok) expect(Object.keys(result.profile).sort()).toEqual(["displayName", "phone", "timeZone"]);
   });
 
   it("telefonfejlen fra normalisePhone kommer igennem", () => {
@@ -182,43 +172,5 @@ describe("parseProfileInput", () => {
       ok: false,
       error: expect.stringMatching(/starter med 2-9/),
     });
-  });
-});
-
-describe("smsConsentStamp — samtykket gælder ét nummer", () => {
-  const NOW = new Date("2026-10-10T12:00:00.000Z");
-  const OLD = "2026-09-01T08:00:00.000Z";
-  const profile = (over: Partial<ValidProfile> = {}): ValidProfile => ({
-    displayName: null,
-    phone: "+4520000000",
-    timeZone: "Europe/Copenhagen",
-    smsOptIn: true,
-    ...over,
-  });
-
-  it("ikke afkrydset → ingen tidsstempel (aldrig givet eller tilbagekaldt)", () => {
-    expect(smsConsentStamp(profile({ smsOptIn: false }), null, NOW)).toBeNull();
-    expect(
-      smsConsentStamp(profile({ smsOptIn: false }), { phone: "+4520000000", smsOptIn: true, smsOptInAt: OLD }, NOW),
-    ).toBeNull();
-  });
-
-  it("nyt samtykke → nu", () => {
-    expect(smsConsentStamp(profile(), null, NOW)).toBe(NOW.toISOString());
-    expect(
-      smsConsentStamp(profile(), { phone: "+4520000000", smsOptIn: false, smsOptInAt: null }, NOW),
-    ).toBe(NOW.toISOString());
-  });
-
-  it("uændret samtykke på samme nummer bevarer det oprindelige tidspunkt (et nyt navn fornyer ikke samtykket)", () => {
-    expect(
-      smsConsentStamp(profile(), { phone: "+4520000000", smsOptIn: true, smsOptInAt: OLD }, NOW),
-    ).toBe(OLD);
-  });
-
-  it("et ændret nummer er et nyt samtykke → nu", () => {
-    expect(
-      smsConsentStamp(profile({ phone: "+4530000000" }), { phone: "+4520000000", smsOptIn: true, smsOptInAt: OLD }, NOW),
-    ).toBe(NOW.toISOString());
   });
 });

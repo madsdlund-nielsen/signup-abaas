@@ -18,10 +18,10 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
 | **MobilePay** | Betaling ind (DK) — via **QuickPays** checkout (MobilePay Online) | Navn, telefon, betalingsmetadata | DK/EU | 🟡 går via QuickPay (ADR 0034); ikke en Alunta-gateway (ADR 0032) | 🔴 afventer | `payments` |
 | **e-conomic / Dinero** | Bogføring ud | Faktura-/kundedata, CVR | DK/EU | afventer leverandørvalg | 🔴 afventer (leverandør uafklaret) | `accounting` |
 | **Ordbogen** (chat.dk / Odin-LLM, nu **odincore.ai**) — endpoint `api.odincore.ai` (alias `api.ordbogen.ai`), `/v1/chat/completions` | AI-mødeopfølgning (ADR 0024, 0058) | Mødeindhold/transskript (kan indeholde PII) | DK — dansk datacenter (oplyst for chat.dk; 🟡 for selve API'et ikke stadfæstet i spec'en — bekræftes skriftligt, `docs/spikes/ordbogen-api.md` #8) | ✅ DK (ADR 0024) | ✅ **håndteret uden for repoet** (Mads, 2026-09-15) — spores ikke herfra | `aiFollowup` |
-| **Ordbogen** (ordbogen.ai → **odincore.ai**) — endpoint `api.odincore.ai`, `/v1/audio/transcriptions` | Lyd → tekst (ADR 0024, 0058). 🔴 Sendes kun med registreret samtykke til optagelse (fail-closed) | Mødeoptagelse/-tekst | DK — dansk datacenter (som ovenfor: API-region bekræftes) | ✅ DK (ADR 0024) | ✅ **håndteret uden for repoet** (samme aftale som Odin-LLM) | `transcription` |
+| **Ordbogen** (ordbogen.ai → **odincore.ai**) — endpoint `api.odincore.ai`, `/v1/audio/transcriptions` | Lyd → tekst (ADR 0024, 0058). Retsgrundlag: **kontrakten** (samtykke til optagelse og AI er en del af kontraktindgåelsen, ADR 0065). Fejler stadig lukket uden et grundlag for mødet (defense-in-depth) | Mødeoptagelse/-tekst | DK — dansk datacenter (som ovenfor: API-region bekræftes) | ✅ DK (ADR 0024) | ✅ **håndteret uden for repoet** (samme aftale som Odin-LLM) | `transcription` |
 | **Resend** | Transaktionsmails (notifikationsmotoren, ADR 0057) | E-mailadresser, mailindhold (aflysning/flytning, påmindelse, rating, fejlet betaling) | EU (Dublin, `eu-west-1`) — **vælges på afsenderdomænet i Resend-UI'et, ikke i API-kaldet** | ✅ EU (Dublin) — 🔴 TODO(mads): bekræft at domænet er oprettet i `eu-west-1` | 🔴 afventer underskrift (Resend DPA findes) | `email` |
-| **inMobile** | SMS (notifikationsmotoren, ADR 0057) | Telefonnumre (E.164) og beskedindhold — **kun for brugere der har givet SMS-samtykke** (`app_user.sms_opt_in`, `/konto`, ADR 0061); et gemt nummer uden samtykke sendes aldrig. Samtykketeksten er en pladsholder (TODO(ejer)) | DK | ✅ DK | 🔴 afventer underskrift | `sms` |
-| **PostHog** | Analytics + fejlovervågning | Pseudonyme events, evt. IP/enhed | EU (eu.posthog.com) | ✅ EU | 🔴 afventer underskrift (PostHog DPA findes) | `analytics` |
+| **inMobile** | SMS (notifikationsmotoren, ADR 0057) | Telefonnumre (E.164) og beskedindhold — **kun for brugere der har angivet et nummer** (`app_user.phone_e164`, `/konto`, ADR 0061). Retsgrundlag: **kontrakten** — SMS-samtykket er en del af kontraktindgåelsen, og der er ingen opt-in/out (ADR 0065). Kontraktens ordlyd er ejerens (TODO(ejer)) | DK | ✅ DK | 🔴 afventer underskrift | `sms` |
+| **PostHog** | Analytics + fejlovervågning; læses desuden aggregeret til admin-driftsstatus (ADR 0066) | Pseudonyme events, evt. IP/enhed. Læsningen sender kun en forespørgsel ud (tidsvinduer) og modtager tællinger + fejltypenavne — ingen persondata forlader os, og intet gemmes | EU (eu.posthog.com) | ✅ EU | 🔴 afventer underskrift (PostHog DPA findes) | `analytics` |
 | **Netlify** (hosting) | SSR, logs, cron | Request-/session-metadata, logs | EU — Frankfurt (`fra`) | 🟡 kræver UI-region-valg + Pro-plan (ADR 0012) | 🔴 afventer underskrift (Netlify DPA findes) | — |
 | **GitHub Actions** | CI/CD | Kildekode (ingen prod-PII), CI-metadata | Global | n/a (ingen prod-persondata) | dækket af GitHub-vilkår | — |
 
@@ -39,11 +39,15 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
   **Ordbogen er undtaget sporingen her** — aftalen er håndteret uden for repoet
   (Mads, 2026-09-15) og skal ikke stå som åben blokering.
 - **Samtykke vs. nødvendig:** transaktionsmails/SMS (Resend, inMobile) og betaling er
-  nødvendig databehandling for ydelsen; analytics (PostHog) kræver samtykke
-  (`analytics`-kategorien i `src/server/consent`).
+  nødvendig databehandling for ydelsen. **Siden 2026-10-11 (ADR 0065) er samtykke til
+  mødeoptagelse, AI-behandling (Ordbogen) og SMS en del af kontrakten** (ToS + honoraraftale) —
+  retsgrundlaget er kontrakten, og der er ingen opt-in/out på platformen. **Undtagelse:** analytics
+  (PostHog) kræver fortsat samtykke (`analytics`-kategorien i `src/server/consent`) — besøgende
+  før kontrakt er ikke dækket, og cookiereglerne kræver samtykke uanset kontrakt. Afgørelsen er
+  Mads'.
 - **Dataminimering:** adaptere sender kun de felter en operation kræver (se porte i `src/lib`).
-  Telefonnummeret forlader aldrig Supabase uden SMS-samtykke: motoren slår det kun op til en
-  SMS-udsendelse og kræver både nummer og `sms_opt_in` (ADR 0061). Kontoens navn flettes kun ind
+  Telefonnummeret forlader kun Supabase til en SMS-udsendelse: motoren slår det kun op dér og
+  sender kun hvis brugeren har angivet et nummer (ADR 0061, 0065). Kontoens navn flettes kun ind
   i en besked til personen selv (`{{modtager_navn}}`).
 - **Udsendelseslog (ADR 0057):** `notification_delivery` indeholder en bruger-reference
   (`recipient_user_id`), aldrig en e-mailadresse eller et telefonnummer — adressen slås op i det

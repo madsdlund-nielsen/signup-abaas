@@ -1,7 +1,7 @@
 ---
 name: pre-pr-check
 description: Kør den lokale pre-PR-gate for signup-abaas (lint + typecheck + unit, samt integration/db hvis Docker kører). Brug når brugeren beder om "check tests før PR", "kør pre-PR gate", "er branchen klar", eller før en PR oprettes manuelt.
-allowed-tools: Bash(npm run lint:*), Bash(npm run check:*), Bash(npm run test:unit:*), Bash(npm run test:integration:*), Bash(npm run test:db:*), Bash(npm run db:test:up:*), Bash(npm run db:test:down:*), Bash(docker info:*)
+allowed-tools: Bash(npm run lint:*), Bash(npm run check:*), Bash(npm run test:unit:*), Bash(npm run test:integration:*), Bash(npm run test:db:*), Bash(npm test:*), Bash(npm run test:all:*), Bash(npm run db:test:up:*), Bash(npm run db:test:down:*), Bash(docker info:*)
 ---
 
 # pre-pr-check — lokal pre-PR-gate (ABaaS)
@@ -15,6 +15,8 @@ npm run lint
 npm run check        # tsc --noEmit
 npm run test:unit
 ```
+(`npm test` kører unit + integration uden Docker; `npm run test:all` tilføjer db-laget.)
+
 Hvis Docker er tilgængeligt (`docker info`), også DB-laget:
 ```bash
 npm run db:test:up           # Postgres + wait-for-db

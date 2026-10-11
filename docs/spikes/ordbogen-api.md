@@ -74,4 +74,4 @@ Web-søgning efter dokumentation gav intet (ingen indeksering af odincore.ai).
 3. Mål svartid for lang lyd (op mod 75 min) før transskriptionen lægges i en baggrundsfunktion (ADR 0058).
 4. Bekræft fejlformerne (`401`/`429`) matcher `ErrorResponse`.
 
-Intet af dette må køres på rigtig mødelyd før **samtykke til optagelse** (ejerens punkt) er på plads.
+Intet af dette må køres på rigtig mødelyd før kontrakten (ToS + honoraraftale, der dækker optagelse og AI-behandling, ADR 0065) er indgået af deltagerne.

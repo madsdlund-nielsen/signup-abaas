@@ -1,6 +1,6 @@
 # 0061 — Kontoprofil: navn, telefon, tidszone og SMS-samtykke på brugeren
 
-- **Status:** Accepteret
+- **Status:** Accepteret — delvist erstattet af 0065 (SMS-opt-in (`sms_opt_in`/`sms_opt_in_at`, afkrydsningen på `/konto` og samtykkekravet i motoren) er fjernet i migration 0027; navn, telefon og tidszone består)
 - **Dato:** 2026-10-10
 - **Fase:** 2 + 4 (lukker huller fra booking, ADR 0046, og notifikationsmotoren, ADR 0057)
 - **Berører uafklaret punkt:** ja — samtykketeksten til SMS og privatlivsvilkår (ToS) er ejerens.
@@ -115,12 +115,13 @@ samtykketabel»; afgrænsningen i selve udtrækket siger det, og at der ikke er 
   den ikke glemmes. Navnet er ikke tvunget: en konto uden navn får e-mailen som attendee-navn, og
   skabeloner der bruger `{{modtager_navn}}` fejler for den.
 - Opfølgning:
-  - TODO(ejer): SMS-samtykketeksten og ToS/privatlivsvilkår — teksten på `/konto` er teknisk
+  - ~~TODO(ejer): SMS-samtykketeksten~~ → lukket af ADR 0065 (samtykket er kontraktens; afkrydsningen er væk).
+    ToS/privatlivsvilkår er stadig ejerens indhold — teksten på `/konto` var teknisk
     pladsholder. Forudsætning for at `FLAG_SMS` tændes i produktion.
   - TODO(ejer): skal navnet være påkrævet ved signup/onboarding (og dermed give `{{modtager_navn}}`
     til alle)? Indtil da er det frivilligt.
   - TODO(mads): inMobile-adapteren er stadig uverificeret live (ADR 0057); telefonnummeret sendes
-    kun til inMobile ved opt-in (`docs/gdpr/leverandoer-register.md`).
+    kun til inMobile når brugeren har angivet det (ADR 0065; `docs/gdpr/leverandoer-register.md`).
   - Sletning: kolonnerne forsvinder med `app_user`-rækken; hos inMobile skal nummeret slettes
     særskilt (`docs/gdpr/sletteflow.md`).
   - Navnet bruges ikke endnu til hilsner i `/dashboard` m.m. — en lille, selvstændig skive.

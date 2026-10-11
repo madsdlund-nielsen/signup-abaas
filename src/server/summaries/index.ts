@@ -15,7 +15,7 @@
  * Demo (ADR 0041): når begge porte er demo-adaptere og der ingen `klar`-række er, bygges et
  * [DEMO]-resumé direkte af demo-adapterne uden at gemme det — som siden altid har gjort. Det
  * rører hverken samtykke eller optagelse: demo-adapterne har ingen lyd og sender intet nogen
- * steder. Så snart en port er rigtig eller stub, gælder den gemte række (og samtykket) fuldt ud.
+ * steder. Så snart en port er rigtig eller stub, gælder den gemte række (og grundlaget) fuldt ud.
  */
 
 import { createLlmProvider } from "@/lib/llm";
@@ -35,7 +35,7 @@ export type MeetingSummaryState =
     }
   /** Rækken afventer eller genereres — resuméet kommer af sig selv. */
   | { kind: "pending" }
-  /** 🔴 Intet registreret samtykke til optagelse: mødet er hverken transskriberet eller opsummeret. */
+  /** 🔴 Intet grundlag (kontrakt, ADR 0065) for mødet — fx et ukendt møde: hverken transskriberet eller opsummeret. */
   | { kind: "missing_consent" }
   | { kind: "missing_recording" }
   /** Opgivet efter flere forsøg — ejeren kan trykke "Generér igen". */

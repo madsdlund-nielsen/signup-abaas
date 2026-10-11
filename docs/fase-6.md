@@ -17,7 +17,7 @@
 - [ ] Sikkerhedsgennemgang: ingen secrets i repo, RLS aktiv på **alle**
       forretningstabeller, webhooks signaturverificerede og idempotente.
 - [ ] GDPR-verifikation: EU-residens bekræftet pr. leverandør, DPA'er på plads,
-      sletteflow testet ende-til-ende, samtykkeflow aktivt.
+      sletteflow testet ende-til-ende, cookie-samtykkeflow aktivt (optagelse/AI/SMS er kontraktens, ADR 0065).
 - [ ] Alle feature-flags gennemgået: hvert flag er enten bevidst tændt til launch
       eller dokumenteret som bevidst slukket.
 - [ ] **Stub-registret er tomt eller hver tilbageværende stub er eksplicit accepteret**
@@ -57,7 +57,7 @@
 - DPA'er på plads for: Supabase, Netlify, Cal.com, Alunta, Resend, inMobile,
   PostHog og **Ordbogen** (dækker både transskription og LLM — ADR 0024).
 - Test sletteflow ende-til-ende på tværs af Supabase og eksterne systemer.
-- Verificér samtykke (inkl. optagelse, hvis aktiveret).
+- Verificér cookie-samtykket. Samtykke til optagelse, AI og SMS er en del af kontrakten (ADR 0065): verificér at ToS + honoraraftale dækker det og at kontrakten indgås før første møde.
 - Bekræft at Netlify Functions-region er sat til EU (Frankfurt, `fra`) — åbent siden fase 0
   (`netlify.toml`).
 

@@ -41,8 +41,6 @@ const tables: Record<string, Row[]> = {
       display_name: "[DEMO] Eva Ejer",
       phone_e164: "+4500000000",
       time_zone: "Europe/Copenhagen",
-      sms_opt_in: true,
-      sms_opt_in_at: "2026-02-01T10:00:00Z",
     },
     { id: "a1", email: "admin@example.invalid", created_at: "2026-01-01T00:00:00Z" },
     {
@@ -52,8 +50,6 @@ const tables: Record<string, Row[]> = {
       display_name: "[DEMO] Fremmed",
       phone_e164: "+4511111111",
       time_zone: "UTC",
-      sms_opt_in: false,
-      sms_opt_in_at: null,
     },
   ],
   user_role_assignment: [
@@ -170,15 +166,13 @@ describe("collectSubjectData — scoping til én person", () => {
     expect(JSON.stringify(raw)).not.toMatch(/andens møde|DEMO-2/);
   });
 
-  it("henter personens egen kontoprofil (navn, telefon, tidszone, SMS-samtykke) — ikke den fremmedes", async () => {
+  it("henter personens egen kontoprofil (navn, telefon, tidszone) — ikke den fremmedes", async () => {
     const { fetch } = memoryFetcher(tables);
     const raw = await collectSubjectData(fetch, "ejer@example.invalid");
     expect(raw?.user).toMatchObject({
       display_name: "[DEMO] Eva Ejer",
       phone_e164: "+4500000000",
       time_zone: "Europe/Copenhagen",
-      sms_opt_in: true,
-      sms_opt_in_at: "2026-02-01T10:00:00Z",
     });
     expect(JSON.stringify(raw)).not.toContain("+4511111111");
   });

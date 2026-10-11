@@ -14,6 +14,7 @@ import { createAnalytics } from "./analytics";
 import { createBookingProvider } from "./booking";
 import { createEmailSender } from "./email";
 import { createLlmProvider } from "./llm";
+import { createOpsMetricsProvider } from "./ops-metrics";
 import { createPaymentProvider } from "./payments";
 import { createSmsSender } from "./sms";
 import { createTranscriptionProvider } from "./transcription";
@@ -24,6 +25,7 @@ import type { Analytics } from "./analytics";
 import type { BookingProvider } from "./booking";
 import type { EmailSender } from "./email";
 import type { LlmProvider } from "./llm";
+import type { OpsMetricsProvider } from "./ops-metrics";
 import type { PaymentProvider } from "./payments";
 import type { SmsSender } from "./sms";
 import type { TranscriptionProvider } from "./transcription";
@@ -43,6 +45,7 @@ export type {
 } from "./booking";
 export type { EmailSender, EmailMessage } from "./email";
 export type { LlmProvider, MeetingSummary, MeetingSummaryRequest } from "./llm";
+export type { ExceptionTypeCount, OpsMetrics, OpsMetricsProvider, OpsMetricsQuery } from "./ops-metrics";
 export type {
   PaymentProvider,
   SubscriptionRequest,
@@ -58,6 +61,8 @@ export interface Adapters {
   email: EmailSender;
   sms: SmsSender;
   analytics: Analytics;
+  /** Læse-siden af PostHog til /admin/drift (ADR 0066) — separat fra skrive-porten `analytics`. */
+  opsMetrics: OpsMetricsProvider;
   payments: PaymentProvider;
   booking: BookingProvider;
   video: VideoProvider;
@@ -72,6 +77,7 @@ export function getAdapters(env: Record<string, string | undefined> = process.en
     email: createEmailSender(env),
     sms: createSmsSender(env),
     analytics: createAnalytics(env),
+    opsMetrics: createOpsMetricsProvider(env),
     payments: createPaymentProvider(env),
     booking: createBookingProvider(env),
     video: createVideoProvider(env),

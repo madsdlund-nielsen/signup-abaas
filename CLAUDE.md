@@ -114,7 +114,6 @@ samtykke.
 - Board-livscyklus (hvornår slutter et board)
 - In-app messaging: **hele modulet uafklaret** — byg ikke uden beslutning
 - Noter under møde
-- Samtykke til mødeoptagelse
 - ToS + honoraraftale
 - Domæne (signupacademy.com) + DNS-adgang til Mads
 
@@ -131,6 +130,7 @@ samtykke.
   parameter + webhook-secret + faktureringsinterval) og live-verifikation i test_mode
 
 **Lukket siden sidst:**
+- ~~Samtykke til mødeoptagelse~~ → **del af kontraktindgåelsen** (Mads, 2026-10-11; ADR 0065). Ingen opt-in/out på platformen; cookie-samtykke til analytics er en bevidst undtagelse
 - ~~Cal.com plan-/tier-valg~~ → **Teams** ($12/bruger/md) (Mads, 2026-09-15; ADR 0046).
   Platform-planen er deprecated og lukket for nye kunder, så managed users + Atoms er ikke
   en åben vej. EU-residens og native optagelse er **ikke** lukket af dette
@@ -266,7 +266,7 @@ de gater ikke længere. Status pr. fase:
   betalingsfrekvenser, op/nedgradering.
 - **Fase 4 — Forberedelse, rating, AI & notifikationer: BYGGET, IKKE LUKKET (skærm-først).**
   Forberedelse, signerede rating-links, notifikationsmotor + skabeloner, Ordbogen-adaptere og
-  gemt resumé er bygget; afventer leverandørnøgler, samtykke til optagelse og ejerbeslutninger.
+  gemt resumé er bygget; afventer leverandørnøgler og ejerbeslutninger.
   Rapport: `docs/fase-4-rapport.md`.
 - **Fase 5 — Honorar + tilgængelighed + dashboard: BYGGET, IKKE LUKKET (skærm-først).**
   Honorarmotor (sats og moms som konfiguration), tilgængelighed, rolle-dashboards og juridisk

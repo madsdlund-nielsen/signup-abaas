@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 
 import { OpsOverview, formatTimestamp } from "@/components/OpsOverview";
 import { PageBody, PageHeader } from "@/components/PageHeader";
+import { PostHogOpsSection } from "@/components/PostHogOps";
 
-import { getIntegrationOverview, getOpsOverview } from "@/server/admin";
+import { getIntegrationOverview, getOpsOverview, getPostHogOps } from "@/server/admin";
 
 export const metadata: Metadata = { title: "Drift — Admin" };
 export const dynamic = "force-dynamic";
@@ -14,11 +15,17 @@ export const dynamic = "force-dynamic";
  * /admin/layout.tsx; tallene læses via den authede klient, så RLS (admin-policies på
  * tabellerne) er andet lag. Siden er passiv med vilje: tal og status, ingen handlinger.
  *
- * Honorar (indeværende måned, pr. linjestatus) indgår fra ADR 0055; PostHog-driftstatus er
- * stadig TODO(mads) nedenfor.
+ * Honorar (indeværende måned, pr. linjestatus) indgår fra ADR 0055. PostHog-driftstatus
+ * (ADR 0066) læses server-side via læse-porten `ops-metrics`; TODO(mads): live nøgle
+ * (POSTHOG_PERSONAL_API_KEY + POSTHOG_PROJECT_ID) — uden den viser sektionen "Ikke koblet på".
  */
 export default async function AdminOpsPage() {
-  const [ops, integrations] = await Promise.all([getOpsOverview(), getIntegrationOverview()]);
+  // getPostHogOps kaster aldrig — en fejl hos PostHog vælter ikke siden (ADR 0066).
+  const [ops, integrations, posthog] = await Promise.all([
+    getOpsOverview(),
+    getIntegrationOverview(),
+    getPostHogOps(),
+  ]);
 
   return (
     <>
@@ -40,19 +47,7 @@ export default async function AdminOpsPage() {
 
         <OpsOverview ops={ops} integrations={integrations} />
 
-        <section className="stack section-rule">
-          <p className="eyebrow">Fejl og ydelse (PostHog)</p>
-          {/* TODO(mads): PostHog-driftstatus (fejlrate, seneste fejl) kræver en live projektnøgle
-              og en query-adapter bag analytics-porten. Ingen tal før da — ingen falske. */}
-          <p className="body">
-            PostHog-driftstatus vises ikke endnu: den kræver en live projektnøgle, og analytics-porten
-            er en stub. Indtil da kan fejl og ydelse ses direkte i{" "}
-            <a href="https://eu.posthog.com" rel="noreferrer noopener" target="_blank">
-              PostHog (EU)
-            </a>
-            .
-          </p>
-        </section>
+        <PostHogOpsSection posthog={posthog} />
       </PageBody>
     </>
   );

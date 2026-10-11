@@ -5,7 +5,7 @@ import type { MeetingSummaryState } from "@/server/summaries";
 /**
  * Opsummeringen af et afholdt møde (fase 4.4). Ren præsentation af den GEMTE række (B-45):
  * kilde, referat og handlingspunkter — eller en rolig statuslinje når resuméet endnu ikke er
- * der (på vej, mangler samtykke, mangler optagelse, opgivet) eller AI-opfølgning ikke er
+ * der (på vej, mangler grundlag, mangler optagelse, opgivet) eller AI-opfølgning ikke er
  * konfigureret. Redaktionel som resten af mødesiden: ingen bokse, ingen badges.
  *
  * `retry` er en slot til "Generér igen" (en client-form med server action), som kun siden kender.
@@ -24,8 +24,8 @@ export function MeetingSummary({ state, retry }: { state: MeetingSummaryState; r
     case "missing_consent":
       return (
         <p className="empty">
-          Der er ikke registreret samtykke til mødeoptagelse, så mødet er hverken transskriberet
-          eller opsummeret.
+          Der er intet grundlag for mødeoptagelse registreret for dette møde, så det er hverken
+          transskriberet eller opsummeret.
         </p>
       );
     case "missing_recording":

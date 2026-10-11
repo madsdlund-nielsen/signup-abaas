@@ -24,15 +24,18 @@ export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
     key: "tos",
     title: "Vilkår og betingelser (ToS)",
     state: "mangler",
-    // TODO(ejer): ToS er ikke udarbejdet. Interfacet er bygget; indholdet er ejerens.
-    note: "Ikke udarbejdet — afventer ejer.",
+    // TODO(ejer): ToS er ikke udarbejdet. Interfacet er bygget; indholdet er ejerens. Kontrakten
+    // (ToS + honoraraftale) skal også dække samtykke til mødeoptagelse, AI-behandling og SMS —
+    // platformen har ingen opt-in/out (Mads, 2026-10-11, ADR 0065).
+    note: "Ikke udarbejdet — afventer ejer. Skal også dække samtykke til optagelse, AI-behandling og SMS (ADR 0065).",
   },
   {
     key: "partner-agreement",
     title: "Honoraraftale (partner)",
     state: "mangler",
     // TODO(ejer): honoraraftalen er ikke udarbejdet; hænger sammen med honorarsats/moms (§12).
-    note: "Ikke udarbejdet — afventer ejer.",
+    // Skal også dække partnerens samtykke til optagelse, AI-behandling og SMS (ADR 0065).
+    note: "Ikke udarbejdet — afventer ejer. Skal også dække samtykke til optagelse, AI-behandling og SMS (ADR 0065).",
   },
   {
     key: "processor-register",
