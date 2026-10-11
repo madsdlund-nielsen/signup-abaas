@@ -33,8 +33,10 @@
       aftalt. Ejerens behov læses via service-role bag lead-tjek — ADR 0055. Lead-tildeling er
       stadig uafklaret, TODO(ejer).)*
 - [ ] Admin-dashboard: boards, partnere, betalinger, honorar, driftstatus. *(Resumé på `/dashboard`
-      og honorar for indeværende måned på `/admin/drift` (ADR 0053/0055). **Rest:** PostHog-
-      driftstatus — TODO(mads): live nøgle.)*
+      og honorar for indeværende måned på `/admin/drift` (ADR 0053/0055). PostHog-driftstatus er
+      **bygget, afventer nøgle** (ADR 0066: læse-port `src/lib/ops-metrics/`, sektionen "Drift
+      (PostHog)"). Afkrydses når Mads har sat `POSTHOG_PERSONAL_API_KEY` + `POSTHOG_PROJECT_ID`
+      og verificeret forespørgslerne live — TODO(mads).)*
 - [x] Juridisk download-interface til admin (jf. §11-krav) er tilgængeligt (`/admin/juridisk`,
       ADR 0053): indsigtsudtræk (art. 15), dokumentoversigt og henvisning til sletteflowet.
       Interfacet er bygget, ikke indholdet: ToS/honoraraftale ikke udarbejdet (`TODO(ejer)`),
@@ -84,7 +86,7 @@
 
 ### 5.4 Dashboards
 > **Bygget** (ADR 0055): `/dashboard` med en sektion pr. rolle (en bruger med flere roller ser flere),
-> `src/server/dashboard/`, honorar-sektion på `/admin/drift`. PostHog-driftstatus står tilbage (TODO(mads)).
+> `src/server/dashboard/`, honorar-sektion på `/admin/drift`. PostHog-driftstatus er bygget (ADR 0066) og afventer læsenøglen (TODO(mads)).
 
 - Ejer: kommende møder, board-sammensætning, betalingsstatus.
 - Partner: kommende møder, honoraroverblik, egne ratings.

@@ -6,7 +6,7 @@
 >
 > Status 2026-10-11: **bygget skærm-først, ikke lukket.** Otte af elleve DoD-punkter er
 > opfyldt. Tre er delvist opfyldt: partner-tilgængelighed i booking, partnerens egne ratings
-> og PostHog-driftstatus. Honorarsatser, moms, afbudsregel og regnskabssystem er ejerens
+> og PostHog-driftstatus (bygget, afventer læsenøgle — ADR 0066). Honorarsatser, moms, afbudsregel og regnskabssystem er ejerens
 > beslutninger, og de er ikke sat. Lukning er Mads' beslutning.
 > Kilder: `docs/fase-5.md`, ADR 0051, 0052, 0053, 0055, `docs/stub-register.md`, `docs/backlog.md`.
 
@@ -51,7 +51,7 @@
 | 6 | Ejer-dashboard: kommende møder, board, betalingsstatus | ✅ | `/dashboard` (ADR 0055). Betalingsstatus er medlemskab, kortstatus og frekvens, med link til `/betaling` for trækhistorikken. |
 | 7 | Partner-dashboard: kommende møder, honoraroverblik, egne ratings | **delvist** | Møder, honorar og tilgængelighed er bygget. **Egne ratings vises ikke:** RLS (0015) lader kun afgiveren og admin læse `meeting_rating`. Panelet siger det højt. Ingen ny læsevej er bygget (ADR 0055). `fase-5.md` har tjekboksen afkrydset, men punktet er ikke opfyldt. |
 | 8 | Lead-partner-dashboard: kompetenceoverblik + næste møde | ✅ (med forbehold) | Overblik og næste møde er bygget (ADR 0055). **Forbehold:** lead-tildeling er uafklaret (ejer), så «lead» er det der står i data. |
-| 9 | Admin-dashboard: boards, partnere, betalinger, honorar, driftstatus fra PostHog | **delvist** | Boards, partnere, betalinger og honorar er bygget (ADR 0053, 0055). **Ikke bygget:** PostHog-driftstatus (fejlrate, seneste fejl). Analytics-porten er stub uden query-grænseflade. Siden linker til PostHog. Ingen falske tal (TODO(mads)). |
+| 9 | Admin-dashboard: boards, partnere, betalinger, honorar, driftstatus fra PostHog | **delvist** | Boards, partnere, betalinger og honorar er bygget (ADR 0053, 0055). **PostHog-driftstatus er bygget, men afventer nøglen** (ADR 0066): separat læse-port `src/lib/ops-metrics/` med rigtig adapter mod PostHogs Query API, demo og stub; sektionen «Drift (PostHog)» viser hændelser og undtagelser seneste 24 t, top-3 fejltyper og aktive personer seneste 7 dage — eller «Ikke koblet på» / «Kunne ikke læses». Rest: `POSTHOG_PERSONAL_API_KEY` + `POSTHOG_PROJECT_ID` og live-verifikation af forespørgslerne (TODO(mads)). Punktet afkrydses først da. |
 | 10 | Juridisk download-interface til admin (§11) | ✅ (interface) / ❌ (indhold) | `/admin/juridisk` er bygget (ADR 0053). **Indholdet findes ikke:** ToS og honoraraftale er «Ikke udarbejdet — afventer ejer». Der er ingen samtykkelog at eksportere, og ingen admin-sletteaction. |
 | 11 | Fuld test suite grøn, inkl. RLS: partner ser kun eget honorar (positiv og negativ) | ✅ (CI) | CI er grøn på HEAD, inkl. Integration & DB tests. `tests/db/partner-fee-rls.test.ts` findes med medpartner-negativ-case. Lokal db-kørsel mangler (B-13). |
 
@@ -88,7 +88,7 @@ Alle står i kode med `TODO(ejer)` / `TODO(mads)` og i `docs/stub-register.md`. 
 | Punkt | Hvor | Hvad det blokerer |
 |---|---|---|
 | **Cal.com-synk af `partner_availability`** (envejs, efter B-23 og med Teams-konto, L-1/L-3) | `src/server/availability/` | Booking direkte i Cal.com omgår vagten. Hører under liveverifikationen i `docs/spikes/multi-host.md`. ADR 0052 |
-| **PostHog-driftstatus** (live nøgle og læse-adapter bag analytics-porten) | `src/app/admin/drift/page.tsx`, `src/lib/analytics/` | Fejlrate og seneste fejl på driftssiden. ADR 0053. Ingen falske tal før da. |
+| **PostHog-driftstatus: læsenøgle + live-verifikation** (adapteren er bygget, ADR 0066) | `src/lib/ops-metrics/`, `src/app/admin/drift/page.tsx` | Rigtige tal i sektionen «Drift (PostHog)». Uden nøgle står der «Ikke koblet på» — ingen falske tal. |
 | **Persistent revisionslog over indsigtsudtræk** (tabel + RLS) | `src/server/admin/subject-request.ts` | Der er i dag kun én logline uden persondata. Stub-register |
 | **Driftsskærmen tæller ejere via `app_user`-policy** | `src/server/admin/ops.ts` | Admin-select-policy findes siden 0024 (ADR 0061), men driftstallet bruger den ikke endnu. ADR 0053, 0061 |
 | **Dashboards er dynamiske uden cache** (B-27) | `next.config.ts`, `netlify.toml` | Hver dashboard-visning er en serverfunktion. Beslutningen om Cache Components er Mads'. Funktionsregionen (US East) er en del af samme punkt. |
@@ -130,7 +130,7 @@ ligge klar, og intet der mangler må stå som stille stub:
 
 8. Cal.com-synk af tilgængelighed, eller en bevidst accept af at direkte Cal.com-bookinger
    omgår vagten. Hører under liveverifikationen i `docs/spikes/multi-host.md` (ADR 0052).
-9. PostHog-driftstatus med live nøgle.
+9. PostHog-læsenøgle (personal API key, kun `query:read`) + projekt-id, og live-verifikation af driftsforespørgslerne (ADR 0066).
 10. Beslutning om B-27 (cache-model og funktionsregion).
 
 **D. Gate før produktion (ikke før fase-lukning)**
