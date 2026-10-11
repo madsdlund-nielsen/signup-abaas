@@ -2,15 +2,15 @@
 
 > Genereret af `scripts/gen-reference.mjs` (`npm run docs:reference`). Redigér ikke i hånden — ret koden eller migrationerne og generér igen.
 
-Udledt af 27 migrationer i `supabase/migrations/` ved at læse `create table`, `alter table`, `create policy`/`drop policy`, `create type`, `create view`, `create function` og `create trigger` i filrækkefølge. Det der ikke genkendes er talt nederst — ikke gættet. Indekser, `grant`/`revoke` og data-sætninger er ikke udledt.
+Udledt af 28 migrationer i `supabase/migrations/` ved at læse `create table`, `alter table`, `create policy`/`drop policy`, `create type`, `create view`, `create function` og `create trigger` i filrækkefølge. Det der ikke genkendes er talt nederst — ikke gættet. Indekser, `grant`/`revoke` og data-sætninger er ikke udledt.
 
 ## Overblik
 
-- Tabeller: **30**, heraf RLS slået til: **30**
+- Tabeller: **31**, heraf RLS slået til: **31**
 - Tabeller uden `enable row level security`: **ingen**
 - RLS slået til men uden nogen policy (alt afvises for klientroller; kun service-role): ingen
-- Policies i alt: **64**
-- Views: 1 · Enum-typer: 15 · Funktioner: 6 · Triggere: 1
+- Policies i alt: **65**
+- Views: 1 · Enum-typer: 15 · Funktioner: 7 · Triggere: 1
 
 | Tabel | Kolonner | RLS | Policies | Oprettet i |
 |---|---|---|---|---|
@@ -19,6 +19,7 @@ Udledt af 27 migrationer i `supabase/migrations/` ved at læse `create table`, `
 | [board_change](#board_change) | 9 | ja | 1 | 0025_board_change.sql |
 | [board_partner](#board_partner) | 3 | ja | 3 | 0002_board.sql |
 | [competence_tag](#competence_tag) | 5 | ja | 1 | 0005_competence_tags.sql |
+| [erasure_receipt](#erasure_receipt) | 7 | ja | 1 | 0028_erasure.sql |
 | [fee_rule](#fee_rule) | 8 | ja | 2 | 0017_partner_fee.sql |
 | [meeting](#meeting) | 11 | ja | 3 | 0012_meeting.sql |
 | [meeting_agenda_item](#meeting_agenda_item) | 7 | ja | 3 | 0015_preparation_and_rating.sql |
@@ -145,6 +146,24 @@ Oprettet i `0005_competence_tags.sql`. RLS: slået til.
 | Policy | Kommando | Roller | Using | With check |
 |---|---|---|---|---|
 | `competence_tag_select_authenticated` | select | alle | `auth.uid() is not null` |  |
+
+### erasure_receipt
+
+Oprettet i `0028_erasure.sql`. RLS: slået til.
+
+| Kolonne | Type | Null | Default | Bemærkning |
+|---|---|---|---|---|
+| `id` | `uuid` | nej | `gen_random_uuid()` | primær nøgle |
+| `subject_hash` | `text` | nej |  | check subject_hash ~ '^[0-9a-f]{64}$' |
+| `requested_by` | `uuid` | ja |  | → app_user(id) on delete set null |
+| `executed_at` | `timestamptz` | nej | `now()` |  |
+| `outcome` | `text` | nej |  | check outcome in ('gennemfoert', 'delvist') |
+| `systems` | `jsonb` | nej |  | check jsonb_typeof(systems) = 'array' |
+| `missing` | `text[]` | nej | `'{}'` |  |
+
+| Policy | Kommando | Roller | Using | With check |
+|---|---|---|---|---|
+| `erasure_receipt_select_admin` | select | alle | `has_role('admin')` |  |
 
 ### fee_rule
 
@@ -755,6 +774,7 @@ Tabelkonstraints:
 | Funktion | Argumenter | Returnerer | Security definer | Oprettet i |
 |---|---|---|---|---|
 | `change_board_composition` | `p_board_id uuid, p_expected_partner_ids uuid[], p_add uuid[], p_remove uuid[], p_lead_id uuid, p_actor_id uuid, p_actor_role text, p_action text, p_partner_id …` | `uuid` | nej | 0026_change_board_composition.sql |
+| `erase_data_subject` | `p_user_id uuid, p_actor_id uuid, p_board_removals jsonb` | `jsonb` | nej | 0028_erasure.sql |
 | `has_role` | `check_role user_role` | `boolean` | ja | 0005_competence_tags.sql |
 | `is_partner_on_board` | `check_board_id uuid` | `boolean` | ja | 0011_partner_login.sql |
 | `notification_template_guard` |  | `trigger` | nej | 0021_notification_template.sql |
