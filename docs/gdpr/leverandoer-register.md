@@ -54,3 +54,8 @@ Roller: **dataansvarlig** = ABaaS (ejerne). **Databehandlere** = nedenstående l
   øjeblik der sendes og gemmes ikke. Fejltekster skrubbes for adresser før de logges eller sendes
   til PostHog. Skabeloner (`notification_template`) indeholder ingen persondata; flettede værdier
   (boardnavn, mødetidspunkt) findes kun i den udgående besked.
+- **Sletning hos databehandlerne (ADR 0068):** `docs/gdpr/sletteflow.md` beskriver hvad der slettes hvor. Automatisk
+  sletning findes kun hvor API'et er dokumenteret — PostHog (persons delete) og Resend (contacts delete) — samt
+  Cal.com-hosts/-aflysning via booking-porten. Cal.com-sæde og -attendee-data, inMobile og Ordbogen slettes manuelt
+  (🔴 TODO(mads): slette-API). Alunta, QuickPay, Nets og regnskabssystemet slettes aldrig af flowet:
+  opbevaringspligt er ikke afklaret (🔴 TODO(ejer/jura)).

@@ -49,7 +49,7 @@ export const LEGAL_DOCUMENTS: readonly LegalDocument[] = [
     title: "Sletteflow (data-subject erasure)",
     state: "i-repo",
     repoPath: "docs/gdpr/sletteflow.md",
-    note: "Arkitektur-skitse for sletning på tværs af Supabase og databehandlere. Der findes endnu ingen sletteknap.",
+    note: "Beskriver sletningen på tværs af Supabase og databehandlere (ADR 0068). Selve sletningen står på denne side; opbevaringspligt og slette-SLA afventer ejer/jura.",
   },
 ];
 

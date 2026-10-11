@@ -98,6 +98,7 @@ det gjort sådan?", så skriv en ADR.
 | 0065 | Samtykke er en del af kontrakten: ingen opt-in/out på platformen (optagelse, AI, SMS); `sms_opt_in` fjernet; cookie-samtykket er en bevidst undtagelse | Accepteret | 4 + 5 |
 | 0066 | PostHog-driftstatus på `/admin/drift`: separat læse-port (`ops-metrics`), personal API key med læse-scope, siden vælter aldrig | Accepteret | 5 |
 | 0067 | Vite 8 og `@vitejs/plugin-react` 6; `overrides` ryddet; `vitest.config.mts` (lukker B-20) | Accepteret | — |
+| 0068 | GDPR-sletning (art. 17): plan, én transaktion (`erase_data_subject`), eksterne behandlere via porte, kvittering uden persondata; fail-closed på opbevaringspligt (lukker B-68) | Accepteret | 5 + 6 |
 | 0069 | Go-live-tjekliste (`/admin/klar`, `npm run launch:check`) og kodegenereret reference: én datafil, to læsere, ingen CI-gate endnu | Accepteret | 6 |
 | 0070 | Sikkerhedsheadere, nonce-CSP (håndhævet), fejlsider og tilgængelighedsgate (axe + kontrast mod tokens) | Accepteret | 6 |
 

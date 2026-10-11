@@ -73,7 +73,10 @@
   alt skal være grønt eller eksplicit accepteret.
 - DPA'er på plads for: Supabase, Netlify, Cal.com, Alunta, Resend, inMobile,
   PostHog og **Ordbogen** (dækker både transskription og LLM — ADR 0024).
-- Test sletteflow ende-til-ende på tværs af Supabase og eksterne systemer.
+- Test sletteflow ende-til-ende på tværs af Supabase og eksterne systemer. *(Flowet er bygget og testet uden
+  netværk samt mod Postgres — ADR 0068, `docs/gdpr/sletteflow.md`. Tilbage: kør det mod rigtige PostHog/Resend/
+  Cal.com/Supabase Auth, afklar opbevaringspligt og slette-SLA (ejer/jura), og slet manuelt det der ingen API har:
+  Cal.com-sæde/attendee-data, inMobile, Ordbogen.)*
 - Verificér cookie-samtykket. Samtykke til optagelse, AI og SMS er en del af kontrakten (ADR 0065): verificér at ToS + honoraraftale dækker det og at kontrakten indgås før første møde.
 - Bekræft at Netlify Functions-region er sat til EU (Frankfurt, `fra`) — åbent siden fase 0
   (`netlify.toml`).
